@@ -15,21 +15,15 @@
 
 namespace ngs {
 
-// 地形１ブロック
-struct Terrain {
-  ci::vec3  pos;
-  ci::Color color;
-};
-
-
 class Stage {
-  std::vector<Terrain> terrains_;
   ci::TriMesh mesh_;
 
   
 public:
   // FIXME:奥行きはdeepなのか??
-  Stage(int width, int deep) {
+  Stage(const int width, const int deep,
+        const int octerve, const int seed,
+        const float random_scale, const float height_scale) {
     // 高さ情報を格納する
     std::vector<std::vector<int> > height_map;
 
@@ -38,18 +32,18 @@ public:
       row.resize(width);
     }
 
-    ci::Perlin random;
+    // パーリンノイズを使っていい感じに地形の起伏を生成
+    ci::Perlin random(octerve, seed);
     
     for (u_int z = 0; z < deep; ++z) {
       for (u_int x = 0; x < width; ++x) {
-        // height = ci::randFloat(0, 4);
-        // ci::app::console() << random.fBm(x / float(width), z / float(deep)) << std::endl;
-        
-        height_map[z][x] = random.fBm(x / 8.0f, z / 8.0f) * 10;
+        height_map[z][x] = glm::clamp(random.fBm(x * random_scale, z * random_scale) * height_scale,
+                                      0.0f, 15.0f);
       }
     }
 
     // 高さ情報を元にTriMeshを生成
+    // 隣のブロックの高さを調べ、自分より低ければその分壁を作る作戦
     uint32_t index = 0;
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
@@ -228,27 +222,6 @@ public:
         }
       }
     }
-
-#if 0
-    // 適当に高さ情報を生成
-    for (int z = 0; z < deep; ++z) {
-      for (int x = 0; x < width; ++x) {
-        Terrain t;
-        int y = ci::randFloat(0, 3);
-        t.pos = ci::vec3(x, y, z);
-
-        // 色は高さで決める
-        t.color = ci::hsvToRgb(ci::vec3(1.0f - y / 3.0f, 1.0f, 1.0f));
-
-        terrains_.push_back(t);
-      }
-    }
-#endif
-  }
-
-  
-  const std::vector<Terrain>& terrains() const {
-    return terrains_;
   }
 
   const ci::TriMesh& mesh() const {

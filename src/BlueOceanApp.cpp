@@ -9,7 +9,6 @@
 #include <cinder/params/Params.h>
 #include <cinder/Rand.h>
 #include "Stage.hpp"
-#include "StageDraw.hpp"
 
 
 namespace ngs {
@@ -30,9 +29,17 @@ class GameApp : public ci::app::App {
 
   ci::Color bg_color;
   
+  // Stage生成時の乱数調整用
+  int octave;
+  int seed;
+  float ramdom_scale;
+  float height_scale;
+
   Stage stage;
+  
 
   ci::gl::Texture2dRef texture_;
+  ci::gl::GlslProgRef	shader_;
   ci::gl::BatchRef stage_mesh;
 
   
@@ -62,6 +69,12 @@ class GameApp : public ci::app::App {
       return fov;
     }
   }
+
+  void createStage() {
+    stage = Stage(50, 50, octave, seed, ramdom_scale, height_scale);
+    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader_);
+  }
+
   
   // ダイアログ関連
 #if defined (CINDER_COCOA_TOUCH)
@@ -72,20 +85,39 @@ class GameApp : public ci::app::App {
     // 各種パラメーター設定
     params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(200, 400)));
 
-    params->addParam("FOV", &fov).min(1.0f).max(180.0f).updateFn([this]() {
+    params->addParam("Fov", &fov).min(1.0f).max(180.0f).updateFn([this]() {
         camera.setFov(fov);
       });
 
-    params->addParam("NEAR Z", &near_z).min(0.1f).updateFn([this]() {
+    params->addParam("Near Z", &near_z).min(0.1f).updateFn([this]() {
         camera.setNearClip(near_z);
       });
-    params->addParam("FAR Z", &far_z).min(0.1f).updateFn([this]() {
+    params->addParam("Far Z", &far_z).min(0.1f).updateFn([this]() {
         camera.setFarClip(far_z);
       });
 
     params->addSeparator();
 
     params->addParam("BG", &bg_color);
+
+    params->addSeparator();
+
+    params->addParam("Octave", &octave).min(0).max(255)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Seed", &seed)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Random Scale", &ramdom_scale).min(0.001f).step(0.001f)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Height Scale", &height_scale).min(1.0f).step(0.1f)
+      .updateFn([this]() {
+          createStage();
+        });
   }
 
   void drawDialog() {
@@ -96,10 +128,13 @@ class GameApp : public ci::app::App {
 
 public:
   GameApp()
-    : stage(50, 50),
-      z_distance(100.0f)
-  {
-  }
+    : z_distance(100.0f),
+      octave(4),
+      seed(0),
+      ramdom_scale(0.125f),
+      height_scale(10.0f),
+      stage(50, 50, octave, seed, ramdom_scale, height_scale)
+  {}
 
   
   void setup() override {
@@ -143,9 +178,9 @@ public:
                                          .magFilter(GL_NEAREST));
     texture_->bind();
     
-    auto lambert = ci::gl::ShaderDef().texture(texture_).lambert();
-    ci::gl::GlslProgRef	shader = ci::gl::getStockShader(lambert);
-    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader);
+    auto lambert = ci::gl::ShaderDef().texture().lambert();
+    shader_ = ci::gl::getStockShader(lambert);
+    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader_);
     
     // ci::gl::enableAlphaBlending();
     ci::gl::enableDepthRead();
