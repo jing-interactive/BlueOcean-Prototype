@@ -32,7 +32,8 @@ class GameApp : public ci::app::App {
   
   Stage stage;
 
-  ci::gl::BatchRef cube;
+  ci::gl::Texture2dRef texture_;
+  ci::gl::BatchRef stage_mesh;
 
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -135,9 +136,16 @@ public:
     getSignalDidBecomeActive().connect([this](){ touch_num = 0; });
 
     // 表示用のモデルデータ
-    auto lambert = ci::gl::ShaderDef().lambert().color();
+    texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
+                                         ci::gl::Texture2d::Format()
+                                         .wrap(GL_CLAMP_TO_EDGE)
+                                         .minFilter(GL_NEAREST)
+                                         .magFilter(GL_NEAREST));
+    texture_->bind();
+    
+    auto lambert = ci::gl::ShaderDef().texture(texture_).lambert();
     ci::gl::GlslProgRef	shader = ci::gl::getStockShader(lambert);
-    cube = ci::gl::Batch::create(ci::geom::Cube(), shader);
+    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader);
     
     ci::gl::enableAlphaBlending();
     ci::gl::enableDepthRead();
@@ -273,7 +281,8 @@ public:
     ci::gl::translate(translate);
     ci::gl::rotate(rotate);
 
-    StageDraw::draw(stage.terrains(), cube);
+    stage_mesh->draw();
+    // StageDraw::draw(stage.terrains(), cube);
     
     // ダイアログ表示
     drawDialog();
