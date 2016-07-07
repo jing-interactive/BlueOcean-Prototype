@@ -147,7 +147,7 @@ public:
     ci::gl::GlslProgRef	shader = ci::gl::getStockShader(lambert);
     stage_mesh = ci::gl::Batch::create(stage.mesh(), shader);
     
-    ci::gl::enableAlphaBlending();
+    // ci::gl::enableAlphaBlending();
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
     ci::gl::enable(GL_CULL_FACE);
@@ -280,9 +280,10 @@ public:
     ci::gl::translate(ci::vec3(0, 0.0, -z_distance));
     ci::gl::translate(translate);
     ci::gl::rotate(rotate);
+    // ci::gl::scale(ci::vec3(1, 0.8, 1));
 
+    // ステージ表示
     stage_mesh->draw();
-    // StageDraw::draw(stage.terrains(), cube);
     
     // ダイアログ表示
     drawDialog();

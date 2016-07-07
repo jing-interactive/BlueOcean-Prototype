@@ -10,6 +10,7 @@
 #include <cinder/Rand.h>
 #include <cinder/Color.h>
 #include <cinder/TriMesh.h>
+#include <cinder/Perlin.h>
 
 
 namespace ngs {
@@ -37,9 +38,14 @@ public:
       row.resize(width);
     }
 
-    for (auto& row : height_map) {
-      for (auto& height : row) {
-        height = ci::randFloat(0, 4);
+    ci::Perlin random;
+    
+    for (u_int z = 0; z < deep; ++z) {
+      for (u_int x = 0; x < width; ++x) {
+        // height = ci::randFloat(0, 4);
+        // ci::app::console() << random.fBm(x / float(width), z / float(deep)) << std::endl;
+        
+        height_map[z][x] = random.fBm(x / 8.0f, z / 8.0f) * 10;
       }
     }
 
