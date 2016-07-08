@@ -2,6 +2,7 @@
 // BlueOcean プロトタイプ
 // 
 
+#include "Defines.hpp"
 #include <cinder/app/App.h>
 #include <cinder/app/RendererGl.h>
 #include <cinder/gl/gl.h>
@@ -170,12 +171,14 @@ public:
     // アクティブになった時にタッチ情報を初期化
     getSignalDidBecomeActive().connect([this](){ touch_num = 0; });
 
-    // 表示用のモデルデータ
+    // 表示用のデータを準備
+    // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
     texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
                                          ci::gl::Texture2d::Format()
                                          .wrap(GL_CLAMP_TO_EDGE)
                                          .minFilter(GL_NEAREST)
-                                         .magFilter(GL_NEAREST));
+                                         // .magFilter(GL_NEAREST)
+                                         );
     texture_->bind();
     
     auto lambert = ci::gl::ShaderDef().texture().lambert();
