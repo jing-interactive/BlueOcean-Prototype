@@ -36,12 +36,20 @@ class GameApp : public ci::app::App {
   float ramdom_scale;
   float height_scale;
 
+  // 海面
+  float sea_level;
+  ci::ColorA sea_color;
+  
   Stage stage;
   
 
-  ci::gl::Texture2dRef texture_;
-  ci::gl::GlslProgRef	shader_;
-  ci::gl::BatchRef stage_mesh;
+  ci::gl::Texture2dRef land_texture_;
+  ci::gl::GlslProgRef	land_shader_;
+  ci::gl::BatchRef land_mesh_;
+  
+  ci::gl::Texture2dRef sea_texture_;
+  ci::gl::GlslProgRef	sea_shader_;
+  ci::gl::BatchRef sea_mesh_;
 
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -73,9 +81,29 @@ class GameApp : public ci::app::App {
 
   void createStage() {
     stage = Stage(50, 50, octave, seed, ramdom_scale, height_scale);
-    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader_);
+    land_mesh_ = ci::gl::Batch::create(stage.getLandMesh(), land_shader_);
   }
 
+  void createSeaMesh() {
+    ci::TriMesh mesh;
+    const auto& size = stage.getSize();
+
+    ci::vec3 p[] = {
+      {      0, 0,      0 },
+      { size.x, 0,      0 },
+      {      0, 0, size.y },
+      { size.x, 0, size.y },
+    };
+    
+    mesh.appendPositions(&p[0], 4);
+    mesh.appendTriangle(0, 2, 1);
+    mesh.appendTriangle(1, 2, 3);
+    
+    auto color = ci::gl::ShaderDef().color();
+    sea_shader_ = ci::gl::getStockShader(color);
+    sea_mesh_ = ci::gl::Batch::create(mesh, sea_shader_);
+  }
+  
   
   // ダイアログ関連
 #if defined (CINDER_COCOA_TOUCH)
@@ -119,6 +147,12 @@ class GameApp : public ci::app::App {
       .updateFn([this]() {
           createStage();
         });
+
+    params->addSeparator();
+
+    params->addParam("Sea Color", &sea_color);
+    params->addParam("Sea Level", &sea_level).step(0.25f);
+    
   }
 
   void drawDialog() {
@@ -134,6 +168,8 @@ public:
       seed(0),
       ramdom_scale(0.125f),
       height_scale(10.0f),
+      sea_level(0.5f),
+      sea_color(1, 1, 1, 1),
       stage(50, 50, octave, seed, ramdom_scale, height_scale)
   {}
 
@@ -173,19 +209,19 @@ public:
 
     // 表示用のデータを準備
     // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
-    texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
-                                         ci::gl::Texture2d::Format()
-                                         .wrap(GL_CLAMP_TO_EDGE)
-                                         .minFilter(GL_NEAREST)
-                                         // .magFilter(GL_NEAREST)
-                                         );
-    texture_->bind();
-    
+    land_texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
+                                              ci::gl::Texture2d::Format()
+                                              .wrap(GL_CLAMP_TO_EDGE)
+                                              .minFilter(GL_NEAREST)
+                                              // .magFilter(GL_NEAREST)
+                                              );
+    land_texture_->bind();
     auto lambert = ci::gl::ShaderDef().texture().lambert();
-    shader_ = ci::gl::getStockShader(lambert);
-    stage_mesh = ci::gl::Batch::create(stage.mesh(), shader_);
+    land_shader_ = ci::gl::getStockShader(lambert);
+    land_mesh_ = ci::gl::Batch::create(stage.getLandMesh(), land_shader_);
+
+    createSeaMesh();
     
-    // ci::gl::enableAlphaBlending();
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
     ci::gl::enable(GL_CULL_FACE);
@@ -297,7 +333,7 @@ public:
       translate += d * t * 0.005f;
     }
     else {
-      z_distance = std::max(z_distance - ld * t * 0.01f, 0.01f);
+      z_distance = std::max(z_distance - ld * t * 0.025f, 0.01f);
     }
   }
   
@@ -320,8 +356,15 @@ public:
     ci::gl::rotate(rotate);
     // ci::gl::scale(ci::vec3(1, 0.8, 1));
 
-    // ステージ表示
-    stage_mesh->draw();
+    // 陸地の描画
+    ci::gl::disableAlphaBlending();
+    land_mesh_->draw();
+
+    // 海面の描画
+    ci::gl::enableAlphaBlending();
+    ci::gl::translate(ci::vec3(0.0f, sea_level, 0.0f));
+    ci::gl::color(sea_color);
+    sea_mesh_->draw();
     
     // ダイアログ表示
     drawDialog();

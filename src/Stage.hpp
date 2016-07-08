@@ -16,14 +16,19 @@
 namespace ngs {
 
 class Stage {
-  ci::TriMesh mesh_;
+  ci::ivec2 size_;
+  
+  ci::TriMesh land_;
+  float sea_level_;
 
   
 public:
   // FIXME:奥行きはdeepなのか??
   Stage(const int width, const int deep,
         const int octerve, const int seed,
-        const float random_scale, const float height_scale) {
+        const float random_scale, const float height_scale)
+    : size_(width, deep)
+  {
     // 高さ情報を格納する
     std::vector<std::vector<int> > height_map;
 
@@ -44,6 +49,7 @@ public:
 
     // 高さ情報を元にTriMeshを生成
     // 隣のブロックの高さを調べ、自分より低ければその分壁を作る作戦
+    // TODO:コピペ感をなくす
     uint32_t index = 0;
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
@@ -72,12 +78,12 @@ public:
             { 0, p[3].y / 16.0f },
           };
         
-          mesh_.appendPositions(&p[0], 4);
-          mesh_.appendNormals(&n[0], 4);
-          mesh_.appendTexCoords0(&uv[0], 4);
+          land_.appendPositions(&p[0], 4);
+          land_.appendNormals(&n[0], 4);
+          land_.appendTexCoords0(&uv[0], 4);
         
-          mesh_.appendTriangle(index + 0, index + 2, index + 1);
-          mesh_.appendTriangle(index + 1, index + 2, index + 3);
+          land_.appendTriangle(index + 0, index + 2, index + 1);
+          land_.appendTriangle(index + 1, index + 2, index + 3);
           index += 4;
         }
 
@@ -106,12 +112,12 @@ public:
               { 0, p[0].y / 16.0f },
             };
           
-            mesh_.appendPositions(&p[0], 4);
-            mesh_.appendNormals(&n[0], 4);
-            mesh_.appendTexCoords0(&uv[0], 4);
+            land_.appendPositions(&p[0], 4);
+            land_.appendNormals(&n[0], 4);
+            land_.appendTexCoords0(&uv[0], 4);
         
-            mesh_.appendTriangle(index + 0, index + 1, index + 2);
-            mesh_.appendTriangle(index + 1, index + 3, index + 2);
+            land_.appendTriangle(index + 0, index + 1, index + 2);
+            land_.appendTriangle(index + 1, index + 3, index + 2);
             index += 4;
           }
         }
@@ -141,12 +147,12 @@ public:
               { 0, p[0].y / 16.0f },
             };
           
-            mesh_.appendPositions(&p[0], 4);
-            mesh_.appendNormals(&n[0], 4);
-            mesh_.appendTexCoords0(&uv[0], 4);
+            land_.appendPositions(&p[0], 4);
+            land_.appendNormals(&n[0], 4);
+            land_.appendTexCoords0(&uv[0], 4);
         
-            mesh_.appendTriangle(index + 0, index + 3, index + 1);
-            mesh_.appendTriangle(index + 0, index + 2, index + 3);
+            land_.appendTriangle(index + 0, index + 3, index + 1);
+            land_.appendTriangle(index + 0, index + 2, index + 3);
             index += 4;
           }
         }
@@ -176,12 +182,12 @@ public:
               { 0, p[0].y / 16.0f },
             };
           
-            mesh_.appendPositions(&p[0], 4);
-            mesh_.appendNormals(&n[0], 4);
-            mesh_.appendTexCoords0(&uv[0], 4);
+            land_.appendPositions(&p[0], 4);
+            land_.appendNormals(&n[0], 4);
+            land_.appendTexCoords0(&uv[0], 4);
         
-            mesh_.appendTriangle(index + 0, index + 2, index + 1);
-            mesh_.appendTriangle(index + 1, index + 2, index + 3);
+            land_.appendTriangle(index + 0, index + 2, index + 1);
+            land_.appendTriangle(index + 1, index + 2, index + 3);
             index += 4;
           }
         }
@@ -211,12 +217,12 @@ public:
               { 0, p[0].y / 16.0f },
             };
           
-            mesh_.appendPositions(&p[0], 4);
-            mesh_.appendNormals(&n[0], 4);
-            mesh_.appendTexCoords0(&uv[0], 4);
+            land_.appendPositions(&p[0], 4);
+            land_.appendNormals(&n[0], 4);
+            land_.appendTexCoords0(&uv[0], 4);
         
-            mesh_.appendTriangle(index + 0, index + 1, index + 3);
-            mesh_.appendTriangle(index + 0, index + 3, index + 2);
+            land_.appendTriangle(index + 0, index + 1, index + 3);
+            land_.appendTriangle(index + 0, index + 3, index + 2);
             index += 4;
           }
         }
@@ -224,8 +230,16 @@ public:
     }
   }
 
-  const ci::TriMesh& mesh() const {
-    return mesh_;
+  const ci::TriMesh& getLandMesh() const {
+    return land_;
+  }
+
+  const ci::ivec2& getSize() const {
+    return size_;
+  }
+
+  float getSeaLevel() const {
+    return sea_level_;
   }
 
 };
