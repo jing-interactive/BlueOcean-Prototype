@@ -8,8 +8,9 @@
 #include <cinder/gl/gl.h>
 #include <cinder/Camera.h>
 #include <cinder/params/Params.h>
-#include <cinder/Rand.h>
-#include "Stage.hpp"
+#include <cinder/Perlin.h>
+#include "TiledStage.hpp"
+#include "StageDraw.hpp"
 
 
 namespace ngs {
@@ -35,21 +36,20 @@ class GameApp : public ci::app::App {
   int seed;
   float ramdom_scale;
   float height_scale;
+  ci::Perlin random;
+
+  // 陸地
+  TiledStage stage;
 
   // 海面
   float sea_level;
   ci::ColorA sea_color;
-  
-  Stage stage;
-  
 
-  ci::gl::Texture2dRef land_texture_;
-  ci::gl::GlslProgRef	land_shader_;
-  ci::gl::BatchRef land_mesh_;
-  
   ci::gl::Texture2dRef sea_texture_;
   ci::gl::GlslProgRef	sea_shader_;
   ci::gl::BatchRef sea_mesh_;
+
+  StageDrawer stage_drawer_;
 
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -80,13 +80,13 @@ class GameApp : public ci::app::App {
   }
 
   void createStage() {
-    stage = Stage(50, 50, octave, seed, ramdom_scale, height_scale);
-    land_mesh_ = ci::gl::Batch::create(stage.getLandMesh(), land_shader_);
+    stage = TiledStage(64, random, ramdom_scale, height_scale);
+    stage_drawer_.clear();
   }
 
   void createSeaMesh() {
     ci::TriMesh mesh;
-    const auto& size = stage.getSize();
+    ci::vec2 size(64, 64);
 
     ci::vec3 p[] = {
       {      0, 0,      0 },
@@ -168,9 +168,10 @@ public:
       seed(0),
       ramdom_scale(0.125f),
       height_scale(10.0f),
+      random(octave, seed),
       sea_level(0.5f),
       sea_color(1, 1, 1, 1),
-      stage(50, 50, octave, seed, ramdom_scale, height_scale)
+      stage(64, random, ramdom_scale, height_scale)
   {}
 
   
@@ -208,17 +209,7 @@ public:
     getSignalDidBecomeActive().connect([this](){ touch_num = 0; });
 
     // 表示用のデータを準備
-    // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
-    land_texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
-                                              ci::gl::Texture2d::Format()
-                                              .wrap(GL_CLAMP_TO_EDGE)
-                                              .minFilter(GL_NEAREST)
-                                              // .magFilter(GL_NEAREST)
-                                              );
-    land_texture_->bind();
-    auto lambert = ci::gl::ShaderDef().texture().lambert();
-    land_shader_ = ci::gl::getStockShader(lambert);
-    land_mesh_ = ci::gl::Batch::create(stage.getLandMesh(), land_shader_);
+    stage_drawer_.setup();
 
     createSeaMesh();
     
@@ -358,13 +349,32 @@ public:
 
     // 陸地の描画
     ci::gl::disableAlphaBlending();
-    land_mesh_->draw();
+    for (int z = 0; z < 5; ++z) {
+      for (int x = 0; x < 5; ++x) {
+        ci::gl::pushModelView();
+
+        ci::gl::translate(ci::vec3(x * 64.0f, 0.0f, z * 64.0f));
+
+        ci::ivec2 pos(x, z);
+        stage_drawer_.draw(pos, stage.getStage(pos));
+        
+        ci::gl::popModelView();
+      }
+    }
 
     // 海面の描画
     ci::gl::enableAlphaBlending();
-    ci::gl::translate(ci::vec3(0.0f, sea_level, 0.0f));
-    ci::gl::color(sea_color);
-    sea_mesh_->draw();
+    for (int z = 0; z < 5; ++z) {
+      for (int x = 0; x < 5; ++x) {
+        ci::gl::pushModelView();
+
+        ci::gl::translate(ci::vec3(x * 64.0f, sea_level, z * 64.0f));
+        ci::gl::color(sea_color);
+        sea_mesh_->draw();
+
+        ci::gl::popModelView();
+      }
+    }
     
     // ダイアログ表示
     drawDialog();

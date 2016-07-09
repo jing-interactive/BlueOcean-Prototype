@@ -7,10 +7,9 @@
 //
 
 #include <vector>
-#include <cinder/Rand.h>
+#include <cinder/Perlin.h>
 #include <cinder/Color.h>
 #include <cinder/TriMesh.h>
-#include <cinder/Perlin.h>
 
 
 namespace ngs {
@@ -25,7 +24,8 @@ class Stage {
 public:
   // FIXME:奥行きはdeepなのか??
   Stage(const int width, const int deep,
-        const int octerve, const int seed,
+        const int offset_x, const int offset_z,
+        const ci::Perlin& random,
         const float random_scale, const float height_scale)
     : size_(width, deep)
   {
@@ -38,12 +38,10 @@ public:
     }
 
     // パーリンノイズを使っていい感じに地形の起伏を生成
-    ci::Perlin random(octerve, seed);
-    
     for (u_int z = 0; z < deep; ++z) {
       for (u_int x = 0; x < width; ++x) {
-        height_map[z][x] = glm::clamp(random.fBm(x * random_scale, z * random_scale) * height_scale,
-                                      0.0f, 15.0f);
+        height_map[z][x] = glm::clamp(random.fBm((x + offset_x * width) * random_scale, (z + offset_z * deep) * random_scale) * height_scale,
+                                      -15.0f, 15.0f);
       }
     }
 
