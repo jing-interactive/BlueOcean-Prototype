@@ -80,13 +80,13 @@ class GameApp : public ci::app::App {
   }
 
   void createStage() {
-    stage = TiledStage(64, random, ramdom_scale, height_scale);
+    stage = TiledStage(32, random, ramdom_scale, height_scale);
     stage_drawer_.clear();
   }
 
   void createSeaMesh() {
     ci::TriMesh mesh;
-    ci::vec2 size(64, 64);
+    ci::vec2 size(32, 32);
 
     ci::vec3 p[] = {
       {      0, 0,      0 },
@@ -163,15 +163,15 @@ class GameApp : public ci::app::App {
 
 public:
   GameApp()
-    : z_distance(100.0f),
+    : z_distance(200.0f),
       octave(4),
       seed(0),
-      ramdom_scale(0.125f),
-      height_scale(10.0f),
+      ramdom_scale(0.05f),
+      height_scale(25.0f),
       random(octave, seed),
-      sea_level(0.5f),
-      sea_color(1, 1, 1, 1),
-      stage(64, random, ramdom_scale, height_scale)
+      sea_level(7.5f),
+      sea_color(1, 1, 1, 0),
+      stage(32, random, ramdom_scale, height_scale)
   {}
 
   
@@ -184,8 +184,8 @@ public:
     ci::gl::enableVerticalSync(true);
     
     fov    = 5.0f;
-    near_z = 10.0f;
-    far_z  = 1000.0f;
+    near_z = 20.0f;
+    far_z  = 3000.0f;
 
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -353,7 +353,7 @@ public:
       for (int x = 0; x < 5; ++x) {
         ci::gl::pushModelView();
 
-        ci::gl::translate(ci::vec3(x * 64.0f, 0.0f, z * 64.0f));
+        ci::gl::translate(ci::vec3(x * 32.0f, 0.0f, z * 32.0f));
 
         ci::ivec2 pos(x, z);
         stage_drawer_.draw(pos, stage.getStage(pos));
@@ -368,7 +368,7 @@ public:
       for (int x = 0; x < 5; ++x) {
         ci::gl::pushModelView();
 
-        ci::gl::translate(ci::vec3(x * 64.0f, sea_level, z * 64.0f));
+        ci::gl::translate(ci::vec3(x * 32.0f, sea_level, z * 32.0f));
         ci::gl::color(sea_color);
         sea_mesh_->draw();
 

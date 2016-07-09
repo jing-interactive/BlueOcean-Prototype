@@ -32,16 +32,18 @@ public:
     // 高さ情報を格納する
     std::vector<std::vector<int> > height_map;
 
-    height_map.resize(deep);
+    height_map.resize(deep + 2);
     for (auto& row : height_map) {
-      row.resize(width);
+      row.resize(width + 2);
     }
 
     // パーリンノイズを使っていい感じに地形の起伏を生成
-    for (u_int z = 0; z < deep; ++z) {
-      for (u_int x = 0; x < width; ++x) {
-        height_map[z][x] = glm::clamp(random.fBm((x + offset_x * width) * random_scale, (z + offset_z * deep) * random_scale) * height_scale,
-                                      -15.0f, 15.0f);
+    // 周囲１ブロックを余計に生成している
+    for (int z = -1; z < (deep + 1); ++z) {
+      for (int x = -1; x < (width + 1); ++x) {
+        height_map[z + 1][x + 1] = glm::clamp(random.fBm((x + offset_x * width) * random_scale,
+                                                         (z + offset_z * deep) * random_scale) * height_scale,
+                                              -15.0f, 15.0f);
       }
     }
 
@@ -51,7 +53,7 @@ public:
     uint32_t index = 0;
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
-        float y = height_map[z][x];
+        float y = height_map[z + 1][x + 1];
         
         {
           // 上面
@@ -85,9 +87,9 @@ public:
           index += 4;
         }
 
-        if ((z > 0) && (height_map[z - 1][x] < y)) {
+        if ((height_map[z - 1 + 1][x + 1] < y)) {
           // 側面(z-)
-          int dy = y - height_map[z - 1][x];
+          int dy = y - height_map[z - 1 + 1][x + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z },
@@ -120,9 +122,9 @@ public:
           }
         }
         
-        if ((z < (deep - 1)) && (height_map[z + 1][x] < y)) {
+        if ((height_map[z + 1 + 1][x + 1] < y)) {
           // 側面(z+)
-          int dy = y - height_map[z + 1][x];
+          int dy = y - height_map[z + 1 + 1][x + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z + 1 },
@@ -155,9 +157,9 @@ public:
           }
         }
         
-        if ((x > 0) && (height_map[z][x - 1] < y)) {
+        if ((height_map[z + 1][x - 1 + 1] < y)) {
           // 側面(x-)
-          int dy = y - height_map[z][x - 1];
+          int dy = y - height_map[z + 1][x - 1 + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x,     y - h,     z },
@@ -190,9 +192,9 @@ public:
           }
         }
         
-        if ((x < (width - 1)) && (height_map[z][x + 1] < y)) {
+        if ((height_map[z + 1][x + 1 + 1] < y)) {
           // 側面(x+)
-          int dy = y - height_map[z][x + 1];
+          int dy = y - height_map[z + 1][x + 1 + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x + 1,     y - h,     z },
