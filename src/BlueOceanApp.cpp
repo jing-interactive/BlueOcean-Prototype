@@ -202,8 +202,8 @@ public:
     camera.setEyePoint(ci::vec3());
     camera.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
 
-    rotate = glm::angleAxis(ci::toRadians(45.0f), ci::vec3(1.0f, 0.0f, 0.0f))
-      * glm::angleAxis(ci::toRadians(45.0f), ci::vec3(0.0f, 1.0f, 0.0f));
+    rotate = glm::angleAxis(ci::toRadians(45.0f), ci::vec3(0.0f, 1.0f, 0.0f))
+      * glm::angleAxis(ci::toRadians(-45.0f), ci::vec3(1.0f, 0.0f, 0.0f));
 
     createDialog();
 
@@ -247,10 +247,12 @@ public:
 
     if (event.isShiftDown()) {
       auto d = mouse_pos - mouse_prev_pos;
-      ci::vec3 v(d.x, -d.y, 0.0f);
+      ci::vec3 v(d.x, 0.0f, d.y);
 
       float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-      translate += v * t * 0.004f;
+      auto p = (rotate * v) * t * 0.005f;
+      translate.x += p.x;
+      translate.z += p.z;
     }
     else if (event.isControlDown()) {
       float d = mouse_pos.y - mouse_prev_pos.y;
@@ -263,9 +265,9 @@ public:
       float l = length(d);
       if (l > 0.0f) {
         d = normalize(d);
-        ci::vec3 v(d.y, d.x, 0.0f);
+        ci::vec3 v(-d.y, -d.x, 0.0f);
         ci::quat r = glm::angleAxis(l * 0.01f, v);
-        rotate = r * rotate;
+        rotate = rotate * r;
       }
 
     }
@@ -301,9 +303,9 @@ public:
       float l = length(d);
       if (l > 0.0f) {
         d = normalize(d);
-        ci::vec3 v(d.y, d.x, 0.0f);
+        ci::vec3 v(-d.y, -d.x, 0.0f);
         ci::quat r = glm::angleAxis(l * 0.01f, v);
-        rotate = r * rotate;
+        rotate = rotate * r;
       }
 
       return;
@@ -311,10 +313,10 @@ public:
 #endif
     if (touches.size() < 2) return;
 
-    ci::vec3 v1{ touches[0].getX(), -touches[0].getY(), 0.0f };
-    ci::vec3 v2{ touches[1].getX(), -touches[1].getY(), 0.0f };
-    ci::vec3 v1_prev{ touches[0].getPrevX(), -touches[0].getPrevY(), 0.0f };
-    ci::vec3 v2_prev{ touches[1].getPrevX(), -touches[1].getPrevY(), 0.0f };
+    ci::vec3 v1{ touches[0].getX(), 0.0f, touches[0].getY() };
+    ci::vec3 v2{ touches[1].getX(), 0.0f, touches[1].getY() };
+    ci::vec3 v1_prev{ touches[0].getPrevX(), 0.0f, touches[0].getPrevY() };
+    ci::vec3 v2_prev{ touches[1].getPrevX(), 0.0f, touches[1].getPrevY() };
 
     ci::vec3 d = v1 - v1_prev;
 
@@ -326,7 +328,9 @@ public:
     float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
 
     if (std::abs(ld) < 3.0f) {
-      translate += d * t * 0.005f;
+      auto p = (rotate * d) * t * 0.005f;
+      translate.x += p.x;
+      translate.z += p.z;
     }
     else {
       z_distance = std::max(z_distance - ld * t * 0.025f, 0.01f);
@@ -341,19 +345,15 @@ public:
   }
 
   void update() override {
-    // カメラ位置の計算(平行移動のみ)
-    auto t = ci::translate(ci::mat4(1.0f), ci::vec3(0, 0, z_distance));
-    t = ci::translate(t, -translate);
-
-    auto pos = t * ci::vec4(0, 0, 0, 1);
-    camera.setEyePoint(ci::vec3(pos.x, pos.y, pos.z));
+    // カメラ位置の計算
+    auto pos = rotate * ci::vec3(0, 0, z_distance) - translate;
+    camera.setEyePoint(pos);
+    camera.setOrientation(rotate);
   }
   
   void draw() override {
     ci::gl::clear(bg_color);
     ci::gl::setMatrices(camera);
-
-    ci::gl::rotate(rotate);
 
     // 陸地の描画
     ci::gl::disableAlphaBlending();
@@ -363,17 +363,17 @@ public:
                                      camera.getAspectRatio());
     
     float z;
-    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), rotate * ci::vec3(0, 1, 0), &z)) {
-      // カメラの回転分を考慮
-      ci::vec3 p = ci::inverse(rotate) * ray.calcPosition(z);
+    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
+      ci::vec3 p = ray.calcPosition(z);
 
+      // 中央ブロックの座標
       ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
 
       for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
         for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
           ci::gl::pushModelView();
 
-          ci::gl::translate(ci::vec3(x * BLOCK_SIZE, 0.0f, z * BLOCK_SIZE));
+          ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, 0.0f, z * BLOCK_SIZE - BLOCK_SIZE / 2));
           ci::ivec2 sp(x, z);
           stage_drawer_.draw(sp, stage.getStage(sp));
         
@@ -388,7 +388,7 @@ public:
         for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
           ci::gl::pushModelView();
 
-          ci::gl::translate(ci::vec3(x * BLOCK_SIZE, sea_level, z * BLOCK_SIZE));
+          ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, sea_level, z * BLOCK_SIZE - BLOCK_SIZE / 2));
           sea_mesh_->draw();
 
           ci::gl::popModelView();
