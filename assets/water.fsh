@@ -16,7 +16,7 @@ out vec4 oColor;
 
 
 void main(void) {
-  vec4 n = texture(uTex1, TexCoord0 + offset) - vec4(0.5, 0.5, 0, 0);
+  vec4 n = texture(uTex1, TexCoord0 + offset) * 2.0 - 1.0;
   
   oColor = texture(uTex0, gl_FragCoord.xy / vec2(ciWindowSize) + n.xy * wave);
 }

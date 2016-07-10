@@ -176,9 +176,9 @@ class GameApp : public ci::app::App {
     params->addSeparator();
 
     // params->addParam("Sea Color", &sea_color);
-    params->addParam("Sea Speed x", &sea_speed_.x).step(0.0001f);
-    params->addParam("Sea Speed y", &sea_speed_.y).step(0.0001f);
-    params->addParam("Sea Wave", &sea_wave_).step(0.0001f);
+    params->addParam("Sea Speed x", &sea_speed_.x).step(0.00001f);
+    params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
+    params->addParam("Sea Wave", &sea_wave_).step(0.001f);
     params->addParam("Sea Level", &sea_level).step(0.25f);
     
   }
@@ -247,8 +247,9 @@ public:
       ;
     fbo = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
 
-    sea_speed_ = ci::vec2(0.0004f, 0.0006f);
-    sea_wave_ = 0.0541f;
+    // sea_speed_ = ci::vec2(0.0004f, 0.0006f);
+    // sea_wave_ = 0.0541f;
+    sea_wave_ = 0.0f;
     
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
