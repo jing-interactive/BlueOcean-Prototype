@@ -27,7 +27,6 @@ public:
                                               .minFilter(GL_NEAREST)
                                               // .magFilter(GL_NEAREST)
                                               );
-    land_texture_->bind();
     auto lambert = ci::gl::ShaderDef().texture().lambert();
     land_shader_ = ci::gl::getStockShader(lambert);
   }
@@ -42,6 +41,7 @@ public:
       meshes_.insert(std::make_pair(pos, mesh));
     }
 
+    land_texture_->bind();
     meshes_.at(pos)->draw();
   }
   

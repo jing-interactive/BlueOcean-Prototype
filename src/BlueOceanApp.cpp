@@ -10,6 +10,7 @@
 #include <cinder/params/Params.h>
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
+#include "Shader.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
 
@@ -18,7 +19,10 @@ namespace ngs {
 
 class GameApp : public ci::app::App {
   enum {
-    BLOCK_SIZE = 64
+    BLOCK_SIZE = 64,
+    
+    FBO_WIDTH  = 512,
+    FBO_HEIGHT = 512,
   };
   
   ci::CameraPersp camera;
@@ -49,10 +53,15 @@ class GameApp : public ci::app::App {
   // 海面
   float sea_level;
   ci::ColorA sea_color;
+  ci::vec2 sea_offset_;
+  ci::vec2 sea_speed_;
+  float sea_wave_;
 
   ci::gl::Texture2dRef sea_texture_;
   ci::gl::GlslProgRef	sea_shader_;
   ci::gl::BatchRef sea_mesh_;
+  
+  ci::gl::FboRef fbo;
 
   StageDrawer stage_drawer_;
 
@@ -99,13 +108,24 @@ class GameApp : public ci::app::App {
       {      0, 0, size.y },
       { size.x, 0, size.y },
     };
+    ci::vec2 uv[] = {
+      { 0, 0 },
+      { 1, 0 },
+      { 0, 1 },
+      { 1, 1 }
+    };
     
     mesh.appendPositions(&p[0], 4);
+    mesh.appendTexCoords0(&uv[0], 4);
     mesh.appendTriangle(0, 2, 1);
     mesh.appendTriangle(1, 2, 3);
-    
-    auto color = ci::gl::ShaderDef().color();
-    sea_shader_ = ci::gl::getStockShader(color);
+
+    auto shader = readShader("water", "water");
+    sea_shader_ = ci::gl::GlslProg::create(shader.first, shader.second);
+    sea_shader_->uniform("uTex0", 0);
+    sea_shader_->uniform("uTex1", 1);
+    sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("water_normal.png")),
+                                             ci::gl::Texture2d::Format().wrap(GL_REPEAT));
     sea_mesh_ = ci::gl::Batch::create(mesh, sea_shader_);
   }
   
@@ -155,7 +175,10 @@ class GameApp : public ci::app::App {
 
     params->addSeparator();
 
-    params->addParam("Sea Color", &sea_color);
+    // params->addParam("Sea Color", &sea_color);
+    params->addParam("Sea Speed x", &sea_speed_.x).step(0.0001f);
+    params->addParam("Sea Speed y", &sea_speed_.y).step(0.0001f);
+    params->addParam("Sea Wave", &sea_wave_).step(0.0001f);
     params->addParam("Sea Level", &sea_level).step(0.25f);
     
   }
@@ -217,6 +240,14 @@ public:
     stage_drawer_.setup();
 
     createSeaMesh();
+
+    // FBO
+    auto format = ci::gl::Fbo::Format()
+      .colorTexture()
+      ;
+    fbo = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
+
+    sea_wave_ = 0.0f;
     
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
@@ -349,7 +380,10 @@ public:
     auto pos = rotate * ci::vec3(0, 0, z_distance) - translate;
     camera.setEyePoint(pos);
     camera.setOrientation(rotate);
+
+    sea_offset_ += sea_speed_;
   }
+
   
   void draw() override {
     ci::gl::clear(bg_color);
@@ -368,30 +402,34 @@ public:
 
       // 中央ブロックの座標
       ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+      {
+        ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo->getSize());
+        ci::gl::ScopedFramebuffer fboScope(fbo);
+        ci::gl::clear();
 
-      for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
-        for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
-          ci::gl::pushModelView();
-
-          ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, 0.0f, z * BLOCK_SIZE - BLOCK_SIZE / 2));
-          ci::ivec2 sp(x, z);
-          stage_drawer_.draw(sp, stage.getStage(sp));
-        
-          ci::gl::popModelView();
-        }
+        drawStage(pos);
       }
+      
+      drawStage(pos);
 
       // 海面の描画
       ci::gl::enableAlphaBlending();
-      ci::gl::color(sea_color);
-      for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
-        for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
-          ci::gl::pushModelView();
+      {
+        fbo->getColorTexture()->bind(0);
+        sea_texture_->bind(1);
+        sea_shader_->uniform("offset", sea_offset_);
+        sea_shader_->uniform("wave", sea_wave_);
+        
+        ci::gl::color(sea_color);
+        for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
+          for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
+            ci::gl::pushModelView();
 
-          ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, sea_level, z * BLOCK_SIZE - BLOCK_SIZE / 2));
-          sea_mesh_->draw();
+            ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, sea_level, z * BLOCK_SIZE - BLOCK_SIZE / 2));
+            sea_mesh_->draw();
 
-          ci::gl::popModelView();
+            ci::gl::popModelView();
+          }
         }
       }
     }
@@ -399,6 +437,26 @@ public:
     // ダイアログ表示
     drawDialog();
   }
+
+
+  // 陸地の描画
+  void drawStage(const ci::ivec2& center_pos) {
+    ci::gl::setMatrices(camera);
+    ci::gl::disableAlphaBlending();
+    
+    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
+      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+        ci::gl::pushModelView();
+
+        ci::gl::translate(ci::vec3(x * BLOCK_SIZE - BLOCK_SIZE / 2, 0.0f, z * BLOCK_SIZE - BLOCK_SIZE / 2));
+        ci::ivec2 pos(x, z);
+        stage_drawer_.draw(pos, stage.getStage(pos));
+        
+        ci::gl::popModelView();
+      }
+    }
+  }
+  
 };
 
 }
