@@ -1,4 +1,4 @@
-﻿//
+//
 // BlueOcean プロトタイプ
 // 
 
@@ -9,6 +9,7 @@
 #include <cinder/Camera.h>
 #include <cinder/params/Params.h>
 #include <cinder/Perlin.h>
+#include <cinder/Ray.h>
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
 
@@ -16,6 +17,10 @@
 namespace ngs {
 
 class GameApp : public ci::app::App {
+  enum {
+    BLOCK_SIZE = 64
+  };
+  
   ci::CameraPersp camera;
 
   float fov;
@@ -80,13 +85,13 @@ class GameApp : public ci::app::App {
   }
 
   void createStage() {
-    stage = TiledStage(32, random, ramdom_scale, height_scale);
+    stage = TiledStage(BLOCK_SIZE, random, ramdom_scale, height_scale);
     stage_drawer_.clear();
   }
 
   void createSeaMesh() {
     ci::TriMesh mesh;
-    ci::vec2 size(32, 32);
+    ci::vec2 size(BLOCK_SIZE, BLOCK_SIZE);
 
     ci::vec3 p[] = {
       {      0, 0,      0 },
@@ -171,7 +176,7 @@ public:
       random(octave, seed),
       sea_level(7.5f),
       sea_color(1, 1, 1, 0),
-      stage(32, random, ramdom_scale, height_scale)
+      stage(BLOCK_SIZE, random, ramdom_scale, height_scale)
   {}
 
   
@@ -336,43 +341,58 @@ public:
   }
 
   void update() override {
+    // カメラ位置の計算(平行移動のみ)
+    auto t = ci::translate(ci::mat4(1.0f), ci::vec3(0, 0, z_distance));
+    t = ci::translate(t, -translate);
+
+    auto pos = t * ci::vec4(0, 0, 0, 1);
+    camera.setEyePoint(ci::vec3(pos.x, pos.y, pos.z));
   }
   
   void draw() override {
     ci::gl::clear(bg_color);
     ci::gl::setMatrices(camera);
 
-    ci::gl::translate(ci::vec3(0, 0.0, -z_distance));
-    ci::gl::translate(translate);
     ci::gl::rotate(rotate);
-    // ci::gl::scale(ci::vec3(1, 0.8, 1));
 
     // 陸地の描画
     ci::gl::disableAlphaBlending();
-    for (int z = 0; z < 5; ++z) {
-      for (int x = 0; x < 5; ++x) {
-        ci::gl::pushModelView();
 
-        ci::gl::translate(ci::vec3(x * 32.0f, 0.0f, z * 32.0f));
+    // 画面中央の座標をレイキャストして求めている
+    ci::Ray ray = camera.generateRay(0.5f, 0.5f,
+                                     camera.getAspectRatio());
+    
+    float z;
+    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), rotate * ci::vec3(0, 1, 0), &z)) {
+      // カメラの回転分を考慮
+      ci::vec3 p = ci::inverse(rotate) * ray.calcPosition(z);
 
-        ci::ivec2 pos(x, z);
-        stage_drawer_.draw(pos, stage.getStage(pos));
+      ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+
+      for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
+        for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
+          ci::gl::pushModelView();
+
+          ci::gl::translate(ci::vec3(x * BLOCK_SIZE, 0.0f, z * BLOCK_SIZE));
+          ci::ivec2 sp(x, z);
+          stage_drawer_.draw(sp, stage.getStage(sp));
         
-        ci::gl::popModelView();
+          ci::gl::popModelView();
+        }
       }
-    }
 
-    // 海面の描画
-    ci::gl::enableAlphaBlending();
-    for (int z = 0; z < 5; ++z) {
-      for (int x = 0; x < 5; ++x) {
-        ci::gl::pushModelView();
+      // 海面の描画
+      ci::gl::enableAlphaBlending();
+      ci::gl::color(sea_color);
+      for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
+        for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
+          ci::gl::pushModelView();
 
-        ci::gl::translate(ci::vec3(x * 32.0f, sea_level, z * 32.0f));
-        ci::gl::color(sea_color);
-        sea_mesh_->draw();
+          ci::gl::translate(ci::vec3(x * BLOCK_SIZE, sea_level, z * BLOCK_SIZE));
+          sea_mesh_->draw();
 
-        ci::gl::popModelView();
+          ci::gl::popModelView();
+        }
       }
     }
     

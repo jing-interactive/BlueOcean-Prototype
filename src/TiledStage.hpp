@@ -44,6 +44,7 @@ public:
       random_scale_(random_scale),
       height_scale_(height_scale)
   {
+#if 0
     // とりあえず適当に作る
     for (int z = 0; z < 5; ++z) {
       for (int x = 0; x < 5; ++x) {
@@ -54,14 +55,23 @@ public:
                                            random_scale_, height_scale_)));
       }
     }
+#endif
   }
 
 
-  bool hasStage(const ci::vec2& pos) const {
+  bool hasStage(const ci::ivec2& pos) const {
     return stages.count(pos);
   }
   
-  const Stage& getStage(const ci::vec2& pos) const {
+  const Stage& getStage(const ci::ivec2& pos) {
+    if (!hasStage(pos)) {
+      stages.insert(std::make_pair(pos,
+                                   Stage(block_size_, block_size_,
+                                         pos.x, pos.y,
+                                         random_,
+                                         random_scale_, height_scale_)));
+    }
+    
     return stages.at(pos);
   }
   
