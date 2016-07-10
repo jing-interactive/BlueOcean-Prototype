@@ -247,7 +247,8 @@ public:
       ;
     fbo = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
 
-    sea_wave_ = 0.0f;
+    sea_speed_ = ci::vec2(0.0004f, 0.0006f);
+    sea_wave_ = 0.0541f;
     
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
