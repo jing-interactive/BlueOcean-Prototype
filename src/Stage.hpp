@@ -10,6 +10,7 @@
 #include <cinder/Perlin.h>
 #include <cinder/Color.h>
 #include <cinder/TriMesh.h>
+#include <cinder/AxisAlignedBox.h>
 
 
 namespace ngs {
@@ -18,7 +19,7 @@ class Stage {
   ci::ivec2 size_;
   
   ci::TriMesh land_;
-  float sea_level_;
+  ci::AxisAlignedBox aabb_;
 
   
 public:
@@ -228,18 +229,19 @@ public:
         }
       }
     }
+    aabb_ = land_.calcBoundingBox();
   }
 
   const ci::TriMesh& getLandMesh() const {
     return land_;
   }
 
+  const ci::AxisAlignedBox& getAABB() const {
+    return aabb_;
+  }
+  
   const ci::ivec2& getSize() const {
     return size_;
-  }
-
-  float getSeaLevel() const {
-    return sea_level_;
   }
 
 };
