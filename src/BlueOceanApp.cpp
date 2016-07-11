@@ -67,7 +67,7 @@ class GameApp : public ci::app::App {
 
   bool picked_;
   ci::AxisAlignedBox picked_aabb_;
-
+  ci::vec3 picked_pos_;
   
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -191,6 +191,73 @@ class GameApp : public ci::app::App {
     params->draw();
   }
 #endif
+
+
+  std::pair<bool, float> intersect(const ci::Ray& ray, const ci::TriMesh& mesh) {
+    const auto& vertex = mesh.getPositions<3>();
+    const auto& indicies = mesh.getIndices();
+
+    bool  cross       = false;
+    float cross_min_z = std::numeric_limits<float>::max();
+    
+    for (u_int i = 0; i < indicies.size(); i += 3) {
+      float cross_z;
+      if (ray.calcTriangleIntersection(vertex[indicies[i]], vertex[indicies[i + 1]], vertex[indicies[i + 2]], &cross_z)) {
+        cross = true;
+        cross_min_z = std::min(cross_z, cross_min_z);
+      }
+    }
+
+    return std::make_pair(cross, cross_min_z);
+  }
+
+  
+  void pickStage(const ci::vec2& pos) {
+    // スクリーン座標→正規化座標
+    float x = pos.x / getWindowWidth();
+    float y = 1.0f - pos.y / getWindowHeight();
+    
+    ci::Ray ray = camera.generateRay(x, y,
+                                     camera.getAspectRatio());
+
+    picked_ = false;
+    float cross_min_z = std::numeric_limits<float>::max();
+    
+    float z;
+    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
+      ci::vec3 p = ray.calcPosition(z);
+
+      // 中央ブロックの座標
+      ci::ivec2 center_pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+      for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
+        for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+          // Rayを平行移動
+          ci::Ray t_ray = ray;
+          t_ray.setOrigin(ray.getOrigin() + ci::vec3(x * -BLOCK_SIZE, 0, z * -BLOCK_SIZE));
+          
+          const auto& s = stage.getStage(ci::ivec2(x, z));
+
+          float cross_z[2];
+          if (s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) {
+            if (cross_z[0] < cross_min_z) {
+              // TriMeshを調べて交差点を特定する
+              auto result = intersect(t_ray, s.getLandMesh());
+              if (result.first && result.second < cross_min_z) {
+                picked_ = true;
+
+                cross_min_z = result.second;
+                picked_pos_ = ray.calcPosition(result.second);
+
+                // AABBも保持
+                ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+                picked_aabb_ = s.getAABB().transformed(m);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
 
 public:
@@ -384,45 +451,7 @@ public:
 
     // 最悪マイナス値にならないよう
     touch_num = std::max(touch_num - int(touches.size()), 0);
-  }
-  
-  
-  void pickStage(const ci::vec2& pos) {
-    // スクリーン座標→正規化座標
-    float x = pos.x / getWindowWidth();
-    float y = 1.0f - pos.y / getWindowHeight();
-    
-    ci::Ray ray = camera.generateRay(x, y,
-                                     camera.getAspectRatio());
-
-    picked_ = false;
-    float cross_min_z = std::numeric_limits<float>::max();
-    
-    float z;
-    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
-      ci::vec3 p = ray.calcPosition(z);
-
-      // 中央ブロックの座標
-      ci::ivec2 center_pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
-      for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-        for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-          // 平行移動したAABBを生成してRayとの交差判定
-          const auto& s = stage.getStage(ci::ivec2(x, z));
-          ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
-          ci::AxisAlignedBox aabb = s.getAABB().transformed(m);
-
-          // TODO:複数交差する可能性があり、全て保持する必要がある
-          float cross_z[2];
-          if (aabb.intersect(ray, &cross_z[0], &cross_z[1])) {
-            picked_ = true;
-            if (cross_z[0] < cross_min_z) {
-              picked_aabb_ = aabb;
-            }
-          }
-        }
-      }
-    }
-  }
+  }  
 
   
   void update() override {
@@ -486,6 +515,7 @@ public:
       if (picked_) {
         ci::gl::color(1, 0, 0);
         ci::gl::drawStrokedCube(picked_aabb_);
+        ci::gl::drawSphere(picked_pos_, 0.1f);
       }
     }
     
