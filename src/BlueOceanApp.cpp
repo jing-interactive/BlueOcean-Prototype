@@ -1,4 +1,4 @@
-//
+﻿//
 // BlueOcean プロトタイプ
 // 
 
@@ -245,6 +245,7 @@ class GameApp : public ci::app::App {
               if (result.first && result.second < cross_min_z) {
                 picked_ = true;
 
+                // Pick座標を保持
                 cross_min_z = result.second;
                 picked_pos_ = ray.calcPosition(result.second);
 
