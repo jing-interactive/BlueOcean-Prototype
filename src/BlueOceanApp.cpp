@@ -238,22 +238,21 @@ class GameApp : public ci::app::App {
           const auto& s = stage.getStage(ci::ivec2(x, z));
 
           float cross_z[2];
-          if (s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) {
-            if (cross_z[0] < cross_min_z) {
-              // TriMeshを調べて交差点を特定する
-              auto result = intersect(t_ray, s.getLandMesh());
-              if (result.first && result.second < cross_min_z) {
-                picked_ = true;
+          if (!s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) continue;
+          if (cross_z[0] >= cross_min_z) continue;
+          
+          // TriMeshを調べて交差点を特定する
+          auto result = intersect(t_ray, s.getLandMesh());
+          if (result.first && result.second < cross_min_z) {
+            picked_ = true;
 
-                // Pick座標を保持
-                cross_min_z = result.second;
-                picked_pos_ = ray.calcPosition(result.second);
+            // Pick座標を保持
+            cross_min_z = result.second;
+            picked_pos_ = ray.calcPosition(result.second);
 
-                // AABBも保持
-                ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
-                picked_aabb_ = s.getAABB().transformed(m);
-              }
-            }
+            // AABBも保持
+            ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+            picked_aabb_ = s.getAABB().transformed(m);
           }
         }
       }
