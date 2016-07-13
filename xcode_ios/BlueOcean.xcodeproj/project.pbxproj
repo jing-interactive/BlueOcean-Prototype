@@ -281,7 +281,6 @@
 		00692BF614FF149000D0A05E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = BlueOcean_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -302,7 +301,6 @@
 		00692BF714FF149000D0A05E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = BlueOcean_Prefix.pch;
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
