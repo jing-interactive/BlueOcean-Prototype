@@ -24,6 +24,12 @@
     "sea_level": 7.5,
     "sea_offset": 0,
     "sea_speed": 0,
-    "sea_wave": 0.0541
+    "sea_wave": 0.0
+  },
+
+  "ship": {
+    "position": [ 0, 0, 0 ],
+    "scaling": [ 1.2, 1.2, 1.2 ],
+    "color": [ 0.8, 0, 0 ]
   }
 }

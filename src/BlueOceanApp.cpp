@@ -16,6 +16,7 @@
 #include "Shader.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
+#include "Ship.hpp"
 
 
 namespace ngs {
@@ -73,6 +74,9 @@ class GameApp : public ci::app::App {
   bool picked_;
   ci::AxisAlignedBox picked_aabb_;
   ci::vec3 picked_pos_;
+
+  // 船
+  Ship ship_;
   
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -80,7 +84,6 @@ class GameApp : public ci::app::App {
   ci::params::InterfaceGlRef params;
 #endif
 
-  
   
   float getVerticalFov() {
     float aspect = ci::app::getWindowAspectRatio();
@@ -313,7 +316,8 @@ public:
       sea_level(params_.getValueForKey<float>("stage.sea_level")),
       sea_color(1, 1, 1, 0),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
-      picked_(false)
+      picked_(false),
+      ship_(params_)
   {}
 
   
@@ -457,6 +461,8 @@ public:
     camera.setOrientation(rotate);
 
     sea_offset_ += sea_speed_;
+
+    ship_.update(sea_level);
   }
 
   
@@ -484,6 +490,7 @@ public:
         ci::gl::clear();
 
         drawStage(pos, frustum);
+        ship_.draw();
       }
       
       ci::gl::clear(bg_color);
@@ -514,6 +521,7 @@ public:
       }
       
       drawStage(pos, frustum);
+      ship_.draw();
 
       if (picked_) {
         ci::gl::color(1, 0, 0);
