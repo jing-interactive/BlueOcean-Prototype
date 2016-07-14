@@ -12,6 +12,7 @@
 #include <cinder/Ray.h>
 #include <cinder/Frustum.h>
 #include "Asset.hpp"
+#include "Params.hpp"
 #include "Shader.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
@@ -26,6 +27,8 @@ class GameApp : public ci::app::App {
     FBO_WIDTH  = 512,
     FBO_HEIGHT = 512,
   };
+
+  ci::JsonTree params_;
   
   ci::CameraPersp camera;
 
@@ -77,6 +80,7 @@ class GameApp : public ci::app::App {
   ci::params::InterfaceGlRef params;
 #endif
 
+  
   
   float getVerticalFov() {
     float aspect = ci::app::getWindowAspectRatio();
@@ -294,15 +298,22 @@ class GameApp : public ci::app::App {
 
 public:
   GameApp()
-    : z_distance(200.0f),
-      octave(4),
-      seed(0),
-      ramdom_scale(0.05f),
-      height_scale(25.0f),
+    : params_(Params::load("params.json")),
+      fov(params_.getValueForKey<float>("camera.fov")),
+      near_z(params_.getValueForKey<float>("camera.near_z")),
+      far_z(params_.getValueForKey<float>("camera.far_z")),
+      touch_num(0),
+      z_distance(params_.getValueForKey<float>("camera.z_distance")),
+      octave(params_.getValueForKey<float>("stage.octave")),
+      seed(params_.getValueForKey<float>("stage.seed")),
+      ramdom_scale(params_.getValueForKey<float>("stage.random_scale")),
+      height_scale(params_.getValueForKey<float>("stage.height_scale")),
       random(octave, seed),
-      sea_level(7.5f),
+      stage(BLOCK_SIZE, random, ramdom_scale, height_scale),
+      sea_level(params_.getValueForKey<float>("stage.sea_level")),
       sea_color(1, 1, 1, 0),
-      stage(BLOCK_SIZE, random, ramdom_scale, height_scale)
+      sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
+      picked_(false)
   {}
 
   
@@ -314,10 +325,6 @@ public:
 
     ci::gl::enableVerticalSync(true);
     
-    fov    = 5.0f;
-    near_z = 20.0f;
-    far_z  = 3000.0f;
-
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
 
@@ -335,7 +342,6 @@ public:
 
     bg_color = ci::Color(0, 0, 0);
 
-    touch_num = 0;
     // アクティブになった時にタッチ情報を初期化
     getSignalDidBecomeActive().connect([this](){ touch_num = 0; });
 
@@ -352,10 +358,7 @@ public:
 
     // sea_speed_ = ci::vec2(0.0004f, 0.0006f);
     // sea_wave_ = 0.0541f;
-    sea_wave_ = 0.0f;
 
-    picked_ = false;
-    
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
     ci::gl::enable(GL_CULL_FACE);
