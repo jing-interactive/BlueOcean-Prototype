@@ -11,6 +11,7 @@
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
 #include <cinder/Frustum.h>
+#include "Asset.hpp"
 #include "Shader.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
@@ -129,7 +130,7 @@ class GameApp : public ci::app::App {
     sea_shader_ = ci::gl::GlslProg::create(shader.first, shader.second);
     sea_shader_->uniform("uTex0", 0);
     sea_shader_->uniform("uTex1", 1);
-    sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("water_normal.png")),
+    sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("water_normal.png")),
                                              ci::gl::Texture2d::Format().wrap(GL_REPEAT));
     sea_mesh_ = ci::gl::Batch::create(mesh, sea_shader_);
   }

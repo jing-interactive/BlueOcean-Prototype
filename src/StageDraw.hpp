@@ -21,7 +21,7 @@ public:
 
   void setup() {
     // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
-    land_texture_ = ci::gl::Texture2d::create(ci::loadImage(ci::app::loadAsset("stage.png")),
+    land_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("stage.png")),
                                               ci::gl::Texture2d::Format()
                                               .wrap(GL_CLAMP_TO_EDGE)
                                               .minFilter(GL_NEAREST)

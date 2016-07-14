@@ -10,6 +10,8 @@
 #include <regex>
 
 
+namespace ngs {
+
 using Shader = std::pair<std::string, std::string>;
 
 
@@ -48,11 +50,13 @@ std::string replaceText(std::string text) {
 //   パスに拡張子は要らない
 Shader readShader(const std::string& vertex_path,
                   const std::string& fragment_path) {
-  auto vertex_shader   = readFile(ci::app::getAssetPath(vertex_path + ".vsh").string());
+  auto vertex_shader   = readFile(Asset::fullPath(vertex_path + ".vsh"));
   vertex_shader = replaceText(vertex_shader);
   
-  auto fragment_shader = readFile(ci::app::getAssetPath(fragment_path + ".fsh").string());
+  auto fragment_shader = readFile(Asset::fullPath(fragment_path + ".fsh"));
   fragment_shader = replaceText(fragment_shader);
 
   return std::make_pair(vertex_shader, fragment_shader);
+}
+
 }
