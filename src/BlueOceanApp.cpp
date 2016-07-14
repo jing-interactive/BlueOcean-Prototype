@@ -10,6 +10,7 @@
 #include <cinder/params/Params.h>
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
+#include <cinder/Frustum.h>
 #include "Shader.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
@@ -31,7 +32,7 @@ class GameApp : public ci::app::App {
   float near_z;
   float far_z;
 
-  ci::ivec2 mouse_prev_pos;
+  ci::vec2 mouse_prev_pos;
   int touch_num;
 
   ci::quat rotate;
@@ -260,6 +261,36 @@ class GameApp : public ci::app::App {
   }
 
 
+  // 回転操作
+  void handlingRotation(const ci::vec2& current_pos, const ci::vec2& prev_pos) {
+    ci::vec2 d{ current_pos - prev_pos };
+    float l = ci::length(d);
+    if (l > 0.0f) {
+      d = ci::normalize(d);
+      ci::vec3 v{ -d.y, -d.x, 0.0f };
+      ci::quat r = glm::angleAxis(l * 0.01f, v);
+      rotate = rotate * r;
+    }
+  }
+
+  // 平行移動操作
+  void handlingTranslation(const ci::vec2& current_pos, const ci::vec2& prev_pos) {
+    ci::vec2 d{ current_pos - prev_pos };
+    ci::vec3 v{ d.x, 0.0f, d.y };
+
+    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
+    auto p = (rotate * v) * t * 0.005f;
+    translate.x += p.x;
+    translate.z += p.z;
+  }
+
+  // ズーミング操作
+  void handlingZooming(const float zooming) {
+    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
+    z_distance = std::max(z_distance - zooming * t, near_z);
+  }
+  
+
 public:
   GameApp()
     : z_distance(200.0f),
@@ -335,50 +366,34 @@ public:
   }
 
   void mouseDown(ci::app::MouseEvent event) override {
+    // マルチタッチ判定中は無視
     if (touch_num > 1) return;
 
     if (event.isLeft()) {
-      // TIPS:マウスとワールド座標で縦方向の向きが逆
-      auto pos = event.getPos();
-      mouse_prev_pos = pos;
+      ci::ivec2 pos = event.getPos();
 
       // クリックした位置のAABBを特定
       pickStage(pos);
+
+      mouse_prev_pos = pos;
     }
   }
   
   void mouseDrag(ci::app::MouseEvent event) override {
     if (touch_num > 1) return;
-
     if (!event.isLeftDown()) return;
 
-    auto mouse_pos = event.getPos();
+    ci::vec2 mouse_pos = event.getPos();
 
     if (event.isShiftDown()) {
-      auto d = mouse_pos - mouse_prev_pos;
-      ci::vec3 v(d.x, 0.0f, d.y);
-
-      float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-      auto p = (rotate * v) * t * 0.005f;
-      translate.x += p.x;
-      translate.z += p.z;
+      handlingTranslation(mouse_pos, mouse_prev_pos);
     }
     else if (event.isControlDown()) {
       float d = mouse_pos.y - mouse_prev_pos.y;
-
-      float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-      z_distance = std::max(z_distance - d * t * 0.008f, near_z);
+      handlingZooming(d * 0.5f);
     }
     else {
-      ci::vec2 d(mouse_pos - mouse_prev_pos);
-      float l = length(d);
-      if (l > 0.0f) {
-        d = normalize(d);
-        ci::vec3 v(-d.y, -d.x, 0.0f);
-        ci::quat r = glm::angleAxis(l * 0.01f, v);
-        rotate = rotate * r;
-      }
-
+      handlingRotation(mouse_pos, mouse_prev_pos);
     }
     mouse_prev_pos = mouse_pos;
   }
@@ -386,10 +401,7 @@ public:
   void mouseWheel(ci::app::MouseEvent event) override {
     // OSX:マルチタッチ操作の時に呼ばれる
     if (touch_num > 1) return;
-
-    // 距離に応じて比率を変える
-    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-    z_distance = std::max(z_distance + event.getWheelIncrement() * t * 0.5f, near_z);
+    handlingZooming(-event.getWheelIncrement());
   }
 
   void keyDown(ci::app::KeyEvent event) override {
@@ -402,47 +414,27 @@ public:
   }
   
   void touchesMoved(ci::app::TouchEvent event) override {
-//  if (touch_num < 2) return;
-
     const auto& touches = event.getTouches();
 
 #if defined (CINDER_COCOA_TOUCH)
     if (touch_num == 1) {
-      ci::vec2 d{ touches[0].getPos() -  touches[0].getPrevPos() };
-      float l = length(d);
-      if (l > 0.0f) {
-        d = normalize(d);
-        ci::vec3 v(-d.y, -d.x, 0.0f);
-        ci::quat r = glm::angleAxis(l * 0.01f, v);
-        rotate = rotate * r;
-      }
-
+      handlingRotation(touches[0].getPos(),
+                       touches[0].getPrevPos());
       return;
     }
 #endif
     if (touches.size() < 2) return;
 
-    ci::vec3 v1{ touches[0].getX(), 0.0f, touches[0].getY() };
-    ci::vec3 v2{ touches[1].getX(), 0.0f, touches[1].getY() };
-    ci::vec3 v1_prev{ touches[0].getPrevX(), 0.0f, touches[0].getPrevY() };
-    ci::vec3 v2_prev{ touches[1].getPrevX(), 0.0f, touches[1].getPrevY() };
+    auto v1 = touches[0].getPos() - touches[1].getPos();
+    auto v2 = touches[0].getPrevPos() - touches[1].getPrevPos();
 
-    ci::vec3 d = v1 - v1_prev;
-
-    float l = length(v2 - v1);
-    float l_prev = length(v2_prev - v1_prev);
-    float ld = l - l_prev;
-
-    // 距離に応じて比率を変える
-    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-
+    float ld = ci::length(v1) - ci::length(v2);
+    
     if (std::abs(ld) < 3.0f) {
-      auto p = (rotate * d) * t * 0.005f;
-      translate.x += p.x;
-      translate.z += p.z;
+      handlingTranslation(touches[0].getPos(), touches[0].getPrevPos());
     }
     else {
-      z_distance = std::max(z_distance - ld * t * 0.025f, 0.01f);
+      handlingZooming(ld * 0.1f);
     }
   }
   
@@ -477,6 +469,8 @@ public:
     if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
       ci::vec3 p = ray.calcPosition(z);
 
+      ci::Frustum frustum(camera);
+
       // 中央ブロックの座標
       ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
       {
@@ -485,7 +479,7 @@ public:
         ci::gl::ScopedFramebuffer fboScope(fbo);
         ci::gl::clear();
 
-        drawStage(pos);
+        drawStage(pos, frustum);
       }
       
       ci::gl::clear(bg_color);
@@ -500,9 +494,14 @@ public:
         ci::gl::color(sea_color);
         for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
           for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
+            // 視錐台カリング
+            ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, sea_level, z * BLOCK_SIZE));
+            ci::AxisAlignedBox aabb(pos, pos + ci::vec3(BLOCK_SIZE, 0, BLOCK_SIZE));
+            if (!frustum.intersects(aabb)) continue;
+            
             ci::gl::pushModelView();
 
-            ci::gl::translate(ci::vec3(x * BLOCK_SIZE, sea_level, z * BLOCK_SIZE));
+            ci::gl::translate(pos);
             sea_mesh_->draw();
 
             ci::gl::popModelView();
@@ -510,7 +509,7 @@ public:
         }
       }
       
-      drawStage(pos);
+      drawStage(pos, frustum);
 
       if (picked_) {
         ci::gl::color(1, 0, 0);
@@ -525,17 +524,25 @@ public:
 
 
   // 陸地の描画
-  void drawStage(const ci::ivec2& center_pos) {
+  void drawStage(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
     ci::gl::setMatrices(camera);
     ci::gl::disableAlphaBlending();
     
     for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
       for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+
+        // 視錐台カリング
+        ci::ivec2 stage_pos(x, z);
+        const auto& s = stage.getStage(stage_pos);
+        const auto& b = s.getAABB();
+        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
+        if (!frustum.intersects(aabb)) continue;
+        
         ci::gl::pushModelView();
 
-        ci::gl::translate(ci::vec3(x * BLOCK_SIZE, 0.0f, z * BLOCK_SIZE));
-        ci::ivec2 pos(x, z);
-        stage_drawer_.draw(pos, stage.getStage(pos));
+        ci::gl::translate(pos);
+        stage_drawer_.draw(stage_pos, s);
         
         ci::gl::popModelView();
       }
