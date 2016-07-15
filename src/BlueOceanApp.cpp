@@ -409,7 +409,7 @@ public:
   void mouseWheel(ci::app::MouseEvent event) override {
     // OSX:マルチタッチ操作の時に呼ばれる
     if (touch_num > 1) return;
-    handlingZooming(-event.getWheelIncrement());
+    handlingZooming(-event.getWheelIncrement() * 2.0);
   }
 
   void keyDown(ci::app::KeyEvent event) override {
