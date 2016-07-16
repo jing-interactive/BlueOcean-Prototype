@@ -321,12 +321,39 @@ class GameApp : public ci::app::App {
     z_distance = std::max(z_distance - zooming * t, near_z);
   }
 
+  
+  // 陸地の描画
+  void drawStage(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
+    ci::gl::setMatrices(camera);
+    ci::gl::disableAlphaBlending();
+    
+    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
+      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
 
+        // 視錐台カリング
+        ci::ivec2 stage_pos(x, z);
+        const auto& s = stage.getStage(stage_pos);
+        const auto& b = s.getAABB();
+        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
+        if (!frustum.intersects(aabb)) continue;
+        
+        ci::gl::pushModelView();
+
+        ci::gl::translate(pos);
+        stage_drawer_.draw(stage_pos, s);
+        
+        ci::gl::popModelView();
+      }
+    }
+  }
+
+  // 経路表示
   void drawRoute() {
     ci::gl::color(0, 0, 1);
     for (const auto& r : route_) {
       ci::vec3 pos(r);
-      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.2, 0.2, 0.2));
+      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.3, 0.3, 0.3));
     }
   }
   
@@ -354,7 +381,7 @@ public:
       has_route_(false)
   {}
 
-  
+
   void setup() override {
 #if defined (CINDER_COCOA_TOUCH)
     // 縦横画面両対応
@@ -455,6 +482,8 @@ public:
           ci::ivec3 start = ship_.getPosition();
           ci::ivec3 end   = picked_pos_;
 
+          ci::app::console() << "start:" << start << std::endl << "end:" << end << std::endl;
+          
           route_ = Route::search(start, end, stage);
           has_route_ = true;
         }
@@ -591,33 +620,6 @@ public:
     
     // ダイアログ表示
     drawDialog();
-  }
-
-
-  // 陸地の描画
-  void drawStage(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
-    ci::gl::setMatrices(camera);
-    ci::gl::disableAlphaBlending();
-    
-    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
-
-        // 視錐台カリング
-        ci::ivec2 stage_pos(x, z);
-        const auto& s = stage.getStage(stage_pos);
-        const auto& b = s.getAABB();
-        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
-        if (!frustum.intersects(aabb)) continue;
-        
-        ci::gl::pushModelView();
-
-        ci::gl::translate(pos);
-        stage_drawer_.draw(stage_pos, s);
-        
-        ci::gl::popModelView();
-      }
-    }
   }
   
 };

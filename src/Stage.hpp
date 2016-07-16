@@ -229,6 +229,14 @@ public:
       }
     }
     aabb_ = land_.calcBoundingBox();
+
+    // 周囲1ピクセル余分に生成していた分を取り除く
+    height_map_.erase(std::begin(height_map_));
+    height_map_.pop_back();
+    for (auto& row : height_map_) {
+      row.erase(std::begin(row));
+      row.pop_back();
+    }
   }
 
   

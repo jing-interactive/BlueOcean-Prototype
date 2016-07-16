@@ -49,7 +49,7 @@ public:
   void draw() {
     ci::gl::pushModelView();
 
-    ci::gl::translate(position_);
+    ci::gl::translate(position_ + ci::vec3(0.5, 0, 0.5));
     ci::gl::rotate(rotation_);
     ci::gl::scale(scaling_);
 

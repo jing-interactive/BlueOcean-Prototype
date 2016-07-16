@@ -3,6 +3,7 @@
 //
 // 海上の経路探索
 //  A*アルゴリズムを使い、目的地までの最短経路を検索
+//  SOURCE:http://qiita.com/2dgames_jp/items/f29e915357c1decbc4b7
 //
 
 #include "TiledStage.hpp"
@@ -65,7 +66,7 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
     auto new_pos = prev_pos + v;
     if (opened.count(new_pos)) continue;
     
-    // 地形の高さを求める
+    // 座標がプラス時とマイナス時で計算が違う
     int stage_x = new_pos.x >= 0 ? new_pos.x / 64
                                  : (new_pos.x - 63) / 64;
     int stage_z = new_pos.z >= 0 ? new_pos.z / 64

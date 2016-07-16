@@ -43,20 +43,7 @@ public:
       random_(random),
       random_scale_(random_scale),
       height_scale_(height_scale)
-  {
-#if 0
-    // とりあえず適当に作る
-    for (int z = 0; z < 5; ++z) {
-      for (int x = 0; x < 5; ++x) {
-        stages.insert(std::make_pair(ci::ivec2(x, z),
-                                     Stage(block_size_, block_size_,
-                                           x, z,
-                                           random_,
-                                           random_scale_, height_scale_)));
-      }
-    }
-#endif
-  }
+  {}
 
 
   bool hasStage(const ci::ivec2& pos) const {
