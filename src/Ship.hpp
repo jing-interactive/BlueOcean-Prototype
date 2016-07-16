@@ -36,6 +36,12 @@ public:
     model_ = ci::gl::Batch::create(loader, shader);
   }
 
+
+  const ci::vec3& getPosition() const {
+    return position_;
+  }
+
+  
   void update(const float sea_level) {
     position_.y = sea_level;
   }

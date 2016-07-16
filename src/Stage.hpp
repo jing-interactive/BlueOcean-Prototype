@@ -17,6 +17,8 @@ namespace ngs {
 
 class Stage {
   ci::ivec2 size_;
+
+  std::vector<std::vector<int> > height_map_;
   
   ci::TriMesh land_;
   ci::AxisAlignedBox aabb_;
@@ -30,11 +32,8 @@ public:
         const float random_scale, const float height_scale)
     : size_(width, deep)
   {
-    // 高さ情報を格納する
-    std::vector<std::vector<int> > height_map;
-
-    height_map.resize(deep + 2);
-    for (auto& row : height_map) {
+    height_map_.resize(deep + 2);
+    for (auto& row : height_map_) {
       row.resize(width + 2);
     }
 
@@ -42,7 +41,7 @@ public:
     // 周囲１ブロックを余計に生成している
     for (int z = -1; z < (deep + 1); ++z) {
       for (int x = -1; x < (width + 1); ++x) {
-        height_map[z + 1][x + 1] = glm::clamp(random.fBm((x + offset_x * width) * random_scale,
+        height_map_[z + 1][x + 1] = glm::clamp(random.fBm((x + offset_x * width) * random_scale,
                                                          (z + offset_z * deep) * random_scale) * height_scale,
                                               -15.0f, 15.0f);
       }
@@ -54,7 +53,7 @@ public:
     uint32_t index = 0;
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
-        float y = height_map[z + 1][x + 1];
+        float y = height_map_[z + 1][x + 1];
         
         {
           // 上面
@@ -88,9 +87,9 @@ public:
           index += 4;
         }
 
-        if ((height_map[z - 1 + 1][x + 1] < y)) {
+        if ((height_map_[z - 1 + 1][x + 1] < y)) {
           // 側面(z-)
-          int dy = y - height_map[z - 1 + 1][x + 1];
+          int dy = y - height_map_[z - 1 + 1][x + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z },
@@ -123,9 +122,9 @@ public:
           }
         }
         
-        if ((height_map[z + 1 + 1][x + 1] < y)) {
+        if ((height_map_[z + 1 + 1][x + 1] < y)) {
           // 側面(z+)
-          int dy = y - height_map[z + 1 + 1][x + 1];
+          int dy = y - height_map_[z + 1 + 1][x + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z + 1 },
@@ -158,9 +157,9 @@ public:
           }
         }
         
-        if ((height_map[z + 1][x - 1 + 1] < y)) {
+        if ((height_map_[z + 1][x - 1 + 1] < y)) {
           // 側面(x-)
-          int dy = y - height_map[z + 1][x - 1 + 1];
+          int dy = y - height_map_[z + 1][x - 1 + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x,     y - h,     z },
@@ -193,9 +192,9 @@ public:
           }
         }
         
-        if ((height_map[z + 1][x + 1 + 1] < y)) {
+        if ((height_map_[z + 1][x + 1 + 1] < y)) {
           // 側面(x+)
-          int dy = y - height_map[z + 1][x + 1 + 1];
+          int dy = y - height_map_[z + 1][x + 1 + 1];
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x + 1,     y - h,     z },
@@ -232,6 +231,11 @@ public:
     aabb_ = land_.calcBoundingBox();
   }
 
+  
+  const std::vector<std::vector<int> >& getHeightMap() const {
+    return height_map_;
+  }
+  
   const ci::TriMesh& getLandMesh() const {
     return land_;
   }

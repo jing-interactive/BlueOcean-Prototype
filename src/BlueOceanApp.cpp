@@ -17,6 +17,7 @@
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
 #include "Ship.hpp"
+#include "Route.hpp"
 
 
 namespace ngs {
@@ -43,6 +44,7 @@ class GameApp : public ci::app::App {
   ci::quat rotate;
   ci::vec3 translate;
   float z_distance;
+  bool camera_modified_;
 
   ci::Color bg_color;
   
@@ -57,8 +59,8 @@ class GameApp : public ci::app::App {
   TiledStage stage;
 
   // 海面
-  float sea_level;
-  ci::ColorA sea_color;
+  float sea_level_;
+  ci::ColorA sea_color_;
   ci::vec2 sea_offset_;
   ci::vec2 sea_speed_;
   float sea_wave_;
@@ -77,6 +79,12 @@ class GameApp : public ci::app::App {
 
   // 船
   Ship ship_;
+
+  // 経路
+  bool has_route_;
+  std::vector<ci::ivec3> route_;
+
+
   
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -188,11 +196,11 @@ class GameApp : public ci::app::App {
 
     params->addSeparator();
 
-    // params->addParam("Sea Color", &sea_color);
+    params->addParam("Sea Color", &sea_color_);
     params->addParam("Sea Speed x", &sea_speed_.x).step(0.00001f);
     params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
     params->addParam("Sea Wave", &sea_wave_).step(0.001f);
-    params->addParam("Sea Level", &sea_level).step(0.25f);
+    params->addParam("Sea Level", &sea_level_).step(0.25f);
     
   }
 
@@ -220,7 +228,7 @@ class GameApp : public ci::app::App {
     return std::make_pair(cross, cross_min_z);
   }
 
-  
+
   void pickStage(const ci::vec2& pos) {
     // スクリーン座標→正規化座標
     float x = pos.x / getWindowWidth();
@@ -231,40 +239,55 @@ class GameApp : public ci::app::App {
 
     picked_ = false;
     float cross_min_z = std::numeric_limits<float>::max();
-    
+
+    // 海面と交差する必要がある
+    float sea_z;
+    if (!ray.calcPlaneIntersection(ci::vec3(0, sea_level_, 0), ci::vec3(0, 1, 0), &sea_z)) return;
+    ci::vec3 sea_pos = ray.calcPosition(sea_z);
+
+    // どの区画をクリックしたか判定
     float z;
-    if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
-      ci::vec3 p = ray.calcPosition(z);
+    if (!ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) return;
+    ci::vec3 p = ray.calcPosition(z);
 
-      // 中央ブロックの座標
-      ci::ivec2 center_pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
-      for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-        for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-          // Rayを平行移動
-          ci::Ray t_ray = ray;
-          t_ray.setOrigin(ray.getOrigin() + ci::vec3(x * -BLOCK_SIZE, 0, z * -BLOCK_SIZE));
+    // 中央ブロックの座標
+    ci::ivec2 center_pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
+      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+        // Rayを平行移動
+        ci::Ray t_ray = ray;
+        t_ray.setOrigin(ray.getOrigin() + ci::vec3(x * -BLOCK_SIZE, 0, z * -BLOCK_SIZE));
           
-          const auto& s = stage.getStage(ci::ivec2(x, z));
+        const auto& s = stage.getStage(ci::ivec2(x, z));
 
-          float cross_z[2];
-          if (!s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) continue;
-          if (cross_z[0] >= cross_min_z) continue;
+        float cross_z[2];
+        if (!s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) continue;
+        if (cross_z[0] >= cross_min_z) continue;
           
-          // TriMeshを調べて交差点を特定する
-          auto result = intersect(t_ray, s.getLandMesh());
-          if (result.first && result.second < cross_min_z) {
-            picked_ = true;
+        // TriMeshを調べて交差点を特定する
+        auto result = intersect(t_ray, s.getLandMesh());
+        if (result.first && result.second < cross_min_z) {
+          picked_ = true;
 
-            // Pick座標を保持
-            cross_min_z = result.second;
-            picked_pos_ = ray.calcPosition(result.second);
+          // Pick座標を保持
+          cross_min_z = result.second;
+          picked_pos_ = ray.calcPosition(result.second);
 
-            // AABBも保持
-            ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
-            picked_aabb_ = s.getAABB().transformed(m);
-          }
+          // AABBも保持
+          ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+          picked_aabb_ = s.getAABB().transformed(m);
         }
       }
+    }
+
+    if (!picked_) return;
+
+    if (picked_pos_.y > sea_pos.y) {
+      // 海面より高い場所はピックできない
+      picked_ = false;
+    }
+    else {
+      picked_pos_ = sea_pos;
     }
   }
 
@@ -297,6 +320,15 @@ class GameApp : public ci::app::App {
     float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
     z_distance = std::max(z_distance - zooming * t, near_z);
   }
+
+
+  void drawRoute() {
+    ci::gl::color(0, 0, 1);
+    for (const auto& r : route_) {
+      ci::vec3 pos(r);
+      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.2, 0.2, 0.2));
+    }
+  }
   
 
 public:
@@ -307,17 +339,19 @@ public:
       far_z(params_.getValueForKey<float>("camera.far_z")),
       touch_num(0),
       z_distance(params_.getValueForKey<float>("camera.z_distance")),
+      camera_modified_(false),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
       ramdom_scale(params_.getValueForKey<float>("stage.random_scale")),
       height_scale(params_.getValueForKey<float>("stage.height_scale")),
       random(octave, seed),
       stage(BLOCK_SIZE, random, ramdom_scale, height_scale),
-      sea_level(params_.getValueForKey<float>("stage.sea_level")),
-      sea_color(1, 1, 1, 0),
+      sea_level_(params_.getValueForKey<float>("stage.sea_level")),
+      sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
       picked_(false),
-      ship_(params_)
+      ship_(params_),
+      has_route_(false)
   {}
 
   
@@ -379,10 +413,6 @@ public:
 
     if (event.isLeft()) {
       ci::ivec2 pos = event.getPos();
-
-      // クリックした位置のAABBを特定
-      pickStage(pos);
-
       mouse_prev_pos = pos;
     }
   }
@@ -403,6 +433,7 @@ public:
     else {
       handlingRotation(mouse_pos, mouse_prev_pos);
     }
+    camera_modified_ = true;
     mouse_prev_pos = mouse_pos;
   }
   
@@ -410,6 +441,27 @@ public:
     // OSX:マルチタッチ操作の時に呼ばれる
     if (touch_num > 1) return;
     handlingZooming(-event.getWheelIncrement() * 2.0);
+  }
+
+  void mouseUp(ci::app::MouseEvent event) override {
+    if (event.isLeft()) {
+      if (!camera_modified_) {
+        // クリックした位置のAABBを特定
+        ci::ivec2 pos = event.getPos();
+        pickStage(pos);
+
+        if (picked_) {
+          // 経路探索
+          ci::ivec3 start = ship_.getPosition();
+          ci::ivec3 end   = picked_pos_;
+
+          route_ = Route::search(start, end, stage);
+          has_route_ = true;
+        }
+      
+        camera_modified_ = false;
+      }
+    }
   }
 
   void keyDown(ci::app::KeyEvent event) override {
@@ -428,6 +480,7 @@ public:
     if (touch_num == 1) {
       handlingRotation(touches[0].getPos(),
                        touches[0].getPrevPos());
+      camera_modified_ = true;
       return;
     }
 #endif
@@ -444,6 +497,7 @@ public:
     else {
       handlingZooming(ld * 0.1f);
     }
+    camera_modified_ = true;
   }
   
   void touchesEnded(ci::app::TouchEvent event) override {
@@ -451,7 +505,9 @@ public:
 
     // 最悪マイナス値にならないよう
     touch_num = std::max(touch_num - int(touches.size()), 0);
-  }  
+    if (!touch_num) camera_modified_ = false;
+
+  }
 
   
   void update() override {
@@ -462,7 +518,7 @@ public:
 
     sea_offset_ += sea_speed_;
 
-    ship_.update(sea_level);
+    ship_.update(sea_level_);
   }
 
   
@@ -490,7 +546,6 @@ public:
         ci::gl::clear();
 
         drawStage(pos, frustum);
-        ship_.draw();
       }
       
       ci::gl::clear(bg_color);
@@ -501,12 +556,12 @@ public:
         sea_texture_->bind(1);
         sea_shader_->uniform("offset", sea_offset_);
         sea_shader_->uniform("wave", sea_wave_);
+        sea_shader_->uniform("color", sea_color_);
         
-        ci::gl::color(sea_color);
         for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
           for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
             // 視錐台カリング
-            ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, sea_level, z * BLOCK_SIZE));
+            ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, sea_level_, z * BLOCK_SIZE));
             ci::AxisAlignedBox aabb(pos, pos + ci::vec3(BLOCK_SIZE, 0, BLOCK_SIZE));
             if (!frustum.intersects(aabb)) continue;
             
@@ -527,6 +582,10 @@ public:
         ci::gl::color(1, 0, 0);
         ci::gl::drawStrokedCube(picked_aabb_);
         ci::gl::drawSphere(picked_pos_, 0.1f);
+
+        if (has_route_) {
+          drawRoute();
+        }
       }
     }
     
