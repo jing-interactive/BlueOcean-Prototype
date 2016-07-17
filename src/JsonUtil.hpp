@@ -27,6 +27,17 @@ std::vector<T> getArray(const ci::JsonTree& json) noexcept {
 }
 
 
+// FIXME:JSONからdoubleで取ってくるのが微妙
+template<typename T>
+T getVec(const ci::JsonTree& json) noexcept {
+  T v;
+  for (size_t i = 0; i < v.size(); ++i) {
+    v[i] = json[0].getValue<double>();
+  }
+
+  return v;
+}
+
 template<typename T>
 ci::vec2 getVec2(const ci::JsonTree& json) noexcept {
   return ci::vec2(json[0].getValue<T>(), json[1].getValue<T>());

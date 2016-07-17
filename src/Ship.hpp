@@ -21,12 +21,14 @@ class Ship {
 
   ci::Color color_;
   ci::gl::BatchRef model_;
+
+  std::vector<ci::ivec3> route_;
   
   
 public:
   Ship(ci::JsonTree& params)
-    : position_(Json::getVec3<float>(params["ship.position"])),
-      scaling_(Json::getVec3<float>(params["ship.scaling"])),
+    : position_(Json::getVec<ci::vec3>(params["ship.position"])),
+      scaling_(Json::getVec<ci::vec3>(params["ship.scaling"])),
       has_target_(false),
       color_(Json::getColor<float>(params["ship.color"]))
   {
@@ -41,6 +43,21 @@ public:
     return position_;
   }
 
+  
+  void setRoute(std::vector<ci::ivec3> route) {
+    route_ = std::move(route);
+  }
+
+  const std::vector<ci::ivec3>& getRoute() const {
+    return route_;
+  }
+
+
+  // 経路による移動開始
+  void start() {
+    
+  }
+  
   
   void update(const float sea_level) {
     position_.y = sea_level;

@@ -69,7 +69,7 @@ class GameApp : public ci::app::App {
   ci::gl::GlslProgRef	sea_shader_;
   ci::gl::BatchRef sea_mesh_;
   
-  ci::gl::FboRef fbo;
+  ci::gl::FboRef fbo_;
   
   StageDrawer stage_drawer_;
 
@@ -82,9 +82,6 @@ class GameApp : public ci::app::App {
 
   // 経路
   bool has_route_;
-  std::vector<ci::ivec3> route_;
-
-
   
   
 #if !defined (CINDER_COCOA_TOUCH)
@@ -158,7 +155,7 @@ class GameApp : public ci::app::App {
 #else
   void createDialog() {
     // 各種パラメーター設定
-    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(200, 400)));
+    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(250, 600)));
 
     params->addParam("Fov", &fov).min(1.0f).max(180.0f).updateFn([this]() {
         camera.setFov(fov);
@@ -351,7 +348,8 @@ class GameApp : public ci::app::App {
   // 経路表示
   void drawRoute() {
     ci::gl::color(0, 0, 1);
-    for (const auto& r : route_) {
+    const auto& route = ship_.getRoute();
+    for (const auto& r : route) {
       ci::vec3 pos(r);
       ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.3, 0.3, 0.3));
     }
@@ -359,6 +357,8 @@ class GameApp : public ci::app::App {
   
 
 public:
+  // TIPS:cinder 0.9.0ではOpenGLのコンテキストが生成された後で
+  //      Appのコンストラクタが呼ばれる
   GameApp()
     : params_(Params::load("params.json")),
       fov(params_.getValueForKey<float>("camera.fov")),
@@ -419,10 +419,7 @@ public:
     auto format = ci::gl::Fbo::Format()
       .colorTexture()
       ;
-    fbo = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
-
-    // sea_speed_ = ci::vec2(0.0004f, 0.0006f);
-    // sea_wave_ = 0.0541f;
+    fbo_ = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
 
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
@@ -482,9 +479,8 @@ public:
           ci::ivec3 start = ship_.getPosition();
           ci::ivec3 end   = picked_pos_;
 
-          ci::app::console() << "start:" << start << std::endl << "end:" << end << std::endl;
-          
-          route_ = Route::search(start, end, stage);
+          auto route = Route::search(start, end, stage);
+          ship_.setRoute(route);
           has_route_ = true;
         }
       
@@ -570,8 +566,8 @@ public:
       ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
       {
         // 海面演出のためにFBOへ描画
-        ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo->getSize());
-        ci::gl::ScopedFramebuffer fboScope(fbo);
+        ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo_->getSize());
+        ci::gl::ScopedFramebuffer fboScope(fbo_);
         ci::gl::clear();
 
         drawStage(pos, frustum);
@@ -581,7 +577,7 @@ public:
 
       // 海面の描画
       {
-        fbo->getColorTexture()->bind(0);
+        fbo_->getColorTexture()->bind(0);
         sea_texture_->bind(1);
         sea_shader_->uniform("offset", sea_offset_);
         sea_shader_->uniform("wave", sea_wave_);
@@ -627,21 +623,18 @@ public:
 }
 
 
-// FIXME:なんかいくない
-enum {
-  WINDOW_WIDTH  = 960,
-  WINDOW_HEIGHT = 640,
-};
-
 // アプリのラウンチコード
-CINDER_APP(ngs::GameApp, 
-           ci::app::RendererGl,
+CINDER_APP(ngs::GameApp, ci::app::RendererGl,
            [](ci::app::App::Settings* settings) {
-             // 画面サイズを変更する
-             settings->setWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-             // Retinaディスプレイ対応
+             // FIXME:ここで設定ファイルを読むなんて...
+             auto params = ngs::Params::load("params.json");
+
+             settings->setWindowSize(ngs::Json::getVec<ci::ivec2>(params["app.size"]));
+             
+             settings->setMultiTouchEnabled();
+             settings->setPowerManagementEnabled(false);
              settings->setHighDensityDisplayEnabled(false);
              
-             // マルチタッチ有効
-             settings->setMultiTouchEnabled(true);
-           })
+             // settings->disableFrameRate();
+             // ci::gl::enableVerticalSync();
+           });
