@@ -48,6 +48,22 @@ struct Node {
 };
 
 
+// 指定座標のステージの高さを求める
+int getStageHeight(const ci::ivec3& pos, TiledStage& stage) {
+    int block_x = glm::floor(pos.x / 64.0f);
+    int block_z = glm::floor(pos.z / 64.0f);
+
+    const auto& height_map = stage.getStage(ci::ivec2(block_x, block_z)).getHeightMap();
+
+    // TIPS:負数の場合に答えが正数になる剰余算を使っている
+    //        値: -1, -2, -3, -4...
+    //      結果: 63, 62, 61, 60...
+    int x = glm::mod(float(pos.x), 64.0f);
+    int z = glm::mod(float(pos.z), 64.0f);
+
+    return height_map[z][x];
+}
+
 // 次の経路をキューに積む
 void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
                     std::priority_queue<Node, std::vector<Node>, std::greater<Node> >& queue,
@@ -65,19 +81,9 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
   for (const auto& v : vector) {
     auto new_pos = prev_pos + v;
     if (opened.count(new_pos)) continue;
-    
-    // 座標がプラス時とマイナス時で計算が違う
-    int stage_x = new_pos.x >= 0 ? new_pos.x / 64
-                                 : (new_pos.x - 63) / 64;
-    int stage_z = new_pos.z >= 0 ? new_pos.z / 64
-                                 : (new_pos.z - 63) / 64;
-    
-    const auto& height_map = stage.getStage(ci::ivec2(stage_x, stage_z)).getHeightMap();
-    int x = new_pos.x >= 0 ? new_pos.x % 64
-                           : 64 - (-new_pos.x % 64);
-    int z = new_pos.z >= 0 ? new_pos.z % 64
-                           : 64 - (-new_pos.z % 64);
-    if (new_pos.y < height_map[z][x]) continue;
+
+    int height = getStageHeight(new_pos, stage);
+    if (height > new_pos.y) continue;
 
     auto d = end - new_pos;
     int estimate_cost = int(std::abs(d.x) + std::abs(d.z));
@@ -104,6 +110,12 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   std::map<ci::ivec3, Node, LessVec3> opened;
   std::priority_queue<Node, std::vector<Node>, std::greater<Node> > queue;  
 
+  int height = getStageHeight(end, stage);
+
+  DOUT << "start:" << start << std::endl;
+  DOUT << "  end:" << end << std::endl;
+  DOUT << "end height:" << height << std::endl;
+  
   // スタート地点をキューに積む
   Node node = {
     start,
@@ -116,11 +128,13 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   opened.insert(std::make_pair(start, node));
   queue.push(node);
 
-  while (1) {
+  bool arrival = false;
+  while (!queue.empty()) {
     const auto node = queue.top();
     queue.pop();
 
     if (node.pos == end) {
+      arrival = true;
       break;
     }
 
@@ -130,6 +144,11 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
                    stage);
   }
 
+  if (!arrival) {
+    DOUT << "No route." << std::endl;
+    return std::vector<ci::ivec3>();
+  }
+  
   // ゴール地点からスタート地点までを辿る
   ci::ivec3 pos = end;
   std::vector<ci::ivec3> roots;

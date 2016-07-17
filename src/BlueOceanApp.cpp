@@ -241,6 +241,8 @@ class GameApp : public ci::app::App {
     float sea_z;
     if (!ray.calcPlaneIntersection(ci::vec3(0, sea_level_, 0), ci::vec3(0, 1, 0), &sea_z)) return;
     ci::vec3 sea_pos = ray.calcPosition(sea_z);
+    // TIPS:誤差があると経路検索で目的地にたどり着かないw
+    sea_pos.y = sea_level_;
 
     // どの区画をクリックしたか判定
     float z;
@@ -347,11 +349,11 @@ class GameApp : public ci::app::App {
 
   // 経路表示
   void drawRoute() {
-    ci::gl::color(0, 0, 1);
+    ci::gl::color(1, 0, 0);
     const auto& route = ship_.getRoute();
     for (const auto& r : route) {
       ci::vec3 pos(r);
-      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.3, 0.3, 0.3));
+      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.2, 0.2, 0.2));
     }
   }
   
@@ -477,7 +479,7 @@ public:
         if (picked_) {
           // 経路探索
           ci::ivec3 start = ship_.getPosition();
-          ci::ivec3 end   = picked_pos_;
+          ci::ivec3 end   = glm::floor(picked_pos_);
 
           auto route = Route::search(start, end, stage);
           ship_.setRoute(route);
