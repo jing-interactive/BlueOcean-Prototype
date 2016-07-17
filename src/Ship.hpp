@@ -10,6 +10,12 @@
 
 namespace ngs {
 
+// ci::quat ci::quat::fromtwovectors(vec3 u, vec3 v) {
+
+// vec3 w = cross(u, v); quat q = quat(dot(u, v), w.x, w.y, w.z); q.w += q.magnitude(); return normalize(q);
+
+// }
+
 class Ship {
   ci::vec3 position_;
   ci::quat rotation_;
@@ -78,15 +84,26 @@ public:
 
     if (do_route_) {
       t_value_ += speed_;
+
+      // ２点間の線形補間を利用した移動
+      auto pos = glm::mix(start_route_, target_route_, std::min(t_value_, 1.0f));
+      // 移動量から向きを決定
+      auto d = glm::normalize(pos - position_);
+      if (glm::length(d) > 0.0f) {
+        rotation_ = glm::rotation(ci::vec3(0, 0, -1), d);
+      }
       
-      position_ = glm::mix(start_route_, target_route_, std::min(t_value_, 1.0f));
+      position_ = pos;
+      
       if (t_value_ >= 1.0f) {
         t_value_ = 0.0f;
         route_index_ += 1;
         if (route_index_ == route_.size()) {
+          // ゴールに到着
           do_route_ = false;
         }
         else {
+          // 次の地点へ
           start_route_ = position_;
           const auto& pos = route_[route_index_];
           target_route_.x = pos.x;
