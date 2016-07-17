@@ -32,7 +32,7 @@ template<typename T>
 T getVec(const ci::JsonTree& json) noexcept {
   T v;
   for (size_t i = 0; i < v.size(); ++i) {
-    v[i] = json[0].getValue<double>();
+    v[i] = json[i].getValue<double>();
   }
 
   return v;
