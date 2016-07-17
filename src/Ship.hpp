@@ -15,22 +15,27 @@ class Ship {
   ci::quat rotation_;
   ci::vec3 scaling_;
 
-  bool has_target_;
-  
-  ci::vec3 target_position_;
-
   ci::Color color_;
   ci::gl::BatchRef model_;
 
   std::vector<ci::ivec3> route_;
+
+  ci::vec3 start_route_;
+  ci::vec3 target_route_;
+  float t_value_;
+  float speed_;
+  size_t route_index_;
+
+  bool do_route_;
   
   
 public:
   Ship(ci::JsonTree& params)
     : position_(Json::getVec<ci::vec3>(params["ship.position"])),
       scaling_(Json::getVec<ci::vec3>(params["ship.scaling"])),
-      has_target_(false),
-      color_(Json::getColor<float>(params["ship.color"]))
+      color_(Json::getColor<float>(params["ship.color"])),
+      speed_(params.getValueForKey<float>("ship.speed")),
+      do_route_(false)
   {
     ci::ObjLoader loader(Asset::load("ship.obj"));
 
@@ -55,12 +60,41 @@ public:
 
   // 経路による移動開始
   void start() {
-    
+    t_value_     = 0.0;
+    route_index_ = 0;
+
+    start_route_ = position_;
+    const auto& pos = route_[route_index_];
+    target_route_.x = pos.x;
+    target_route_.y = position_.y;
+    target_route_.z = pos.z;
+
+    do_route_ = true;
   }
   
   
   void update(const float sea_level) {
     position_.y = sea_level;
+
+    if (do_route_) {
+      t_value_ += speed_;
+      
+      position_ = glm::mix(start_route_, target_route_, std::min(t_value_, 1.0f));
+      if (t_value_ >= 1.0f) {
+        t_value_ = 0.0f;
+        route_index_ += 1;
+        if (route_index_ == route_.size()) {
+          do_route_ = false;
+        }
+        else {
+          start_route_ = position_;
+          const auto& pos = route_[route_index_];
+          target_route_.x = pos.x;
+          target_route_.y = position_.y;
+          target_route_.z = pos.z;
+        }
+      }
+    }
   }
 
   void draw() {

@@ -483,6 +483,7 @@ public:
 
           auto route = Route::search(start, end, stage);
           ship_.setRoute(route);
+          ship_.start();
           has_route_ = true;
         }
       
