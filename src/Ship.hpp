@@ -117,11 +117,12 @@ public:
   void draw() {
     ci::gl::pushModelView();
 
+    // TIPS:マス目の中央に位置するようオフセットを加えている
     ci::gl::translate(position_ + ci::vec3(0.5, 0, 0.5));
     ci::gl::rotate(rotation_);
     ci::gl::scale(scaling_);
 
-    ci::gl::color(0.8, 0.0, 0.0);
+    ci::gl::color(color_);
     model_->draw();
     
     ci::gl::popModelView();
