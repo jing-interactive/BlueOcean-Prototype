@@ -11,6 +11,8 @@
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
 #include <cinder/Frustum.h>
+#include "Event.hpp"
+#include "Arguments.hpp"
 #include "Asset.hpp"
 #include "Params.hpp"
 #include "Shader.hpp"
@@ -30,6 +32,8 @@ class Game {
     FBO_HEIGHT = 512,
   };
 
+  Event<Arguments> event_;
+  
   ci::JsonTree params_;
   
   ci::CameraPersp camera;
@@ -356,6 +360,16 @@ class Game {
     }
   }
 
+
+  // 各種コールバックを登録
+  void registerCallbacks() {
+    event_.connect("ship_arrival", [this](const Connection&, const Arguments&) {
+        ci::app::console() << "ship_arrival" << std::endl;
+      });
+  }
+
+
+  
 public:
   Game()
     : params_(Params::load("params.json")),
@@ -375,7 +389,7 @@ public:
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
       picked_(false),
-      ship_(params_),
+      ship_(event_, params_),
       has_route_(false)
   {
     int width  = ci::app::getWindowWidth();
@@ -409,6 +423,8 @@ public:
     ci::gl::enableDepthRead();
     ci::gl::enableDepthWrite();
     ci::gl::enable(GL_CULL_FACE);
+
+    registerCallbacks();
   }
 
   void resize() {

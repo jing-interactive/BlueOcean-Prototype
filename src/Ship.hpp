@@ -5,18 +5,16 @@
 //
 
 #include <cinder/ObjLoader.h>
+#include "Arguments.hpp"
+#include "Event.hpp"
 #include "JsonUtil.hpp"
 
 
 namespace ngs {
 
-// ci::quat ci::quat::fromtwovectors(vec3 u, vec3 v) {
-
-// vec3 w = cross(u, v); quat q = quat(dot(u, v), w.x, w.y, w.z); q.w += q.magnitude(); return normalize(q);
-
-// }
-
 class Ship {
+  Event<Arguments>& event_;
+  
   ci::vec3 position_;
   ci::quat rotation_;
   ci::vec3 scaling_;
@@ -36,8 +34,11 @@ class Ship {
   
   
 public:
-  Ship(ci::JsonTree& params)
-    : position_(Json::getVec<ci::vec3>(params["ship.position"])),
+  Ship() = delete;
+  
+  Ship(Event<Arguments>& event, ci::JsonTree& params)
+    : event_(event),
+      position_(Json::getVec<ci::vec3>(params["ship.position"])),
       scaling_(Json::getVec<ci::vec3>(params["ship.scaling"])),
       color_(Json::getColor<float>(params["ship.color"])),
       speed_(params.getValueForKey<float>("ship.speed")),
@@ -101,6 +102,9 @@ public:
         if (route_index_ == route_.size()) {
           // ゴールに到着
           do_route_ = false;
+
+          // イベント送信
+          event_.signal("ship_arrival", Arguments());
         }
         else {
           // 次の地点へ
