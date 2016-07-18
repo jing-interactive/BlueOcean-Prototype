@@ -1,6 +1,9 @@
 {
   "app": {
-    "size": [ 960, 640 ]
+    "size": [ 960, 640 ],
+
+    "camera_rotation_sensitivity":    0.01,
+    "camera_translation_sensitivity": 0.005
   },
   
   "camera": {

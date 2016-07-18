@@ -47,10 +47,14 @@ class Game {
   int touch_num;
 
   ci::quat rotate;
-  ci::vec3 translate;
+  ci::vec3 translate_;
   float z_distance;
   bool camera_modified_;
 
+  // カメラの操作感
+  float camera_rotation_sensitivity_;
+  float camera_translation_sensitivity_;
+  
   ci::Color bg_color;
   
   // Stage生成時の乱数調整用
@@ -301,10 +305,12 @@ class Game {
     ci::vec2 d{ current_pos - prev_pos };
     float l = ci::length(d);
     if (l > 0.0f) {
-      d = ci::normalize(d);
-      ci::vec3 v{ -d.y, -d.x, 0.0f };
-      ci::quat r = glm::angleAxis(l * 0.01f, v);
-      rotate = rotate * r;
+      // d = ci::normalize(d);
+      // ci::vec3 v{ -d.y, -d.x, 0.0f };
+      // ci::quat r = glm::angleAxis(l * 0.01f, v);
+      ci::quat rx(ci::vec3(-d.y * camera_rotation_sensitivity_, 0.0f, 0.0f));
+      ci::quat ry(ci::vec3(0.0f, -d.x * camera_rotation_sensitivity_, 0.0f));
+      rotate = ry * rotate * rx;
     }
   }
 
@@ -314,9 +320,9 @@ class Game {
     ci::vec3 v{ d.x, 0.0f, d.y };
 
     float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-    auto p = (rotate * v) * t * 0.005f;
-    translate.x += p.x;
-    translate.z += p.z;
+    auto p = (rotate * v) * t * camera_translation_sensitivity_;
+    translate_.x -= p.x;
+    translate_.z -= p.z;
   }
 
   // ズーミング操作
@@ -382,6 +388,8 @@ public:
       fov(params_.getValueForKey<float>("camera.fov")),
       near_z(params_.getValueForKey<float>("camera.near_z")),
       far_z(params_.getValueForKey<float>("camera.far_z")),
+      camera_rotation_sensitivity_(params_.getValueForKey<float>("app.camera_rotation_sensitivity")),
+      camera_translation_sensitivity_(params_.getValueForKey<float>("app.camera_translation_sensitivity")),
       touch_num(0),
       z_distance(params_.getValueForKey<float>("camera.z_distance")),
       camera_modified_(false),
@@ -550,8 +558,8 @@ public:
     ship_camera_.update(ship_.getPosition());
     
     // カメラ位置の計算
-    // auto pos = rotate * ci::vec3(0, 0, z_distance) - translate;
-    auto pos = rotate * ci::vec3(0, 0, ship_camera_.getDistance()) + ship_camera_.getPosition();
+    auto pos = rotate * ci::vec3(0, 0, z_distance) + translate_;
+    // auto pos = rotate * ci::vec3(0, 0, ship_camera_.getDistance()) + ship_camera_.getPosition();
     
     camera.setEyePoint(pos);
     camera.setOrientation(rotate);
