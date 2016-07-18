@@ -19,6 +19,7 @@
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
 #include "Ship.hpp"
+#include "ShipCamera.hpp"
 #include "Route.hpp"
 
 
@@ -83,6 +84,7 @@ class Game {
 
   // 船
   Ship ship_;
+  ShipCamera ship_camera_;
 
   // 経路
   bool has_route_;
@@ -363,9 +365,13 @@ class Game {
 
   // 各種コールバックを登録
   void registerCallbacks() {
-    event_.connect("ship_arrival", [this](const Connection&, const Arguments&) {
+    event_.connect("ship_arrival",
+                   [this](const Connection&, const Arguments&) {
         ci::app::console() << "ship_arrival" << std::endl;
+        has_route_ = false;
+        ship_camera_.arrived();
       });
+    
   }
 
 
@@ -390,6 +396,7 @@ public:
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
       picked_(false),
       ship_(event_, params_),
+      ship_camera_(event_, params_),
       has_route_(false)
   {
     int width  = ci::app::getWindowWidth();
@@ -488,6 +495,7 @@ public:
           auto route = Route::search(start, end, stage);
           ship_.setRoute(route);
           ship_.start();
+          ship_camera_.start();
           has_route_ = true;
         }
       
@@ -539,8 +547,12 @@ public:
 
   
   void update() {
+    ship_camera_.update(ship_.getPosition());
+    
     // カメラ位置の計算
-    auto pos = rotate * ci::vec3(0, 0, z_distance) - translate;
+    // auto pos = rotate * ci::vec3(0, 0, z_distance) - translate;
+    auto pos = rotate * ci::vec3(0, 0, ship_camera_.getDistance()) + ship_camera_.getPosition();
+    
     camera.setEyePoint(pos);
     camera.setOrientation(rotate);
 
