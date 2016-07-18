@@ -17,6 +17,8 @@ class StageDrawer {
 
   
 public:
+  // TIPS:ソフトリセット無しでステージの再生成を実行したいので
+  //      あえてコンストラクタを使っていない
   StageDrawer() = default;
 
   void setup() {

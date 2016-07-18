@@ -16,8 +16,11 @@
 #include "Asset.hpp"
 #include "Params.hpp"
 #include "Shader.hpp"
+#include "Holder.hpp"
+#include "StageObj.hpp"
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
+#include "StageObjDraw.hpp"
 #include "Ship.hpp"
 #include "ShipCamera.hpp"
 #include "Route.hpp"
@@ -81,6 +84,7 @@ class Game {
   ci::gl::FboRef fbo_;
   
   StageDrawer stage_drawer_;
+  StageObjDrawer stageobj_drawer_;
 
   bool picked_;
   ci::AxisAlignedBox picked_aabb_;
@@ -348,12 +352,14 @@ class Game {
         ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
         if (!frustum.intersects(aabb)) continue;
         
-        ci::gl::pushModelView();
+        ci::gl::pushModelMatrix();
 
         ci::gl::translate(pos);
         stage_drawer_.draw(stage_pos, s);
+
+        stageobj_drawer_.draw(s.getStageObjects());
         
-        ci::gl::popModelView();
+        ci::gl::popModelMatrix();
       }
     }
   }

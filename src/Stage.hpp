@@ -11,6 +11,8 @@
 #include <cinder/Color.h>
 #include <cinder/TriMesh.h>
 #include <cinder/AxisAlignedBox.h>
+#include <cinder/Rand.h>
+#include "StageObj.hpp"
 
 
 namespace ngs {
@@ -22,6 +24,28 @@ class Stage {
   
   ci::TriMesh land_;
   ci::AxisAlignedBox aabb_;
+
+  std::vector<StageObj> stage_objects_;
+
+
+  void createStageObjects(const int width, const int deep) {
+    std::string names[] = {
+      "rock1.obj",
+      "rock2.obj",
+      "rock3.obj",
+      "rock4.obj",
+    };
+    
+    for (int z = 0; z < deep; ++z) {
+      for (int x = 0; x < width; ++x) {
+        if (ci::randFloat() > 0.1f) continue;
+
+        const auto& name = names[ci::randInt(4)];
+        float y = height_map_[z][x];
+        stage_objects_.emplace_back(name, ci::vec3(x + 0.5f, y, z + 0.5f), ci::vec3(0), ci::vec3(1.0f / 16.0f));
+      }
+    }
+  }
 
   
 public:
@@ -237,6 +261,9 @@ public:
       row.erase(std::begin(row));
       row.pop_back();
     }
+
+    // ステージ上に乗っかっているオブジェクトを生成
+    createStageObjects(width, deep);
   }
 
   
@@ -254,6 +281,10 @@ public:
   
   const ci::ivec2& getSize() const {
     return size_;
+  }
+
+  const std::vector<StageObj> getStageObjects() const {
+    return stage_objects_;
   }
 
 };
