@@ -4,7 +4,6 @@
 // 試作版アプリ
 //
 
-#include "Defines.hpp"
 #include <cinder/gl/gl.h>
 #include <cinder/Camera.h>
 #include <cinder/params/Params.h>

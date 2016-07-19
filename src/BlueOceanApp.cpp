@@ -2,6 +2,7 @@
 // BlueOcean プロトタイプ
 // 
 
+#include "Defines.hpp"
 #include <cinder/app/App.h>
 #include <cinder/app/RendererGl.h>
 #include "Game.hpp"
