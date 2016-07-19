@@ -351,21 +351,22 @@ class Game {
         const auto& b = s.getAABB();
         ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
         if (!frustum.intersects(aabb)) continue;
-        
-        ci::gl::pushModelMatrix();
 
-        ci::gl::translate(pos);
+        ci::mat4 transform = glm::translate(pos);
+        ci::gl::setModelMatrix(transform);
+        
         stage_drawer_.draw(stage_pos, s);
 
-        stageobj_drawer_.draw(s.getStageObjects());
+        // stageobj_drawer_.draw(s.getStageObjects());
         
-        ci::gl::popModelMatrix();
       }
     }
   }
 
   // 経路表示
   void drawRoute() {
+    ci::gl::setModelMatrix(ci::mat4(1.0f));
+    
     ci::gl::color(1, 0, 0);
     const auto& route = ship_.getRoute();
     for (const auto& r : route) {
@@ -512,9 +513,8 @@ public:
           ship_camera_.start();
           has_route_ = true;
         }
-      
-        camera_modified_ = false;
       }
+      camera_modified_ = false;
     }
   }
 
@@ -617,13 +617,11 @@ public:
             ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, sea_level_, z * BLOCK_SIZE));
             ci::AxisAlignedBox aabb(pos, pos + ci::vec3(BLOCK_SIZE, 0, BLOCK_SIZE));
             if (!frustum.intersects(aabb)) continue;
-            
-            ci::gl::pushModelView();
 
-            ci::gl::translate(pos);
+            ci::mat4 transform = glm::translate(pos);
+            ci::gl::setModelMatrix(transform);
+
             sea_mesh_->draw();
-
-            ci::gl::popModelView();
           }
         }
       }
@@ -632,6 +630,8 @@ public:
       ship_.draw();
 
       if (picked_) {
+        ci::gl::setModelMatrix(ci::mat4(1.0f));
+
         ci::gl::color(1, 0, 0);
         ci::gl::drawStrokedCube(picked_aabb_);
         ci::gl::drawSphere(picked_pos_, 0.1f);

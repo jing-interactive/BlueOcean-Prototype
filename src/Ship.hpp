@@ -119,17 +119,15 @@ public:
   }
 
   void draw() {
-    ci::gl::pushModelView();
-
     // TIPS:マス目の中央に位置するようオフセットを加えている
-    ci::gl::translate(position_ + ci::vec3(0.5, 0, 0.5));
-    ci::gl::rotate(rotation_);
-    ci::gl::scale(scaling_);
+    ci::mat4 transform = glm::translate(position_ + ci::vec3(0.5, 0, 0.5))
+                       * glm::mat4_cast(rotation_)
+                       * glm::scale(scaling_);
 
+    ci::gl::setModelMatrix(transform);
+    
     ci::gl::color(color_);
     model_->draw();
-    
-    ci::gl::popModelView();
   }
 
 };
