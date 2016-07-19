@@ -40,16 +40,13 @@ public:
       if (!batches_.hasObject(name)) {
         // FIXME:まさかのここでのファイル読み込み
         ci::ObjLoader loader(Asset::load(name));
-        ci::gl::BatchRef mesh = ci::gl::Batch::create(loader, shader_);
-        batches_.add(name, mesh);
+        ci::TriMesh mesh(loader);
+
+        ci::gl::BatchRef batch = ci::gl::Batch::create(mesh >> ci::geom::Transform(obj.getTransfomation()), shader_);
+        batches_.add(name, batch);
       }
 
-      ci::gl::pushModelMatrix();
-
-      ci::gl::multModelMatrix(obj.getTransfomation());
       batches_.getForKey(name)->draw();
-
-      ci::gl::popModelMatrix();
     }
   }
     

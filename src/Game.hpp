@@ -96,6 +96,15 @@ class Game {
   // 経路
   bool has_route_;
 
+  // デバッグ用
+  bool disp_stage_;
+  bool disp_stage_obj_;
+  bool disp_sea_;
+
+
+
+
+  
 #if !defined (CINDER_COCOA_TOUCH)
   // iOS版はダイアログの実装が無い
   ci::params::InterfaceGlRef params;
@@ -210,6 +219,12 @@ class Game {
     params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
     params->addParam("Sea Wave", &sea_wave_).step(0.001f);
     params->addParam("Sea Level", &sea_level_).step(0.25f);
+
+    params->addSeparator();
+
+    params->addParam("Disp Stage",    &disp_stage_);
+    params->addParam("Disp StageObj", &disp_stage_obj_);
+    params->addParam("Disp Sea",      &disp_sea_);
     
   }
 
@@ -353,11 +368,13 @@ class Game {
 
         ci::mat4 transform = glm::translate(pos);
         ci::gl::setModelMatrix(transform);
-        
-        stage_drawer_.draw(stage_pos, s);
 
-        // stageobj_drawer_.draw(s.getStageObjects());
-        
+        if (disp_stage_) {
+          stage_drawer_.draw(stage_pos, s);
+        }
+        if (disp_stage_obj_) {
+          stageobj_drawer_.draw(s.getStageObjects());
+        }
       }
     }
   }
@@ -411,7 +428,10 @@ public:
       picked_(false),
       ship_(event_, params_),
       ship_camera_(event_, params_),
-      has_route_(false)
+      has_route_(false),
+      disp_stage_(true),
+      disp_stage_obj_(true),
+      disp_sea_(true)
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -603,7 +623,7 @@ public:
       ci::gl::clear(bg_color);
 
       // 海面の描画
-      {
+      if (disp_sea_) {
         fbo_->getColorTexture()->bind(0);
         sea_texture_->bind(1);
         sea_shader_->uniform("offset", sea_offset_);
