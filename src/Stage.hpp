@@ -34,14 +34,18 @@ class Stage {
       "rock2.obj",
       "rock3.obj",
       "rock4.obj",
+      "tree1.obj",
+      "tree2.obj",
     };
+    
     
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
-        if (ci::randFloat() > 0.1f) continue;
-
-        const auto& name = names[ci::randInt(4)];
+        if (ci::randFloat() > 0.05f) continue;
         float y = height_map_[z][x];
+        if (y < 8.0f) continue;
+
+        const auto& name = names[ci::randInt(6)];
         stage_objects_.emplace_back(name, ci::vec3(x + 0.5f, y, z + 0.5f), ci::vec3(0), ci::vec3(1.0f / 16.0f));
       }
     }

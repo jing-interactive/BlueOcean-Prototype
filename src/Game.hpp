@@ -373,7 +373,7 @@ class Game {
           stage_drawer_.draw(stage_pos, s);
         }
         if (disp_stage_obj_) {
-          stageobj_drawer_.draw(s.getStageObjects());
+          stageobj_drawer_.draw(stage_pos, s);
         }
       }
     }

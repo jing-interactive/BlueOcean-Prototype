@@ -6,15 +6,16 @@
 
 #include <cinder/ObjLoader.h>
 #include "StageObj.hpp"
+#include "StageObjMesh.hpp"
 
 
 namespace ngs {
 
 class StageObjDrawer {
+  StageObjMesh mesh_creater_;
   ci::gl::Texture2dRef texture_;
-  ci::gl::GlslProgRef	 shader_;
 
-  Holder<ci::gl::BatchRef> batches_;
+  std::map<ci::ivec2, ci::gl::BatchRef, LessVec> meshes_;
 
 
 public:
@@ -27,27 +28,18 @@ public:
                                          // .magFilter(GL_NEAREST)
                                          );
     
-    auto lambert = ci::gl::ShaderDef().texture().lambert();
-    shader_ = ci::gl::getStockShader(lambert);
   }
 
-  void draw(const std::vector<StageObj>& objects) {
-    texture_->bind();
+  void draw(const ci::ivec2& pos, const Stage& stage) {
+    if (stage.getStageObjects().empty()) return;
     
-    for (const auto& obj : objects) {
-      const auto& name = obj.getName();
-      
-      if (!batches_.hasObject(name)) {
-        // FIXME:まさかのここでのファイル読み込み
-        ci::ObjLoader loader(Asset::load(name));
-        ci::TriMesh mesh(loader);
-
-        ci::gl::BatchRef batch = ci::gl::Batch::create(mesh >> ci::geom::Transform(obj.getTransfomation()), shader_);
-        batches_.add(name, batch);
-      }
-
-      batches_.getForKey(name)->draw();
+    if (meshes_.count(pos) == 0) {
+      ci::gl::BatchRef mesh = mesh_creater_.createBatch(stage.getStageObjects());
+      meshes_.insert(std::make_pair(pos, mesh));
     }
+
+    texture_->bind();
+    meshes_.at(pos)->draw();
   }
     
 };
