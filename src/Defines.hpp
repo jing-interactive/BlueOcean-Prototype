@@ -10,6 +10,8 @@
 #pragma warning (disable:4305)
 // FIXME:ポインタで示される未知のサイズ領域に対してのメモリ操作
 #pragma warning (disable:4996)
+// FIXME:装飾された名前が限界を超えました...という警告を抑制
+#pragma warning (disable:4503)
 #endif
 
 // TIPS:console() をReleaseビルドで排除する
