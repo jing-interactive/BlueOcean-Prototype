@@ -135,6 +135,7 @@ class Game {
   void createStage() {
     stage = TiledStage(BLOCK_SIZE, random, ramdom_scale, height_scale);
     stage_drawer_.clear();
+    stageobj_drawer_.clear();
   }
 
   void createSeaMesh() {
@@ -449,9 +450,6 @@ public:
     createDialog();
 
     bg_color = ci::Color(0, 0, 0);
-
-    // 表示用のデータを準備
-    stage_drawer_.setup();
 
     createSeaMesh();
 

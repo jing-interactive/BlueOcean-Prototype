@@ -27,7 +27,10 @@ public:
                                          .minFilter(GL_NEAREST)
                                          // .magFilter(GL_NEAREST)
                                          );
-    
+  }
+
+  void clear() {
+    meshes_.clear();
   }
 
   void draw(const ci::ivec2& pos, const Stage& stage) {

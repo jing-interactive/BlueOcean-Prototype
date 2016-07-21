@@ -17,11 +17,7 @@ class StageDrawer {
 
   
 public:
-  // TIPS:ソフトリセット無しでステージの再生成を実行したいので
-  //      あえてコンストラクタを使っていない
-  StageDrawer() = default;
-
-  void setup() {
+  StageDrawer() {
     // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
     land_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("stage.png")),
                                               ci::gl::Texture2d::Format()
