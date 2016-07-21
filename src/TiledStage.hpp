@@ -6,6 +6,7 @@
 
 #include <map>
 #include <cinder/Perlin.h>
+#include "StageObjFactory.hpp"
 #include "Stage.hpp"
 
 
@@ -32,17 +33,21 @@ class TiledStage {
   ci::Perlin random_;
   float random_scale_;
   float height_scale_;
+
+  StageObjFactory stageobj_factory_;
   
   std::map<ci::ivec2, Stage, LessVec> stages;
   
 
 public:
-  TiledStage(const int block_size, const ci::Perlin& random,
+  TiledStage(const ci::JsonTree& params,
+             const int block_size, const ci::Perlin& random,
              const float random_scale, const float height_scale)
     : block_size_(block_size),
       random_(random),
       random_scale_(random_scale),
-      height_scale_(height_scale)
+      height_scale_(height_scale),
+      stageobj_factory_(params)
   {}
 
 
@@ -56,6 +61,7 @@ public:
                                    Stage(block_size_, block_size_,
                                          pos.x, pos.y,
                                          random_,
+                                         stageobj_factory_,
                                          random_scale_, height_scale_)));
     }
     

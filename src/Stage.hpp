@@ -13,6 +13,7 @@
 #include <cinder/AxisAlignedBox.h>
 #include <cinder/Rand.h>
 #include "StageObj.hpp"
+#include "StageObjFactory.hpp"
 
 
 namespace ngs {
@@ -28,25 +29,15 @@ class Stage {
   std::vector<StageObj> stage_objects_;
 
 
-  void createStageObjects(const int width, const int deep) {
-    std::string names[] = {
-      "rock1.obj",
-      "rock2.obj",
-      "rock3.obj",
-      "rock4.obj",
-      "tree1.obj",
-      "tree2.obj",
-    };
-    
-    
+  void createStageObjects(const int width, const int deep,
+                          const StageObjFactory& factory) {
     for (int z = 0; z < deep; ++z) {
       for (int x = 0; x < width; ++x) {
-        if (ci::randFloat() > 0.05f) continue;
-        float y = height_map_[z][x];
-        if (y < 8.0f) continue;
+        int y = height_map_[z][x];
+        auto stageobj = factory.create(y);
+        if (!stageobj.first) continue;
 
-        const auto& name = names[ci::randInt(6)];
-        stage_objects_.emplace_back(name, ci::vec3(x + 0.5f, y, z + 0.5f), ci::vec3(0), ci::vec3(1.0f / 16.0f));
+        stage_objects_.emplace_back(stageobj.second, ci::vec3(x + 0.5f, y, z + 0.5f), ci::vec3(0), ci::vec3(1.0f / 16.0f));
       }
     }
   }
@@ -57,6 +48,7 @@ public:
   Stage(const int width, const int deep,
         const int offset_x, const int offset_z,
         const ci::Perlin& random,
+        const StageObjFactory& factory,
         const float random_scale, const float height_scale)
     : size_(width, deep)
   {
@@ -267,7 +259,7 @@ public:
     }
 
     // ステージ上に乗っかっているオブジェクトを生成
-    createStageObjects(width, deep);
+    createStageObjects(width, deep, factory);
   }
 
   

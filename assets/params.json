@@ -35,6 +35,59 @@
     "sea_color": [0.5, 0.5, 0.5, 1]
   },
 
+  "stage_obj": [
+    {
+      "name": "rock1.obj",
+      "height": [8, 15],
+      "probability": 0.03
+    },
+    {
+      "name": "rock2.obj",
+      "height": [8, 15],
+      "probability": 0.03
+    },
+    {
+      "name": "rock3.obj",
+      "height": [8, 15],
+      "probability": 0.03
+    },
+    {
+      "name": "rock4.obj",
+      "height": [8, 15],
+      "probability": 0.03
+    },
+    {
+      "name": "rock5.obj",
+      "height": [8, 15],
+      "probability": 0.03
+    },
+    {
+      "name": "tree1.obj",
+      "height": [9, 13],
+      "probability": 0.03
+    },
+    {
+      "name": "tree2.obj",
+      "height": [9, 13],
+      "probability": 0.03
+    },
+    {
+      "name": "tree3.obj",
+      "height": [8, 9],
+      "probability": 0.03
+    },
+    {
+      "name": "remain1.obj",
+      "height": [10, 15],
+      "probability": 0.0001
+    },
+    {
+      "name": "remain2.obj",
+      "height": [10, 15],
+      "probability": 0.0001
+    }
+  ],
+
   "ship": {
     "position": [ 0, 0, 0 ],
     "scaling": [ 1.2, 1.2, 1.2 ],

@@ -133,7 +133,7 @@ class Game {
   }
 
   void createStage() {
-    stage = TiledStage(BLOCK_SIZE, random, ramdom_scale, height_scale);
+    stage = TiledStage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale);
     stage_drawer_.clear();
     stageobj_drawer_.clear();
   }
@@ -422,7 +422,7 @@ public:
       ramdom_scale(params_.getValueForKey<float>("stage.random_scale")),
       height_scale(params_.getValueForKey<float>("stage.height_scale")),
       random(octave, seed),
-      stage(BLOCK_SIZE, random, ramdom_scale, height_scale),
+      stage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale),
       sea_level_(params_.getValueForKey<float>("stage.sea_level")),
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
