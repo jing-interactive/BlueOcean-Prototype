@@ -25,6 +25,8 @@ public:
 
     // アクティブになった時にタッチ情報を初期化
     getSignalDidBecomeActive().connect([this](){ game_->resetTouch(); });
+
+    console() <<  << std::endl;
   }
   
 
@@ -81,6 +83,10 @@ private:
   
   void draw() override {
     game_->draw();
+  }
+
+  void cleanup() override {
+    game_->cleanup();
   }
   
 };

@@ -662,6 +662,11 @@ public:
     // ダイアログ表示
     drawDialog();
   }
+
+  // アプリ終了時
+  void cleanup() {
+    ci::app::console() << "cleanup:" << getDocumentPath() << std::endl;
+  }
 };
 
 }

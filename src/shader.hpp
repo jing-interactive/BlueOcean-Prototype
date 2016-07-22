@@ -8,6 +8,7 @@
 #include <fstream>
 #include <utility>
 #include <regex>
+#include "Path.hpp"
 
 
 namespace ngs {
@@ -50,10 +51,10 @@ std::string replaceText(std::string text) {
 //   パスに拡張子は要らない
 Shader readShader(const std::string& vertex_path,
                   const std::string& fragment_path) {
-  auto vertex_shader   = readFile(Asset::fullPath(vertex_path + ".vsh"));
+  auto vertex_shader   = readFile(getAssetPath(vertex_path + ".vsh").string());
   vertex_shader = replaceText(vertex_shader);
   
-  auto fragment_shader = readFile(Asset::fullPath(fragment_path + ".fsh"));
+  auto fragment_shader = readFile(getAssetPath(fragment_path + ".fsh").string());
   fragment_shader = replaceText(fragment_shader);
 
   return std::make_pair(vertex_shader, fragment_shader);
