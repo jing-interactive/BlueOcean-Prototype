@@ -23,6 +23,7 @@
 #include "Ship.hpp"
 #include "ShipCamera.hpp"
 #include "Route.hpp"
+#include "Time.hpp"
 
 
 namespace ngs {
@@ -96,6 +97,10 @@ class Game {
   // 経路
   bool has_route_;
 
+  // 時間管理
+  Time time_;
+
+  
   // デバッグ用
   bool disp_stage_;
   bool disp_stage_obj_;
@@ -464,6 +469,15 @@ public:
     ci::gl::enable(GL_CULL_FACE);
 
     registerCallbacks();
+
+    // 記録ファイルがあるなら読み込んでみる
+    auto path = getDocumentPath() / "record.json";
+    if (ci::fs::is_regular_file(path)) {
+      ci::JsonTree record(ci::loadFile(path));
+
+      // ゲーム開始時刻を復元
+      time_ = Time(record.getValueAtIndex<double>(0));
+    }
   }
 
   void resize() {
@@ -665,7 +679,14 @@ public:
 
   // アプリ終了時
   void cleanup() {
-    ci::app::console() << "cleanup:" << getDocumentPath() << std::endl;
+    DOUT << "cleanup" << std::endl;
+
+    ci::JsonTree object = ci::JsonTree::makeObject();
+
+    auto duration = time_.getDuration();
+    object.pushBack(ci::JsonTree("", duration.count()));
+
+    object.write(getDocumentPath() / "record.json");
   }
 };
 

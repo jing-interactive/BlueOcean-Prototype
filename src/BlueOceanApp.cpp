@@ -25,8 +25,6 @@ public:
 
     // アクティブになった時にタッチ情報を初期化
     getSignalDidBecomeActive().connect([this](){ game_->resetTouch(); });
-
-    console() << getDocumentPath() << std::endl;
   }
   
 
