@@ -16,7 +16,6 @@
 		28FD15000DC6FC520079059D /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD14FF0DC6FC520079059D /* OpenGLES.framework */; };
 		28FD15080DC6FC5B0079059D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28FD15070DC6FC5B0079059D /* QuartzCore.framework */; };
 		4719DC6D1D2D56E800EF9830 /* BlueOceanApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4719DC6C1D2D56E800EF9830 /* BlueOceanApp.cpp */; };
-		47524C151D41E55600668514 /* Path.mm in Sources */ = {isa = PBXBuildFile; fileRef = 47524C141D41E55600668514 /* Path.mm */; };
 		647D28C4CA7245388397C537 /* CinderApp_ios.png in Resources */ = {isa = PBXBuildFile; fileRef = 847EB84C6B4247098A42951E /* CinderApp_ios.png */; };
 		A026DAB079CD4F6082EA55B2 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DD73BFF2A9AE4999A78E0A6A /* Images.xcassets */; };
 		C725DFFE121DAC7F00FA186B /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C727C02B121B400300192073 /* CoreMedia.framework */; settings = {ATTRIBUTES = (Weak, ); }; };
@@ -40,7 +39,6 @@
 		28FD14FF0DC6FC520079059D /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		28FD15070DC6FC5B0079059D /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		4719DC6C1D2D56E800EF9830 /* BlueOceanApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlueOceanApp.cpp; path = ../src/BlueOceanApp.cpp; sourceTree = "<group>"; };
-		47524C141D41E55600668514 /* Path.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = Path.mm; path = ../src/Path.mm; sourceTree = "<group>"; };
 		6559B03F374F433994BFCD43 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		847EB84C6B4247098A42951E /* CinderApp_ios.png */ = {isa = PBXFileReference; lastKnownFileType = "\"\""; name = CinderApp_ios.png; path = ../resources/CinderApp_ios.png; sourceTree = "<group>"; };
 		894275A8C36A4821AA3ADD5F /* BlueOcean_Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BlueOcean_Prefix.pch; sourceTree = "<group>"; };
@@ -120,7 +118,6 @@
 		00692BD914FF149000D0A05E /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				47524C141D41E55600668514 /* Path.mm */,
 				4719DC6C1D2D56E800EF9830 /* BlueOceanApp.cpp */,
 			);
 			name = Source;
@@ -215,7 +212,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				47524C151D41E55600668514 /* Path.mm in Sources */,
 				4719DC6D1D2D56E800EF9830 /* BlueOceanApp.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

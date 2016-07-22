@@ -4,6 +4,7 @@
 // OSごとのパスの違いを吸収
 //
 
+#include <cinder/Utilities.h>
 
 namespace ngs {
 
@@ -19,18 +20,11 @@ ci::fs::path getAssetPath(const std::string& path) {
 #endif
 }
 
-
-#if defined(CINDER_COCOA_TOUCH)
-
-//ci::getDocumentsDirectory();
-
-// iOS版は専用処理
-ci::fs::path getDocumentPath();
-  
-#else
-
 ci::fs::path getDocumentPath() {
-#if defined (CINDER_MAC)
+#if defined(CINDER_COCOA_TOUCH)
+  // iOS版はアプリごとに用意された場所
+  return ci::getDocumentsDirectory();
+#elif defined (CINDER_MAC)
 #if defined (DEBUG)
   // Debug時はプロジェクトの場所へ書き出す
   return ci::fs::path(PREPRO_TO_STR(SRCROOT));
@@ -43,7 +37,5 @@ ci::fs::path getDocumentPath() {
   return ci::app::getAppPath();
 #endif
 }
-
-#endif
 
 }
