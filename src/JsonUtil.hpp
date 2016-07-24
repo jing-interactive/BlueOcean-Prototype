@@ -38,22 +38,23 @@ T getVec(const ci::JsonTree& json) noexcept {
   return v;
 }
 
-#if 0
 template<typename T>
-ci::vec2 getVec2(const ci::JsonTree& json) noexcept {
-  return ci::vec2(json[0].getValue<T>(), json[1].getValue<T>());
+ci::JsonTree createFromVec(const T& vec) {
+  ci::JsonTree json;
+  for (size_t i = 0; i < vec.size(); ++i) {
+    json.pushBack(ci::JsonTree("", vec[i]));
+  }
+  return json;
 }
 
 template<typename T>
-ci::vec3 getVec3(const ci::JsonTree& json) noexcept {
-  return ci::vec3(json[0].getValue<T>(), json[1].getValue<T>(), json[2].getValue<T>());
+ci::JsonTree createFromVec(const std::string& key, const T& vec) {
+  auto json = ci::JsonTree::makeObject(key);
+  for (size_t i = 0; i < vec.size(); ++i) {
+    json.pushBack(ci::JsonTree("", vec[i]));
+  }
+  return json;
 }
-
-template<typename T>
-ci::vec4 getVec4(const ci::JsonTree& json) noexcept {
-  return ci::vec4(json[0].getValue<T>(), json[1].getValue<T>(), json[2].getValue<T>(), json[3].getValue<T>());
-}
-#endif
 
 template<typename T>
 ci::ColorT<T> getColor(const ci::JsonTree& json) noexcept {
@@ -75,13 +76,5 @@ T getValue(const ci::JsonTree& json, const std::string& name, const T& default_v
   return (json.hasChild(name)) ? json[name].getValue<T>()
                                : default_value;
 }
-
-
-#if 0
-template<typename T>
-ci::Quaternion<T> getQuaternion(const ci::JsonTree& json) noexcept {
-  return ci::Quaternion<T>(ci::Vec3<T>::zAxis(), getVec3<T>(json));
-}
-#endif
 
 } }

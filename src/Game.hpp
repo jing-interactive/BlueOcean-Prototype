@@ -435,6 +435,9 @@ class Game {
       ship_.setRoute(ship_route);
       ship_.start(route_start_time_);
     }
+
+    ship_.setPosition(Json::getVec<ci::vec3>(record["ship.position"]));
+    ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
   }
 
   
@@ -705,7 +708,7 @@ public:
   void cleanup() {
     DOUT << "cleanup" << std::endl;
 
-    ci::JsonTree object = ci::JsonTree::makeObject();
+    ci::JsonTree object;
 
     // 開始時間
     auto duration = start_time_.getDuration();
@@ -716,11 +719,7 @@ public:
     if (has_route_) {
       auto route = ci::JsonTree::makeArray("route");
       for (const auto& r : ship_.getRoute()) {
-        ci::JsonTree value;
-        value.pushBack(ci::JsonTree("", r.x));
-        value.pushBack(ci::JsonTree("", r.y));
-        value.pushBack(ci::JsonTree("", r.z));
-
+        ci::JsonTree value = Json::createFromVec(r);
         route.pushBack(value);
       }
 
@@ -728,6 +727,19 @@ public:
 
       object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
     }
+
+    // 船の情報
+    ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
+    {
+      auto position = Json::createFromVec("position", ship_.getPosition());
+      ship_info.pushBack(position);
+    }
+    {
+      auto rotation = Json::createFromVec("rotation", ship_.getRotation());
+      ship_info.pushBack(rotation);
+    }
+    
+    object.pushBack(ship_info);
     
     object.write(getDocumentPath() / "record.json");
   }

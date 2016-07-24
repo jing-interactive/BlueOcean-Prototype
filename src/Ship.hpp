@@ -85,6 +85,18 @@ public:
     return position_;
   }
 
+  void setPosition(const ci::vec3& position) {
+    position_ = position;
+  }
+
+  const ci::quat& getRotation() const {
+    return rotation_;
+  }
+
+  void setRotation(const ci::quat& rotation) {
+    rotation_ = rotation;
+  }
+  
   
   void setRoute(std::vector<ci::ivec3> route) {
     route_ = std::move(route);
