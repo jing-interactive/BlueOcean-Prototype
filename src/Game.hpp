@@ -96,6 +96,7 @@ class Game {
 
   // 経路
   bool has_route_;
+  Time route_start_time_;
 
   // 時間管理
   Time start_time_;
@@ -409,6 +410,32 @@ class Game {
     
   }
 
+  // セーブデータから色々復元
+  void restoreFromRecords() {
+    auto path = getDocumentPath() / "record.json";
+    if (!ci::fs::is_regular_file(path)) return;
+    
+    ci::JsonTree record(ci::loadFile(path));
+
+    // ゲーム開始時刻を復元
+    start_time_ = Time(record.getValueForKey<double>("start_time"));
+
+    // 船の経路
+    has_route_ = record.getValueForKey<bool>("has_route");
+    if (has_route_) {
+      const auto& route = record["route"];
+      std::vector<ci::ivec3> ship_route;
+      for (const auto& r : route) {
+        auto pos = Json::getVec<ci::ivec3>(r);
+        ship_route.push_back(pos);
+      }
+
+      route_start_time_ = Time(record.getValueForKey<double>("route_start_time"));
+
+      ship_.setRoute(ship_route);
+      ship_.start(route_start_time_);
+    }
+  }
 
   
 public:
@@ -471,26 +498,7 @@ public:
     registerCallbacks();
 
     // 記録ファイルがあるなら読み込んでみる
-    auto path = getDocumentPath() / "record.json";
-    if (ci::fs::is_regular_file(path)) {
-      ci::JsonTree record(ci::loadFile(path));
-
-      // ゲーム開始時刻を復元
-      start_time_ = Time(record.getValueForKey<double>("start_time"));
-
-      // 船の経路
-      has_route_ = record.getValueForKey<bool>("has_route");
-      if (has_route_) {
-        const auto& route = record["route"];
-        std::vector<ci::ivec3> ship_route;
-        for (const auto& r : route) {
-          auto pos = Json::getVec<ci::ivec3>(r);
-          ship_route.push_back(pos);
-        }
-
-        ship_.setRoute(ship_route);
-      }
-    }
+    restoreFromRecords();
   }
 
   void resize() {
@@ -553,7 +561,8 @@ public:
 
           auto route = Route::search(start, end, stage);
           ship_.setRoute(route);
-          ship_.start();
+          route_start_time_ = Time();
+          ship_.start(route_start_time_);
           ship_camera_.start();
           has_route_ = true;
         }
@@ -605,6 +614,8 @@ public:
 
   
   void update() {
+    Time current_time;
+    
     ship_camera_.update(ship_.getPosition());
     
     // カメラ位置の計算
@@ -616,7 +627,7 @@ public:
 
     sea_offset_ += sea_speed_;
 
-    ship_.update(sea_level_);
+    ship_.update(current_time, sea_level_);
   }
   
   void draw() {
@@ -714,6 +725,8 @@ public:
       }
 
       object.pushBack(route);
+
+      object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
     }
     
     object.write(getDocumentPath() / "record.json");

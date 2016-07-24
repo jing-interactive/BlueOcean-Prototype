@@ -8,6 +8,7 @@
 #include "Arguments.hpp"
 #include "Event.hpp"
 #include "JsonUtil.hpp"
+#include "Time.hpp"
 
 
 namespace ngs {
@@ -24,13 +25,42 @@ class Ship {
 
   std::vector<ci::ivec3> route_;
 
-  ci::vec3 start_route_;
-  ci::vec3 target_route_;
-  float t_value_;
   float speed_;
   size_t route_index_;
 
   bool do_route_;
+  // 移動開始時間
+  Time route_start_time_;
+
+
+  // 現在時間の移動位置を求める
+  void calcCurrentPosition(const Time& current_time, const float sea_level) {
+    auto duration = current_time.getDuration() - route_start_time_.getDuration();
+    
+    double total_time = (route_.size() - 1) / speed_;
+    if (duration.count() >= total_time) {
+      // 終点に着いた
+      position_ = route_.back();
+      do_route_ = false;
+
+      event_.signal("ship_arrival", Arguments());
+    }
+    else {
+      int index = duration.count() / speed_;
+      double t = (duration.count() - speed_ * index) / speed_;
+      
+      // ２点間の線形補間を利用した移動
+      ci::vec3 start = route_[index];
+      ci::vec3 end   = route_[index + 1];
+      position_ = glm::mix(start, end, t);
+      
+      // 移動量から向きを決定
+      auto d = glm::normalize(end - start);
+      rotation_ = glm::rotation(ci::vec3(0, 0, -1), d);
+    }
+
+    position_.y = sea_level;
+  }
   
   
 public:
@@ -66,55 +96,17 @@ public:
 
 
   // 経路による移動開始
-  void start() {
-    t_value_     = 0.0;
-    route_index_ = 0;
-
-    start_route_ = position_;
-    const auto& pos = route_[route_index_];
-    target_route_.x = pos.x;
-    target_route_.y = position_.y;
-    target_route_.z = pos.z;
-
+  void start(const Time& start_time) {
     do_route_ = true;
+    route_start_time_ = start_time;
   }
+
   
-  
-  void update(const float sea_level) {
+  void update(const Time& current_time, const float sea_level) {
     position_.y = sea_level;
 
     if (do_route_) {
-      t_value_ += speed_;
-
-      // ２点間の線形補間を利用した移動
-      auto pos = glm::mix(start_route_, target_route_, std::min(t_value_, 1.0f));
-      // 移動量から向きを決定
-      auto d = glm::normalize(pos - position_);
-      if (glm::length(d) > 0.0f) {
-        rotation_ = glm::rotation(ci::vec3(0, 0, -1), d);
-      }
-      
-      position_ = pos;
-      
-      if (t_value_ >= 1.0f) {
-        t_value_ = 0.0f;
-        route_index_ += 1;
-        if (route_index_ == route_.size()) {
-          // ゴールに到着
-          do_route_ = false;
-
-          // イベント送信
-          event_.signal("ship_arrival", Arguments());
-        }
-        else {
-          // 次の地点へ
-          start_route_ = position_;
-          const auto& pos = route_[route_index_];
-          target_route_.x = pos.x;
-          target_route_.y = position_.y;
-          target_route_.z = pos.z;
-        }
-      }
+      calcCurrentPosition(current_time, sea_level);
     }
   }
 
