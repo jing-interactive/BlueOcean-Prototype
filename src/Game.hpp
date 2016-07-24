@@ -98,7 +98,7 @@ class Game {
   bool has_route_;
 
   // 時間管理
-  Time time_;
+  Time start_time_;
 
   
   // デバッグ用
@@ -476,7 +476,20 @@ public:
       ci::JsonTree record(ci::loadFile(path));
 
       // ゲーム開始時刻を復元
-      time_ = Time(record.getValueAtIndex<double>(0));
+      start_time_ = Time(record.getValueForKey<double>("start_time"));
+
+      // 船の経路
+      has_route_ = record.getValueForKey<bool>("has_route");
+      if (has_route_) {
+        const auto& route = record["route"];
+        std::vector<ci::ivec3> ship_route;
+        for (const auto& r : route) {
+          auto pos = Json::getVec<ci::ivec3>(r);
+          ship_route.push_back(pos);
+        }
+
+        ship_.setRoute(ship_route);
+      }
     }
   }
 
@@ -666,10 +679,10 @@ public:
         ci::gl::color(1, 0, 0);
         ci::gl::drawStrokedCube(picked_aabb_);
         ci::gl::drawSphere(picked_pos_, 0.1f);
+      }
 
-        if (has_route_) {
-          drawRoute();
-        }
+      if (has_route_) {
+        drawRoute();
       }
     }
     
@@ -683,9 +696,26 @@ public:
 
     ci::JsonTree object = ci::JsonTree::makeObject();
 
-    auto duration = time_.getDuration();
-    object.pushBack(ci::JsonTree("", duration.count()));
+    // 開始時間
+    auto duration = start_time_.getDuration();
+    object.pushBack(ci::JsonTree("start_time", duration.count()));
 
+    // 船の経路
+    object.pushBack(ci::JsonTree("has_route", has_route_));
+    if (has_route_) {
+      auto route = ci::JsonTree::makeArray("route");
+      for (const auto& r : ship_.getRoute()) {
+        ci::JsonTree value;
+        value.pushBack(ci::JsonTree("", r.x));
+        value.pushBack(ci::JsonTree("", r.y));
+        value.pushBack(ci::JsonTree("", r.z));
+
+        route.pushBack(value);
+      }
+
+      object.pushBack(route);
+    }
+    
     object.write(getDocumentPath() / "record.json");
   }
 };
