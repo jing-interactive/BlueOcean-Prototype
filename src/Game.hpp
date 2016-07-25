@@ -49,7 +49,7 @@ class Game {
   ci::vec2 mouse_prev_pos;
   int touch_num;
 
-  ci::quat rotate;
+  ci::quat rotate_;
   ci::vec3 translate_;
   float z_distance;
   bool camera_modified_;
@@ -335,7 +335,7 @@ class Game {
       // ci::quat r = glm::angleAxis(l * 0.01f, v);
       ci::quat rx(ci::vec3(-d.y * camera_rotation_sensitivity_, 0.0f, 0.0f));
       ci::quat ry(ci::vec3(0.0f, -d.x * camera_rotation_sensitivity_, 0.0f));
-      rotate = ry * rotate * rx;
+      rotate_ = ry * rotate_ * rx;
     }
   }
 
@@ -345,7 +345,7 @@ class Game {
     ci::vec3 v{ d.x, 0.0f, d.y };
 
     float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance;
-    auto p = (rotate * v) * t * camera_translation_sensitivity_;
+    auto p = (rotate_ * v) * t * camera_translation_sensitivity_;
     translate_.x -= p.x;
     translate_.z -= p.z;
   }
@@ -420,6 +420,13 @@ class Game {
     // ゲーム開始時刻を復元
     start_time_ = Time(record.getValueForKey<double>("start_time"));
 
+    ship_.setPosition(Json::getVec<ci::vec3>(record["ship.position"]));
+    ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
+
+    // カメラ
+    rotate_ = Json::getVec<ci::quat>(record["camera.rotate"]);
+    z_distance = record.getValueForKey<float>("camera.z_distance");
+    
     // 船の経路
     has_route_ = record.getValueForKey<bool>("has_route");
     if (has_route_) {
@@ -434,10 +441,13 @@ class Game {
 
       ship_.setRoute(ship_route);
       ship_.start(route_start_time_);
-    }
 
-    ship_.setPosition(Json::getVec<ci::vec3>(record["ship.position"]));
-    ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
+      // カメラ設定
+      ship_camera_.start();
+      ship_camera_.update(ship_.getPosition());
+      z_distance = ship_camera_.getDistance();
+    }
+    translate_ = ship_camera_.getPosition();
   }
 
   
@@ -479,7 +489,7 @@ public:
     camera.setEyePoint(ci::vec3());
     camera.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
 
-    rotate = glm::angleAxis(ci::toRadians(45.0f), ci::vec3(0.0f, 1.0f, 0.0f))
+    rotate_ = glm::angleAxis(ci::toRadians(45.0f), ci::vec3(0.0f, 1.0f, 0.0f))
       * glm::angleAxis(ci::toRadians(-45.0f), ci::vec3(1.0f, 0.0f, 0.0f));
 
     createDialog();
@@ -622,11 +632,15 @@ public:
     ship_camera_.update(ship_.getPosition());
     
     // カメラ位置の計算
-    auto pos = rotate * ci::vec3(0, 0, z_distance) + translate_;
-    // auto pos = rotate * ci::vec3(0, 0, ship_camera_.getDistance()) + ship_camera_.getPosition();
+    translate_.y = sea_level_;
+    if (has_route_) {
+      translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
+      z_distance += (ship_camera_.getDistance() - z_distance) * 0.1f;
+    }
+    auto pos = rotate_ * ci::vec3(0, 0, z_distance) + translate_;
     
     camera.setEyePoint(pos);
-    camera.setOrientation(rotate);
+    camera.setOrientation(rotate_);
 
     sea_offset_ += sea_speed_;
 
@@ -738,8 +752,17 @@ public:
       auto rotation = Json::createFromVec("rotation", ship_.getRotation());
       ship_info.pushBack(rotation);
     }
-    
     object.pushBack(ship_info);
+
+    // カメラ情報
+    ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
+    {
+      auto rotate = Json::createFromVec("rotate", rotate_);
+      camera_info.pushBack(rotate);
+
+      camera_info.pushBack(ci::JsonTree("z_distance", z_distance));
+    }
+    object.pushBack(camera_info);
     
     object.write(getDocumentPath() / "record.json");
   }
