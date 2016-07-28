@@ -76,6 +76,8 @@ class Game {
   ci::vec2 sea_offset_;
   ci::vec2 sea_speed_;
   float sea_wave_;
+  ci::vec2 sea_tide_speed_;
+  ci::vec2 sea_tide_level_;
 
   ci::gl::Texture2dRef sea_texture_;
   ci::gl::GlslProgRef	sea_shader_;
@@ -106,8 +108,6 @@ class Game {
   bool disp_stage_;
   bool disp_stage_obj_;
   bool disp_sea_;
-
-
 
 
   
@@ -226,7 +226,6 @@ class Game {
     params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
     params->addParam("Sea Wave", &sea_wave_).step(0.001f);
     params->addParam("Sea Level", &sea_level_).step(0.25f);
-
     params->addSeparator();
 
     params->addParam("Disp Stage",    &disp_stage_);
@@ -451,6 +450,14 @@ class Game {
     }
   }
 
+
+  // 潮の満ち引きを計算
+  void caleSeaTide(const double duration) {
+    float t = (std::sin(duration * sea_tide_speed_.x) + std::sin(duration * sea_tide_speed_.y)) * 0.25 + 0.5;
+    sea_level_ = glm::mix(sea_tide_level_.x, sea_tide_level_.y, t);
+  }
+  
+
   
 public:
   Game()
@@ -472,6 +479,8 @@ public:
       sea_level_(params_.getValueForKey<float>("stage.sea_level")),
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
+      sea_tide_speed_(Json::getVec<ci::vec2>(params_["stage.sea_tide_speed"])),
+      sea_tide_level_(Json::getVec<ci::vec2>(params_["stage.sea_tide_level"])),
       picked_(false),
       ship_(event_, params_),
       ship_camera_(event_, params_),
@@ -629,7 +638,9 @@ public:
   
   void update() {
     Time current_time;
-    
+
+    caleSeaTide((current_time.getDuration() - start_time_.getDuration()).count());
+
     ship_camera_.update(ship_.getPosition());
     
     // カメラ位置の計算

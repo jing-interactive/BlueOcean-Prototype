@@ -32,59 +32,27 @@
     "sea_offset": 0,
     "sea_speed": 0,
     "sea_wave": 0.0,
-    "sea_color": [0.5, 0.5, 0.5, 1]
+    "sea_color": [0.5, 0.5, 0.5, 1],
+
+    "sea_tide_speed": [ 0.09, 0.007 ],
+    "sea_tide_level": [ 0, 13]
   },
 
   "stage_obj": [
     {
       "name": "rock1.obj",
-      "height": [8, 15],
-      "probability": 0.03
-    },
-    {
-      "name": "rock2.obj",
-      "height": [8, 15],
-      "probability": 0.03
-    },
-    {
-      "name": "rock3.obj",
-      "height": [8, 15],
-      "probability": 0.03
-    },
-    {
-      "name": "rock4.obj",
-      "height": [8, 15],
-      "probability": 0.03
-    },
-    {
-      "name": "rock5.obj",
-      "height": [8, 15],
-      "probability": 0.03
+      "height": [9, 15],
+      "probability": 0.01
     },
     {
       "name": "tree1.obj",
-      "height": [9, 13],
-      "probability": 0.03
+      "height": [8, 13],
+      "probability": 0.01
     },
     {
-      "name": "tree2.obj",
-      "height": [9, 13],
-      "probability": 0.03
-    },
-    {
-      "name": "tree3.obj",
-      "height": [8, 9],
-      "probability": 0.03
-    },
-    {
-      "name": "remain1.obj",
+      "name": "ark.obj",
       "height": [10, 15],
-      "probability": 0.0001
-    },
-    {
-      "name": "remain2.obj",
-      "height": [10, 15],
-      "probability": 0.0001
+      "probability": 0.001
     }
   ],
 
