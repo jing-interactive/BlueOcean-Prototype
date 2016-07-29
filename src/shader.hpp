@@ -29,7 +29,7 @@ std::string readFile(const std::string& path) {
 
 // 機種依存部分を置換
 std::string replaceText(std::string text) {
-  std::vector<std::pair<std::regex, std::string> > replace{
+  std::vector<std::pair<std::regex, std::string>> replace{
 #if defined (CINDER_COCOA_TOUCH)
     { std::regex("\\$version\\$"), "#version 300 es" },
     { std::regex("\\$precision\\$"), "precision mediump float;" },

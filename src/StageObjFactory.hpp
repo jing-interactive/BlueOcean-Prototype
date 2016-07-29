@@ -16,7 +16,7 @@ class StageObjFactory {
     float probability;
   };
   
-  std::map<int, std::vector<Info> > info_;
+  std::map<int, std::vector<Info>> info_;
   
 
 public:

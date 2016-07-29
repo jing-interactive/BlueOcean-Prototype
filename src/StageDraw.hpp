@@ -6,15 +6,16 @@
 
 #include "TiledStage.hpp"
 #include "Light.hpp"
+#include "Misc.hpp"
 
 
 namespace ngs {
 
 class StageDrawer {
-  std::map<ci::ivec2, ci::gl::BatchRef, LessVec> meshes_;
+  std::map<ci::ivec2, ci::gl::BatchRef, LessVec<ci::ivec2>> meshes_;
 
   ci::gl::Texture2dRef texture_;
-  ci::gl::GlslProgRef	 shader_;
+  ci::gl::GlslProgRef	shader_;
 
   
 public:

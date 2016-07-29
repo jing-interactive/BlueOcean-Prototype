@@ -66,8 +66,6 @@ class Ship {
   
   
 public:
-  Ship() = delete;
-  
   Ship(Event<Arguments>& event, ci::JsonTree& params)
     : event_(event),
       position_(Json::getVec<ci::vec3>(params["ship.position"])),

@@ -17,7 +17,7 @@ class StageObjDrawer {
   ci::gl::Texture2dRef texture_;
   ci::gl::GlslProgRef	shader_;
 
-  std::map<ci::ivec2, ci::gl::BatchRef, LessVec> meshes_;
+  std::map<ci::ivec2, ci::gl::BatchRef, LessVec<ci::ivec2>> meshes_;
 
 
 public:

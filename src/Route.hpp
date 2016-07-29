@@ -66,7 +66,7 @@ int getStageHeight(const ci::ivec3& pos, TiledStage& stage) {
 
 // 次の経路をキューに積む
 void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
-                    std::priority_queue<Node, std::vector<Node>, std::greater<Node> >& queue,
+                    std::priority_queue<Node, std::vector<Node>, std::greater<Node>>& queue,
                     const ci::ivec3& prev_pos, const int prev_cost,
                     const ci::ivec3& end,
                     TiledStage& stage) {
@@ -108,7 +108,7 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
 std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
                               TiledStage& stage) {
   std::map<ci::ivec3, Node, LessVec3> opened;
-  std::priority_queue<Node, std::vector<Node>, std::greater<Node> > queue;  
+  std::priority_queue<Node, std::vector<Node>, std::greater<Node>> queue;  
 
   int height = getStageHeight(end, stage);
 

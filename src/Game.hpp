@@ -25,6 +25,7 @@
 #include "Route.hpp"
 #include "Time.hpp"
 #include "Light.hpp"
+#include "DayLighting.hpp"
 
 
 namespace ngs {
@@ -105,6 +106,8 @@ class Game {
   Time start_time_;
 
   Light light_;
+  DayLighting day_lighting_;
+
   
   // デバッグ用
   bool disp_stage_;
@@ -487,6 +490,7 @@ public:
       ship_(event_, params_),
       ship_camera_(event_, params_),
       has_route_(false),
+      day_lighting_(params_["day_lighting"]),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true)
@@ -646,8 +650,12 @@ public:
   
   void update() {
     Time current_time;
+    double duration = current_time - start_time_;
 
-    caleSeaTide(current_time - start_time_);
+    caleSeaTide(duration);
+    auto l = day_lighting_.update(duration);
+    light_.ambient = l.ambient;
+    light_.diffuse = l.diffuse;
 
     ship_camera_.update(ship_.getPosition());
     

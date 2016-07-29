@@ -21,7 +21,7 @@ namespace ngs {
 class Stage {
   ci::ivec2 size_;
 
-  std::vector<std::vector<int> > height_map_;
+  std::vector<std::vector<int>> height_map_;
   
   ci::TriMesh land_;
   ci::AxisAlignedBox aabb_;
@@ -263,7 +263,7 @@ public:
   }
 
   
-  const std::vector<std::vector<int> >& getHeightMap() const {
+  const std::vector<std::vector<int>>& getHeightMap() const {
     return height_map_;
   }
   
