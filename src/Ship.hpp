@@ -9,6 +9,7 @@
 #include "Event.hpp"
 #include "JsonUtil.hpp"
 #include "Time.hpp"
+#include "Light.hpp"
 
 
 namespace ngs {
@@ -22,6 +23,7 @@ class Ship {
 
   ci::Color color_;
   ci::gl::BatchRef model_;
+  ci::gl::GlslProgRef shader_;
 
   std::vector<ci::ivec3> route_;
 
@@ -76,8 +78,9 @@ public:
   {
     ci::ObjLoader loader(Asset::load("ship.obj"));
 
-    auto shader = ci::gl::getStockShader(ci::gl::ShaderDef().color().lambert());
-    model_ = ci::gl::Batch::create(loader, shader);
+    auto shader_prog = readShader("color", "color");
+    shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
+    model_ = ci::gl::Batch::create(loader, shader_);
   }
 
 
@@ -122,7 +125,11 @@ public:
     }
   }
 
-  void draw() {
+  void draw(const Light& light) {
+    shader_->uniform("LightPosition", light.direction);
+    shader_->uniform("LightAmbient",  light.ambient);
+    shader_->uniform("LightDiffuse",  light.diffuse);
+    
     // TIPS:マス目の中央に位置するようオフセットを加えている
     ci::mat4 transform = glm::translate(position_ + ci::vec3(0.5, 0, 0.5))
                        * glm::mat4_cast(rotation_)

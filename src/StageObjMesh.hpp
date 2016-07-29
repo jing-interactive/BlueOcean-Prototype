@@ -10,8 +10,6 @@
 namespace ngs {
 
 class StageObjMesh {
-  ci::gl::GlslProgRef	shader_;
-
   std::map<std::string, ci::TriMesh> meshes_;
 
 
@@ -26,22 +24,18 @@ class StageObjMesh {
     return meshes_.at(path);
   }
 
-
   
 public:
-  StageObjMesh() {
-    auto lambert = ci::gl::ShaderDef().texture().lambert();
-    shader_ = ci::gl::getStockShader(lambert);
-  }
+  StageObjMesh() = default;
 
-  ci::gl::BatchRef createBatch(const std::vector<StageObj>& objects) {
+  ci::gl::BatchRef createBatch(const std::vector<StageObj>& objects, const ci::gl::GlslProgRef& shader) {
     ci::geom::SourceMods mods;
     for (const auto& obj : objects) {
       // モデルをアフィン変換して追加
       mods &= loadMesh(obj.getName()) >> ci::geom::Transform(obj.getTransfomation());
     }
 
-    return ci::gl::Batch::create(mods, shader_);
+    return ci::gl::Batch::create(mods, shader);
   }
 
 };

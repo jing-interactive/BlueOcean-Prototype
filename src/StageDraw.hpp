@@ -5,6 +5,7 @@
 //
 
 #include "TiledStage.hpp"
+#include "Light.hpp"
 
 
 namespace ngs {
@@ -12,34 +13,42 @@ namespace ngs {
 class StageDrawer {
   std::map<ci::ivec2, ci::gl::BatchRef, LessVec> meshes_;
 
-  ci::gl::Texture2dRef land_texture_;
-  ci::gl::GlslProgRef	 land_shader_;
+  ci::gl::Texture2dRef texture_;
+  ci::gl::GlslProgRef	 shader_;
 
   
 public:
   StageDrawer() {
     // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる
-    land_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("stage.png")),
-                                              ci::gl::Texture2d::Format()
-                                              .wrap(GL_CLAMP_TO_EDGE)
-                                              .minFilter(GL_NEAREST)
-                                              // .magFilter(GL_NEAREST)
-                                              );
-    auto lambert = ci::gl::ShaderDef().texture().lambert();
-    land_shader_ = ci::gl::getStockShader(lambert);
+    texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("stage.png")),
+                                         ci::gl::Texture2d::Format()
+                                         .wrap(GL_CLAMP_TO_EDGE)
+                                         .minFilter(GL_NEAREST)
+                                         // .magFilter(GL_NEAREST)
+                                         );
+
+    auto shader = readShader("texture", "texture");
+    shader_ = ci::gl::GlslProg::create(shader.first, shader.second);
   }
 
   void clear() {
     meshes_.clear();
   }
+
+
+  void setupLight(const Light& light) {
+    shader_->uniform("LightPosition", light.direction);
+    shader_->uniform("LightAmbient",  light.ambient);
+    shader_->uniform("LightDiffuse",  light.diffuse);
+  }
   
   void draw(const ci::ivec2& pos, const Stage& stage) {
     if (meshes_.count(pos) == 0) {
-      ci::gl::BatchRef mesh = ci::gl::Batch::create(stage.getLandMesh(), land_shader_);
+      ci::gl::BatchRef mesh = ci::gl::Batch::create(stage.getLandMesh(), shader_);
       meshes_.insert(std::make_pair(pos, mesh));
     }
 
-    land_texture_->bind();
+    texture_->bind();
     meshes_.at(pos)->draw();
   }
   

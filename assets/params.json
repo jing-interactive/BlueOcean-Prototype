@@ -19,6 +19,13 @@
     "height": 512
   },
 
+  "light": {
+    "direction": [ 0, 0, 1, 0 ],
+    "ambient":   [ 0.2, 0.2, 0.2, 1.0 ],
+    "diffuse":   [ 0.8, 0.8, 0.8, 1.0 ],
+    "specular":  [ 0.2, 0.2, 0.2, 1.0 ]
+  },
+  
   "stage": {
     "block_size": 64,
 

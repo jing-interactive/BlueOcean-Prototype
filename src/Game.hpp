@@ -24,6 +24,7 @@
 #include "ShipCamera.hpp"
 #include "Route.hpp"
 #include "Time.hpp"
+#include "Light.hpp"
 
 
 namespace ngs {
@@ -103,6 +104,7 @@ class Game {
   // 時間管理
   Time start_time_;
 
+  Light light_;
   
   // デバッグ用
   bool disp_stage_;
@@ -508,6 +510,12 @@ public:
 
     createSeaMesh();
 
+    // Lighting
+    light_.direction = Json::getVec<ci::vec4>(params_["light.direction"]);
+    light_.ambient   = Json::getColorA<float>(params_["light.ambient"]);
+    light_.diffuse   = Json::getColorA<float>(params_["light.diffuse"]);
+    light_.specular  = Json::getColorA<float>(params_["light.specular"]);
+    
     // FBO
     auto format = ci::gl::Fbo::Format()
       .colorTexture()
@@ -663,6 +671,9 @@ public:
     ci::gl::setMatrices(camera);
     ci::gl::disableAlphaBlending();
 
+    stage_drawer_.setupLight(light_);
+    stageobj_drawer_.setupLight(light_);
+    
     // 陸地の描画
     // 画面中央の座標をレイキャストして求めている
     ci::Ray ray = camera.generateRay(0.5f, 0.5f,
@@ -711,7 +722,7 @@ public:
       }
       
       drawStage(pos, frustum);
-      ship_.draw();
+      ship_.draw(light_);
 
       if (picked_) {
         ci::gl::setModelMatrix(ci::mat4(1.0f));
