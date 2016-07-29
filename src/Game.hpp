@@ -647,7 +647,7 @@ public:
   void update() {
     Time current_time;
 
-    caleSeaTide((current_time.getDuration() - start_time_.getDuration()).count());
+    caleSeaTide(current_time - start_time_);
 
     ship_camera_.update(ship_.getPosition());
     

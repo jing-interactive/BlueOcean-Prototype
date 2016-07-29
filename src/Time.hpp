@@ -29,6 +29,10 @@ public:
   Duration getDuration() const {
     return begin_.time_since_epoch();
   }
+
+  double operator-(const Time& rhs) const {
+    return (getDuration() - rhs.getDuration()).count();
+  }
   
 };
 

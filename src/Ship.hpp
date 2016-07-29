@@ -37,10 +37,10 @@ class Ship {
 
   // 現在時間の移動位置を求める
   void calcCurrentPosition(const Time& current_time, const float sea_level) {
-    auto duration = current_time.getDuration() - route_start_time_.getDuration();
+    double duration = current_time - route_start_time_;
     
     double total_time = (route_.size() - 1) / speed_;
-    if (duration.count() >= total_time) {
+    if (duration >= total_time) {
       // 終点に着いた
       position_ = route_.back();
       do_route_ = false;
@@ -48,8 +48,8 @@ class Ship {
       event_.signal("ship_arrival", Arguments());
     }
     else {
-      int index = duration.count() / speed_;
-      double t = (duration.count() - speed_ * index) / speed_;
+      int index = duration / speed_;
+      double t = (duration - speed_ * index) / speed_;
       
       // ２点間の線形補間を利用した移動
       ci::vec3 start = route_[index];
