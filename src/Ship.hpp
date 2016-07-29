@@ -57,6 +57,9 @@ class Ship {
       position_ = glm::mix(start, end, t);
       
       // 移動量から向きを決定
+      // TIPS:Y軸回転のみ
+      start.y = 0;
+      end.y   = 0;
       auto d = glm::normalize(end - start);
       rotation_ = glm::rotation(ci::vec3(0, 0, -1), d);
     }

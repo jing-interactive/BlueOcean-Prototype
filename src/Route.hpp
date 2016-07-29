@@ -17,6 +17,8 @@ namespace ngs { namespace Route {
 struct Node {
   ci::ivec3 pos;
   ci::ivec3 prev_pos;
+  int height;
+
   int cost;
   int estimate_cost;
   int score;
@@ -76,6 +78,7 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
     Node node = {
       new_pos,
       prev_pos,
+      height,
       
       cost,
       estimate_cost,
@@ -93,16 +96,16 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   std::map<ci::ivec3, Node, LessVec<ci::ivec3>> opened;
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> queue;  
 
-  int height = getStageHeight(end, stage);
+  int height = getStageHeight(start, stage);
 
   DOUT << "start:" << start << std::endl;
   DOUT << "  end:" << end << std::endl;
-  DOUT << "end height:" << height << std::endl;
   
   // スタート地点をキューに積む
   Node node = {
     start,
     start,
+    height,
     0,
     0,
     0,
@@ -136,10 +139,13 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   ci::ivec3 pos = end;
   std::vector<ci::ivec3> roots;
   while (1) {
-    roots.push_back(pos);
     auto node = opened.at(pos);
+
     // コストが0: スタート地点
     if (!node.cost) break;
+    
+    ci::ivec3 p(pos.x, node.height, pos.z);
+    roots.push_back(p);
     
     pos = node.prev_pos;
   }
