@@ -100,5 +100,10 @@
 
   "ship_camera": {
     "distance": [ 100, 200 ]
+  },
+  
+  "target": {
+    "scaling": [ 1, 1, 1 ],
+    "color": [ 1.0, 0.0, 0.0 ]
   }
 }

@@ -68,10 +68,10 @@ class Ship {
 public:
   Ship(Event<Arguments>& event, ci::JsonTree& params)
     : event_(event),
-      position_(Json::getVec<ci::vec3>(params["ship.position"])),
-      scaling_(Json::getVec<ci::vec3>(params["ship.scaling"])),
-      color_(Json::getColor<float>(params["ship.color"])),
-      speed_(params.getValueForKey<float>("ship.speed")),
+      position_(Json::getVec<ci::vec3>(params["position"])),
+      scaling_(Json::getVec<ci::vec3>(params["scaling"])),
+      color_(Json::getColor<float>(params["color"])),
+      speed_(params.getValueForKey<float>("speed")),
       do_route_(false)
   {
     ci::ObjLoader loader(Asset::load("ship.obj"));

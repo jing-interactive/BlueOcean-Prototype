@@ -9,7 +9,7 @@
 #include <cinder/params/Params.h>
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
-#include <cinder/Frustum.h>
+#include <cinder/Frustum.h> 
 #include "Event.hpp"
 #include "Arguments.hpp"
 #include "Asset.hpp"
@@ -26,6 +26,7 @@
 #include "Time.hpp"
 #include "Light.hpp"
 #include "DayLighting.hpp"
+#include "Target.hpp"
 
 
 namespace ngs {
@@ -102,6 +103,8 @@ class Game {
   bool has_route_;
   Time route_start_time_;
 
+  Target target_;
+  
   // 時間管理
   Time start_time_;
 
@@ -116,6 +119,7 @@ class Game {
   
   bool pause_day_lighting_;
   bool pause_sea_tide_;
+  bool pause_ship_camera_;
 
 
   
@@ -245,7 +249,7 @@ class Game {
 
     params->addParam("Pause Day Lighting", &pause_day_lighting_);
     params->addParam("Pause Sea Tide",     &pause_sea_tide_);
-    
+    params->addParam("Pause Ship Camera",  &pause_ship_camera_);    
   }
 
   void drawDialog() {
@@ -406,8 +410,8 @@ class Game {
     ci::gl::color(1, 0, 0);
     const auto& route = ship_.getRoute();
     for (const auto& r : route) {
-      ci::vec3 pos(r);
-      ci::gl::drawCube(pos + ci::vec3(0.5, 0.5, 0.5), ci::vec3(0.2, 0.2, 0.2));
+      ci::vec3 pos(r.x, std::max(sea_level_, float(r.y)), r.z);
+      ci::gl::drawCube(pos + ci::vec3(0.5, 0.2, 0.5), ci::vec3(0.2, 0.2, 0.2));
     }
   }
 
@@ -418,6 +422,7 @@ class Game {
                    [this](const Connection&, const Arguments&) {
         ci::app::console() << "ship_arrival" << std::endl;
         has_route_ = false;
+        target_.arrived();
         ship_camera_.arrived();
       });
     
@@ -456,6 +461,8 @@ class Game {
       ship_.setRoute(ship_route);
       ship_.start(route_start_time_);
 
+      target_.setPosition(ship_route.back());
+      
       // カメラ設定
       ship_camera_.start();
       ship_camera_.update(ship_.getPosition());
@@ -496,15 +503,17 @@ public:
       sea_tide_speed_(Json::getVec<ci::vec2>(params_["stage.sea_tide_speed"])),
       sea_tide_level_(Json::getVec<ci::vec2>(params_["stage.sea_tide_level"])),
       picked_(false),
-      ship_(event_, params_),
+      ship_(event_, params_["ship"]),
       ship_camera_(event_, params_),
       has_route_(false),
+      target_(params_["target"]),
       day_lighting_(params_["day_lighting"]),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
       pause_day_lighting_(false),
-      pause_sea_tide_(false)
+      pause_sea_tide_(false),
+      pause_ship_camera_(false)
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -609,6 +618,7 @@ public:
           ship_.setRoute(route);
           route_start_time_ = Time();
           ship_.start(route_start_time_);
+          target_.setPosition(route.back());
           ship_camera_.start();
           has_route_ = true;
         }
@@ -678,8 +688,10 @@ public:
     // カメラ位置の計算
     translate_.y = sea_level_;
     if (has_route_) {
-      translate_  += (ship_camera_.getPosition() - translate_) * 0.1f;
-      z_distance_ += (ship_camera_.getDistance() - z_distance_) * 0.1f;
+      if(!pause_ship_camera_) {
+        translate_  += (ship_camera_.getPosition() - translate_) * 0.1f;
+        z_distance_ += (ship_camera_.getDistance() - z_distance_) * 0.1f;
+      }
     }
     auto pos = rotate_ * ci::vec3(0, 0, z_distance_) + translate_;
     
@@ -689,6 +701,7 @@ public:
     sea_offset_ += sea_speed_;
 
     ship_.update(current_time, sea_level_);
+    target_.update(duration, sea_level_);
   }
   
   void draw() {
@@ -747,6 +760,7 @@ public:
       
       drawStage(pos, frustum);
       ship_.draw(light_);
+      target_.draw();
 
       if (picked_) {
         ci::gl::setModelMatrix(ci::mat4(1.0f));

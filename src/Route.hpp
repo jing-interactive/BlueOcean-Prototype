@@ -14,23 +14,6 @@
 
 namespace ngs { namespace Route {
 
-// ci::ivec3同士の比較関数
-struct LessVec3 {
-  bool operator()(const ci::ivec3& lhs, const ci::ivec3& rhs) const {
-    if (lhs.x < rhs.x) return true;
-    if (lhs.x > rhs.x) return false;
-    
-    if (lhs.y < rhs.y) return true;
-    if (lhs.y > rhs.y) return false;
-
-    if (lhs.z < rhs.z) return true;
-    // if (lhs.z > rhs.z) return false;
-
-    return false;
-  }
-};
-
-
 struct Node {
   ci::ivec3 pos;
   ci::ivec3 prev_pos;
@@ -65,7 +48,7 @@ int getStageHeight(const ci::ivec3& pos, TiledStage& stage) {
 }
 
 // 次の経路をキューに積む
-void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
+void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
                     std::priority_queue<Node, std::vector<Node>, std::greater<Node>>& queue,
                     const ci::ivec3& prev_pos, const int prev_cost,
                     const ci::ivec3& end,
@@ -107,7 +90,7 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec3>& opened,
 
 std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
                               TiledStage& stage) {
-  std::map<ci::ivec3, Node, LessVec3> opened;
+  std::map<ci::ivec3, Node, LessVec<ci::ivec3>> opened;
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> queue;  
 
   int height = getStageHeight(end, stage);
