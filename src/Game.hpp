@@ -113,6 +113,9 @@ class Game {
   bool disp_stage_;
   bool disp_stage_obj_;
   bool disp_sea_;
+  
+  bool pause_day_lighting_;
+  bool pause_sea_tide_;
 
 
   
@@ -188,7 +191,7 @@ class Game {
 #else
   void createDialog() {
     // 各種パラメーター設定
-    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(250, 600)));
+    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(300, 600)));
 
     params->addParam("Fov", &fov).min(1.0f).max(180.0f).updateFn([this]() {
         camera.setFov(fov);
@@ -231,11 +234,17 @@ class Game {
     params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
     params->addParam("Sea Wave", &sea_wave_).step(0.001f);
     params->addParam("Sea Level", &sea_level_).step(0.25f);
+
     params->addSeparator();
 
     params->addParam("Disp Stage",    &disp_stage_);
     params->addParam("Disp StageObj", &disp_stage_obj_);
     params->addParam("Disp Sea",      &disp_sea_);
+
+    params->addSeparator();
+
+    params->addParam("Pause Day Lighting", &pause_day_lighting_);
+    params->addParam("Pause Sea Tide",     &pause_sea_tide_);
     
   }
 
@@ -493,7 +502,9 @@ public:
       day_lighting_(params_["day_lighting"]),
       disp_stage_(true),
       disp_stage_obj_(true),
-      disp_sea_(true)
+      disp_sea_(true),
+      pause_day_lighting_(false),
+      pause_sea_tide_(false)
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -652,10 +663,15 @@ public:
     Time current_time;
     double duration = current_time - start_time_;
 
-    caleSeaTide(duration);
-    auto l = day_lighting_.update(duration);
-    light_.ambient = l.ambient;
-    light_.diffuse = l.diffuse;
+    if (!pause_sea_tide_) {
+      caleSeaTide(duration);
+    }
+
+    if (!pause_day_lighting_) {
+      auto l = day_lighting_.update(duration);
+      light_.ambient = l.ambient;
+      light_.diffuse = l.diffuse;
+    }
 
     ship_camera_.update(ship_.getPosition());
     

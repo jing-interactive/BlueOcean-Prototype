@@ -40,6 +40,8 @@ public:
 
     // 1日でループする時間を求める
     double time = std::fmod(duration, last_time);
+
+    // 現在時間からキーを探す
     size_t i;
     for (i = 0; i < (lights_.size() - 1); ++i) {
       if(time >= lights_[i].time && time <= lights_[i + 1].time) {
@@ -50,7 +52,8 @@ public:
 
     const auto& start_key = lights_[i];
     const auto& end_key   = lights_[i + 1];
-    
+
+    // ２つのキーを直線補間
     double t = (time - start_key.time) / (end_key.time - start_key.time);
 
     Light light;
