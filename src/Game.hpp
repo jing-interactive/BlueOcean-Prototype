@@ -51,6 +51,7 @@ class Game {
 
   ci::vec2 mouse_prev_pos;
   int touch_num;
+  uint32_t touch_id;
 
   ci::quat rotate_;
   ci::vec3 translate_;
@@ -629,6 +630,12 @@ public:
 
   void touchesBegan(ci::app::TouchEvent event) {
     const auto& touches = event.getTouches();
+
+    if (touch_num == 0) {
+      // 最初のを覚えとく
+      touch_id = touches[0].getId();
+    }
+    
     touch_num += touches.size();
   }
 
@@ -661,11 +668,35 @@ public:
   
   void touchesEnded(ci::app::TouchEvent event) {
     const auto& touches = event.getTouches();
+#if defined (CINDER_COCOA_TOUCH)
+    if (!camera_modified_) {
+      for (const auto& touch : touches) {
+        if (touch.getId() !=touch_id) continue;
+
+        // クリックした位置のAABBを特定
+        ci::ivec2 pos = touch.getPos();
+        pickStage(pos);
+
+        if (picked_) {
+          // 経路探索
+          ci::ivec3 start = ship_.getPosition();
+          ci::ivec3 end   = glm::floor(picked_pos_);
+
+          auto route = Route::search(start, end, stage);
+          ship_.setRoute(route);
+          route_start_time_ = Time();
+          ship_.start(route_start_time_);
+          target_.setPosition(route.back());
+          ship_camera_.start();
+          has_route_ = true;
+        }
+      }
+    }
+#endif
 
     // 最悪マイナス値にならないよう
     touch_num = std::max(touch_num - int(touches.size()), 0);
     if (!touch_num) camera_modified_ = false;
-
   }
 
   
