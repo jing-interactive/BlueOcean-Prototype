@@ -20,11 +20,28 @@ public:
   {
 #if defined (CINDER_COCOA_TOUCH)
     // 縦横画面両対応
-    getSignalSupportedOrientations().connect([]() { return ci::app::InterfaceOrientation::All; });
+    getSignalSupportedOrientations().connect([]() {
+        return ci::app::InterfaceOrientation::All;
+      });
 #endif
 
     // アクティブになった時にタッチ情報を初期化
-    getSignalDidBecomeActive().connect([this](){ game_->resetTouch(); });
+    getSignalDidBecomeActive().connect([this]() {
+        DOUT << "SignalDidBecomeActive" << std::endl;
+        game_->resetTouch();
+      });
+
+    // 非アクティブ時
+    getSignalWillResignActive().connect([this]() {
+        DOUT << "SignalWillResignActive" << std::endl;
+      });
+    
+#if defined (CINDER_COCOA_TOUCH)
+    // バックグラウンド移行
+    getSignalDidEnterBackground().connect([this]() {
+        DOUT << "SignalDidEnterBackground" << std::endl;
+      });
+#endif
   }
   
 

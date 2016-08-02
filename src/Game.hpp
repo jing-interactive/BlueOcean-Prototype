@@ -431,6 +431,54 @@ class Game {
     
   }
 
+
+  // ゲーム内情報を書き出す
+  void storeRecords() {
+    ci::JsonTree object;
+
+    // 開始時間
+    auto duration = start_time_.getDuration();
+    object.pushBack(ci::JsonTree("start_time", duration.count()));
+
+    // 船の経路
+    object.pushBack(ci::JsonTree("has_route", has_route_));
+    if (has_route_) {
+      auto route = ci::JsonTree::makeArray("route");
+      for (const auto& r : ship_.getRoute()) {
+        ci::JsonTree value = Json::createFromVec(r);
+        route.pushBack(value);
+      }
+
+      object.pushBack(route);
+
+      object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
+    }
+
+    // 船の情報
+    ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
+    {
+      auto position = Json::createFromVec("position", ship_.getPosition());
+      ship_info.pushBack(position);
+    }
+    {
+      auto rotation = Json::createFromVec("rotation", ship_.getRotation());
+      ship_info.pushBack(rotation);
+    }
+    object.pushBack(ship_info);
+
+    // カメラ情報
+    ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
+    {
+      auto rotate = Json::createFromVec("angle", camera_angle_);
+      camera_info.pushBack(rotate);
+
+      camera_info.pushBack(ci::JsonTree("z_distance", z_distance_));
+    }
+    object.pushBack(camera_info);
+    
+    object.write(getDocumentPath() / "record.json");
+  }
+  
   // セーブデータから色々復元
   void restoreFromRecords() {
     auto path = getDocumentPath() / "record.json";
@@ -821,49 +869,7 @@ public:
   void cleanup() {
     DOUT << "cleanup" << std::endl;
 
-    ci::JsonTree object;
-
-    // 開始時間
-    auto duration = start_time_.getDuration();
-    object.pushBack(ci::JsonTree("start_time", duration.count()));
-
-    // 船の経路
-    object.pushBack(ci::JsonTree("has_route", has_route_));
-    if (has_route_) {
-      auto route = ci::JsonTree::makeArray("route");
-      for (const auto& r : ship_.getRoute()) {
-        ci::JsonTree value = Json::createFromVec(r);
-        route.pushBack(value);
-      }
-
-      object.pushBack(route);
-
-      object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
-    }
-
-    // 船の情報
-    ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
-    {
-      auto position = Json::createFromVec("position", ship_.getPosition());
-      ship_info.pushBack(position);
-    }
-    {
-      auto rotation = Json::createFromVec("rotation", ship_.getRotation());
-      ship_info.pushBack(rotation);
-    }
-    object.pushBack(ship_info);
-
-    // カメラ情報
-    ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
-    {
-      auto rotate = Json::createFromVec("angle", camera_angle_);
-      camera_info.pushBack(rotate);
-
-      camera_info.pushBack(ci::JsonTree("z_distance", z_distance_));
-    }
-    object.pushBack(camera_info);
-    
-    object.write(getDocumentPath() / "record.json");
+    storeRecords();
   }
 };
 
