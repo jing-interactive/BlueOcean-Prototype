@@ -56,6 +56,8 @@ class Game {
   ci::quat rotate_;
   ci::vec3 translate_;
   float z_distance_;
+  ci::vec2 camera_angle_;
+  ci::vec2 angle_restriction_;
   bool camera_modified_;
 
   // カメラの操作感
@@ -348,12 +350,12 @@ class Game {
     ci::vec2 d{ current_pos - prev_pos };
     float l = ci::length(d);
     if (l > 0.0f) {
-      // d = ci::normalize(d);
-      // ci::vec3 v{ -d.y, -d.x, 0.0f };
-      // ci::quat r = glm::angleAxis(l * 0.01f, v);
-      ci::quat rx(ci::vec3(-d.y * camera_rotation_sensitivity_, 0.0f, 0.0f));
-      ci::quat ry(ci::vec3(0.0f, -d.x * camera_rotation_sensitivity_, 0.0f));
-      rotate_ = ry * rotate_ * rx;
+      camera_angle_.x += -d.y * camera_rotation_sensitivity_;
+      camera_angle_.x = glm::clamp(camera_angle_.x, angle_restriction_.x, angle_restriction_.y);
+      camera_angle_.y += -d.x * camera_rotation_sensitivity_;
+      
+      rotate_ = glm::angleAxis(ci::toRadians(camera_angle_.y), ci::vec3(0.0f, 1.0f, 0.0f))
+        * glm::angleAxis(ci::toRadians(camera_angle_.x), ci::vec3(1.0f, 0.0f, 0.0f));
     }
   }
 
@@ -443,9 +445,12 @@ class Game {
     ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
 
     // カメラ
-    rotate_     = Json::getVec<ci::quat>(record["camera.rotate"]);
-    translate_  = ship_.getPosition();
-    z_distance_ = record.getValueForKey<float>("camera.z_distance");
+    translate_    = ship_.getPosition();
+    z_distance_   = record.getValueForKey<float>("camera.z_distance");
+    camera_angle_ = Json::getVec<ci::vec2>(record["camera.angle"]);
+
+    rotate_ = glm::angleAxis(ci::toRadians(camera_angle_.y), ci::vec3(0.0f, 1.0f, 0.0f))
+      * glm::angleAxis(ci::toRadians(camera_angle_.x), ci::vec3(1.0f, 0.0f, 0.0f));
     
     // 船の経路
     has_route_ = record.getValueForKey<bool>("has_route");
@@ -491,6 +496,8 @@ public:
       camera_translation_sensitivity_(params_.getValueForKey<float>("app.camera_translation_sensitivity")),
       touch_num(0),
       z_distance_(params_.getValueForKey<float>("camera.z_distance")),
+      camera_angle_(Json::getVec<ci::vec2>(params_["camera.angle"])),
+      angle_restriction_(Json::getVec<ci::vec2>(params_["camera.angle_restriction"])),
       camera_modified_(false),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
@@ -526,8 +533,8 @@ public:
     camera.setEyePoint(ci::vec3());
     camera.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
 
-    rotate_ = glm::angleAxis(ci::toRadians(45.0f), ci::vec3(0.0f, 1.0f, 0.0f))
-      * glm::angleAxis(ci::toRadians(-45.0f), ci::vec3(1.0f, 0.0f, 0.0f));
+    rotate_ = glm::angleAxis(ci::toRadians(camera_angle_.y), ci::vec3(0.0f, 1.0f, 0.0f))
+      * glm::angleAxis(ci::toRadians(camera_angle_.x), ci::vec3(1.0f, 0.0f, 0.0f));
 
     createDialog();
 
@@ -614,7 +621,7 @@ public:
           // 経路探索
           ci::ivec3 start = ship_.getPosition();
           ci::ivec3 end   = glm::floor(picked_pos_);
-
+          
           auto route = Route::search(start, end, stage);
           ship_.setRoute(route);
           route_start_time_ = Time();
@@ -849,7 +856,7 @@ public:
     // カメラ情報
     ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
     {
-      auto rotate = Json::createFromVec("rotate", rotate_);
+      auto rotate = Json::createFromVec("angle", camera_angle_);
       camera_info.pushBack(rotate);
 
       camera_info.pushBack(ci::JsonTree("z_distance", z_distance_));

@@ -49,6 +49,31 @@ int getStageHeight(const ci::ivec3& pos, TiledStage& stage) {
     return height_map[z][x];
 }
 
+// 海面より１ブロック高く、海面に接した陸地か調べる
+// 引数のpos.yが海面の高さを表す
+bool canSearch(const ci::ivec3 pos, TiledStage& stage) {
+  int height = getStageHeight(pos, stage);
+
+  if (height > (pos.y + 1)) return false;
+
+  // ４方向のどこかに海はあるか
+  ci::ivec3 vector[] = {
+    {  1, 0,  0 },
+    { -1, 0,  0 },
+    {  0, 0,  1 },
+    {  0, 0, -1 },
+  };
+
+  for (const auto& v : vector) {
+    auto new_pos = pos + v;
+  
+    int height = getStageHeight(new_pos, stage);
+    if (height <= pos.y) return true;
+  }
+    
+  return false;
+}
+
 // 次の経路をキューに積む
 void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
                     std::priority_queue<Node, std::vector<Node>, std::greater<Node>>& queue,

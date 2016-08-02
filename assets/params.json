@@ -2,7 +2,7 @@
   "app": {
     "size": [ 960, 640 ],
 
-    "camera_rotation_sensitivity":    0.01,
+    "camera_rotation_sensitivity":    0.3,
     "camera_translation_sensitivity": 0.005
   },
   
@@ -11,7 +11,9 @@
     "near_z": 20,
     "far_z": 3000,
 
-    "z_distance": 200
+    "z_distance": 200,
+    "angle": [ -45, 45 ],
+    "angle_restriction": [ -70, -25 ]
   },
 
   "fbo": {
