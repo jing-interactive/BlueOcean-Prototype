@@ -55,9 +55,11 @@ class Game {
 
   ci::quat rotate_;
   ci::vec3 translate_;
-  float z_distance_;
   ci::vec2 camera_angle_;
   ci::vec2 angle_restriction_;
+  float distance_;
+  ci::vec2 distance_restriction_;
+  
   bool camera_modified_;
 
   // カメラの操作感
@@ -383,7 +385,7 @@ class Game {
     ci::vec2 d{ current_pos - prev_pos };
     ci::vec3 v{ d.x, 0.0f, d.y };
 
-    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance_;
+    float t = std::tan(ci::toRadians(fov) / 2.0f) * distance_;
     auto p = (rotate_ * v) * t * camera_translation_sensitivity_;
     translate_.x -= p.x;
     translate_.z -= p.z;
@@ -391,8 +393,8 @@ class Game {
 
   // ズーミング操作
   void handlingZooming(const float zooming) {
-    float t = std::tan(ci::toRadians(fov) / 2.0f) * z_distance_;
-    z_distance_ = std::max(z_distance_- zooming * t, near_z);
+    float t = std::tan(ci::toRadians(fov) / 2.0f) * distance_;
+    distance_ = glm::clamp(distance_- zooming * t, distance_restriction_.x, distance_restriction_.y);
   }
 
   
@@ -491,7 +493,7 @@ class Game {
       auto rotate = Json::createFromVec("angle", camera_angle_);
       camera_info.pushBack(rotate);
 
-      camera_info.pushBack(ci::JsonTree("z_distance", z_distance_));
+      camera_info.pushBack(ci::JsonTree("distance", distance_));
     }
     object.pushBack(camera_info);
 
@@ -528,7 +530,7 @@ class Game {
 
     // カメラ
     translate_    = ship_.getPosition();
-    z_distance_   = record.getValueForKey<float>("camera.z_distance");
+    distance_     = record.getValueForKey<float>("camera.distance");
     camera_angle_ = Json::getVec<ci::vec2>(record["camera.angle"]);
 
     rotate_ = glm::angleAxis(ci::toRadians(camera_angle_.y), ci::vec3(0.0f, 1.0f, 0.0f))
@@ -554,8 +556,8 @@ class Game {
       // カメラ設定
       ship_camera_.start();
       ship_camera_.update(ship_.getPosition());
-      translate_  = ship_camera_.getPosition();
-      z_distance_ = ship_camera_.getDistance();
+      translate_ = ship_camera_.getPosition();
+      distance_  = ship_camera_.getDistance();
 
     }
 
@@ -589,9 +591,10 @@ public:
       camera_rotation_sensitivity_(params_.getValueForKey<float>("app.camera_rotation_sensitivity")),
       camera_translation_sensitivity_(params_.getValueForKey<float>("app.camera_translation_sensitivity")),
       touch_num(0),
-      z_distance_(params_.getValueForKey<float>("camera.z_distance")),
       camera_angle_(Json::getVec<ci::vec2>(params_["camera.angle"])),
       angle_restriction_(Json::getVec<ci::vec2>(params_["camera.angle_restriction"])),
+      distance_(params_.getValueForKey<float>("camera.distance")),
+      distance_restriction_(Json::getVec<ci::vec2>(params_["camera.distance_restriction"])),
       camera_modified_(false),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
@@ -804,11 +807,11 @@ public:
     translate_.y = sea_level_;
     if (has_route_) {
       if(!pause_ship_camera_) {
-        translate_  += (ship_camera_.getPosition() - translate_) * 0.1f;
-        z_distance_ += (ship_camera_.getDistance() - z_distance_) * 0.1f;
+        translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
+        distance_  += (ship_camera_.getDistance() - distance_) * 0.1f;
       }
     }
-    auto pos = rotate_ * ci::vec3(0, 0, z_distance_) + translate_;
+    auto pos = rotate_ * ci::vec3(0, 0, distance_) + translate_;
     
     camera.setEyePoint(pos);
     camera.setOrientation(rotate_);
