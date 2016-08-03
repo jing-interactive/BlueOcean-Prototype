@@ -107,6 +107,8 @@ class Game {
   // 経路
   bool has_route_;
   Time route_start_time_;
+  // 探索地点(経路の終点と一致しない場合もある)
+  ci::ivec3 search_pos_;
 
   Target target_;
   
@@ -337,31 +339,39 @@ class Game {
 
     if (!picked_) return;
 
-    // if (picked_pos_.y > sea_pos.y) {
-    //   // 海面より高い場所はピックできない
-    //   picked_ = false;
-    // }
-    // else {
-    //   picked_pos_ = sea_pos;
-    // }
-    picked_pos_ = sea_pos;
+    // クリックした場所が海面より低い→Rayと海面の交差を優先
+    if (picked_pos_.y < sea_pos.y) {
+      picked_pos_ = sea_pos;
+    }
   }
 
   // 経路探索
   void searchRoute() {
     ci::ivec3 start = ship_.getPosition();
-    ci::ivec3 end   = glm::floor(picked_pos_);
+    ci::ivec3 end   = glm::floor(ci::vec3(picked_pos_.x, sea_level_, picked_pos_.z));
 
     if (Route::canSearch(end, stage)) {
       // TIPS:end地点からstart地点に向かって探す
       end.y = sea_level_;
       auto route = Route::search(end, start, stage);
-      ship_.setRoute(route);
-      route_start_time_ = Time();
-      ship_.start(route_start_time_);
-      target_.setPosition(route.back());
-      ship_camera_.start();
-      has_route_ = true;
+
+      if (!route.empty()) {
+        const auto& p = route.back();
+        search_pos_ = p;
+      
+        // end地点が海面より高い→１つ手前が終点
+        if (p.y > sea_level_) {
+          route.pop_back();
+        }
+      
+        ship_.setRoute(route);
+        route_start_time_ = Time();
+        ship_.start(route_start_time_);
+        target_.setPosition(search_pos_);
+        ship_camera_.start();
+
+        has_route_ = true;
+      }
     }
   }
   
@@ -473,6 +483,9 @@ class Game {
       object.pushBack(route);
 
       object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
+
+      auto p = Json::createFromVec("search_pos", search_pos_);
+      object.pushBack(p);
     }
 
     // 船の情報
@@ -551,7 +564,8 @@ class Game {
       ship_.setRoute(ship_route);
       ship_.start(route_start_time_);
 
-      target_.setPosition(ship_route.back());
+      search_pos_ = Json::getVec<ci::vec3>(record["search_pos"]);
+      target_.setPosition(search_pos_);
       
       // カメラ設定
       ship_camera_.start();

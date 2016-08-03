@@ -54,6 +54,8 @@ int getStageHeight(const ci::ivec3& pos, TiledStage& stage) {
 bool canSearch(const ci::ivec3 pos, TiledStage& stage) {
   int height = getStageHeight(pos, stage);
 
+  DOUT << "height:" << height << " sea_level:" << pos.y << std::endl;
+  
   if (height > (pos.y + 1)) return false;
 
   // ４方向のどこかに海はあるか
