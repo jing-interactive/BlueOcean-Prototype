@@ -335,15 +335,34 @@ class Game {
 
     if (!picked_) return;
 
-    if (picked_pos_.y > sea_pos.y) {
-      // 海面より高い場所はピックできない
-      picked_ = false;
-    }
-    else {
-      picked_pos_ = sea_pos;
-    }
+    // if (picked_pos_.y > sea_pos.y) {
+    //   // 海面より高い場所はピックできない
+    //   picked_ = false;
+    // }
+    // else {
+    //   picked_pos_ = sea_pos;
+    // }
+    picked_pos_ = sea_pos;
   }
 
+  // 経路探索
+  void searchRoute() {
+    ci::ivec3 start = ship_.getPosition();
+    ci::ivec3 end   = glm::floor(picked_pos_);
+
+    if (Route::canSearch(end, stage)) {
+      // TIPS:end地点からstart地点に向かって探す
+      end.y = sea_level_;
+      auto route = Route::search(end, start, stage);
+      ship_.setRoute(route);
+      route_start_time_ = Time();
+      ship_.start(route_start_time_);
+      target_.setPosition(route.back());
+      ship_camera_.start();
+      has_route_ = true;
+    }
+  }
+  
 
   // 回転操作
   void handlingRotation(const ci::vec2& current_pos, const ci::vec2& prev_pos) {
@@ -475,6 +494,21 @@ class Game {
       camera_info.pushBack(ci::JsonTree("z_distance", z_distance_));
     }
     object.pushBack(camera_info);
+
+    // デバッグ設定
+    {
+      ci::JsonTree debug_info = ci::JsonTree::makeObject("debug");
+
+      debug_info.pushBack(ci::JsonTree("disp_stage",     disp_stage_));
+      debug_info.pushBack(ci::JsonTree("disp_stage_obj", disp_stage_obj_));
+      debug_info.pushBack(ci::JsonTree("disp_sea",       disp_sea_));
+
+      debug_info.pushBack(ci::JsonTree("pause_day_lighting", pause_day_lighting_));
+      debug_info.pushBack(ci::JsonTree("pause_sea_tide",     pause_sea_tide_));
+      debug_info.pushBack(ci::JsonTree("pause_ship_camera",  pause_ship_camera_));
+      
+      object.pushBack(debug_info);
+    }
     
     object.write(getDocumentPath() / "record.json");
   }
@@ -522,6 +556,18 @@ class Game {
       ship_camera_.update(ship_.getPosition());
       translate_  = ship_camera_.getPosition();
       z_distance_ = ship_camera_.getDistance();
+
+    }
+
+    // デバッグ設定
+    if (record.hasChild("debug")) {
+      disp_stage_     = record.getValueForKey<bool>("debug.disp_stage");
+      disp_stage_obj_ = record.getValueForKey<bool>("debug.disp_stage_obj");
+      disp_sea_       = record.getValueForKey<bool>("debug.disp_sea");
+      
+      pause_day_lighting_ = record.getValueForKey<bool>("debug.pause_day_lighting");
+      pause_sea_tide_     = record.getValueForKey<bool>("debug.pause_sea_tide");
+      pause_ship_camera_  = record.getValueForKey<bool>("debug.pause_ship_camera");
     }
   }
 
@@ -667,16 +713,7 @@ public:
 
         if (picked_) {
           // 経路探索
-          ci::ivec3 start = ship_.getPosition();
-          ci::ivec3 end   = glm::floor(picked_pos_);
-          
-          auto route = Route::search(start, end, stage);
-          ship_.setRoute(route);
-          route_start_time_ = Time();
-          ship_.start(route_start_time_);
-          target_.setPosition(route.back());
-          ship_camera_.start();
-          has_route_ = true;
+          searchRoute();
         }
       }
       camera_modified_ = false;
@@ -734,17 +771,9 @@ public:
 
         if (picked_) {
           // 経路探索
-          ci::ivec3 start = ship_.getPosition();
-          ci::ivec3 end   = glm::floor(picked_pos_);
-
-          auto route = Route::search(start, end, stage);
-          ship_.setRoute(route);
-          route_start_time_ = Time();
-          ship_.start(route_start_time_);
-          target_.setPosition(route.back());
-          ship_camera_.start();
-          has_route_ = true;
+          searchRoute();
         }
+        break;
       }
     }
 #endif

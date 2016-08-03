@@ -165,17 +165,17 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   std::vector<ci::ivec3> roots;
   while (1) {
     auto node = opened.at(pos);
+    
+    ci::ivec3 p(pos.x, node.height, pos.z);
+    roots.push_back(p);
 
     // コストが0: スタート地点
     if (!node.cost) break;
     
-    ci::ivec3 p(pos.x, node.height, pos.z);
-    roots.push_back(p);
-    
     pos = node.prev_pos;
   }
 
-  std::reverse(std::begin(roots), std::end(roots));
+  // std::reverse(std::begin(roots), std::end(roots));
 
   return roots;
 }
