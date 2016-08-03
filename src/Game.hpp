@@ -27,6 +27,7 @@
 #include "Light.hpp"
 #include "DayLighting.hpp"
 #include "Target.hpp"
+#include "Sea.hpp"
 
 
 namespace ngs {
@@ -79,14 +80,14 @@ class Game {
   TiledStage stage;
 
   // 海面
+  Sea sea_;
   float sea_level_;
+  
   ci::ColorA sea_color_;
   ci::vec2 sea_offset_;
   ci::vec2 sea_speed_;
   float sea_wave_;
-  ci::vec2 sea_tide_speed_;
-  ci::vec2 sea_tide_level_;
-
+  
   ci::gl::Texture2dRef sea_texture_;
   ci::gl::GlslProgRef	sea_shader_;
   ci::gl::BatchRef sea_mesh_;
@@ -587,14 +588,6 @@ class Game {
     }
   }
 
-
-  // 潮の満ち引きを計算
-  void caleSeaTide(const double duration) {
-    float t = (std::sin(duration * sea_tide_speed_.x) + std::sin(duration * sea_tide_speed_.y)) * 0.25 + 0.5;
-    sea_level_ = glm::mix(sea_tide_level_.x, sea_tide_level_.y, t);
-  }
-  
-
   
 public:
   Game()
@@ -616,11 +609,9 @@ public:
       height_scale(params_.getValueForKey<float>("stage.height_scale")),
       random(octave, seed),
       stage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale),
-      sea_level_(params_.getValueForKey<float>("stage.sea_level")),
+      sea_(params_["sea"]),
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
-      sea_tide_speed_(Json::getVec<ci::vec2>(params_["stage.sea_tide_speed"])),
-      sea_tide_level_(Json::getVec<ci::vec2>(params_["stage.sea_tide_level"])),
       picked_(false),
       ship_(event_, params_["ship"]),
       ship_camera_(event_, params_),
@@ -806,7 +797,7 @@ public:
     double duration = current_time - start_time_;
 
     if (!pause_sea_tide_) {
-      caleSeaTide(duration);
+      sea_level_ = sea_.getLevel(duration);
     }
 
     if (!pause_day_lighting_) {

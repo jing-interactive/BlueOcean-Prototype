@@ -57,6 +57,13 @@
       "diffuse":   [ 0.2, 0.2, 0.8, 1.0 ]
     }
   ],
+
+  "sea": {
+    "level": 7.5,
+    
+    "tide_speed": [ 0.09, 0.007 ],
+    "tide_level": [ 0, 13]
+  },
   
   "stage": {
     "block_size": 64,
@@ -67,14 +74,10 @@
     "random_scale": 0.05,
     "height_scale": 25.0,
     
-    "sea_level": 7.5,
     "sea_offset": 0,
     "sea_speed": 0,
     "sea_wave": 0.0,
-    "sea_color": [0.5, 0.5, 0.5, 1],
-
-    "sea_tide_speed": [ 0.09, 0.007 ],
-    "sea_tide_level": [ 0, 13]
+    "sea_color": [0.5, 0.5, 0.5, 1]
   },
 
   "stage_obj": [
