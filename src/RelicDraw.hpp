@@ -40,8 +40,7 @@ public:
     rotation_ = rotation_ * ci::quat(rotate_speed_);
   }
   
-  void draw(const Stage& stage, const float sea_level) {
-    const auto& relics = stage.getRelics();
+  void draw(const std::vector<Relic>& relics, const float sea_level) {
     if (relics.empty()) return;
 
     ci::gl::color(color_);

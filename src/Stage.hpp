@@ -14,8 +14,6 @@
 #include <cinder/Rand.h>
 #include "StageObj.hpp"
 #include "StageObjFactory.hpp"
-#include "Relic.hpp"
-#include "RelicFactory.hpp"
 
 
 namespace ngs {
@@ -29,7 +27,6 @@ class Stage {
   ci::AxisAlignedBox aabb_;
 
   std::vector<StageObj> stage_objects_;
-  std::vector<Relic> relics_;
 
 
   void createStageObjects(const int width, const int deep,
@@ -45,18 +42,6 @@ class Stage {
     }
   }
 
-  void createRelics(const int width, const int deep,
-                    const RelicFactory& factory) {
-    for (int z = 0; z < deep; ++z) {
-      for (int x = 0; x < width; ++x) {
-        int y = height_map_[z][x];
-        if (!factory.create(y)) continue;
-
-        relics_.push_back({ ci::ivec3(x, y, z), "", false });
-      }
-    }
-  }
-
   
 public:
   // FIXME:奥行きはdeepなのか??
@@ -64,7 +49,6 @@ public:
         const int offset_x, const int offset_z,
         const ci::Perlin& random,
         const StageObjFactory& factory,
-        const RelicFactory& relic_factory,
         const float random_scale, const float height_scale)
     : size_(width, deep)
   {
@@ -276,9 +260,6 @@ public:
 
     // ステージ上に乗っかっているオブジェクトを生成
     createStageObjects(width, deep, factory);
-
-    // 探索可能な遺物の生成
-    createRelics(width, deep, relic_factory);
   }
 
   
@@ -300,10 +281,6 @@ public:
 
   const std::vector<StageObj> getStageObjects() const {
     return stage_objects_;
-  }
-
-  const std::vector<Relic> getRelics() const {
-    return relics_;
   }
 
 };

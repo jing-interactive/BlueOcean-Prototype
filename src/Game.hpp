@@ -456,7 +456,7 @@ class Game {
         ci::mat4 transform = glm::translate(pos);
         ci::gl::setModelMatrix(transform);
 
-        relic_drawer_.draw(s, sea_level_);
+        relic_drawer_.draw(stage.getRelics(stage_pos), sea_level_);
       }
     }
   }
@@ -561,6 +561,8 @@ class Game {
       
       object.pushBack(debug_info);
     }
+
+    object.pushBack(stage.serialize());
     
     object.write(getDocumentPath() / "record.json");
   }
@@ -578,6 +580,9 @@ class Game {
     ship_.setHeight(record.getValueForKey<float>("ship.height"));
     ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
 
+    // ステージ
+    stage.deserialize(record["stage"]);
+    
     // カメラ
     translate_    = ship_.getPosition();
     distance_     = record.getValueForKey<float>("camera.distance");
