@@ -7,6 +7,8 @@
 namespace ngs {
 
 class RelicDrawer {
+  float range_;
+  
   ci::Color color_;
   ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
@@ -21,6 +23,10 @@ public:
     : color_(Json::getColor<float>(params["color"])),
       rotate_speed_(Json::getVec<ci::vec3>(params["rotate_speed"]))
   {
+    // 計算量を減らすため２乗した値を保存
+    float range = params.getValueForKey<float>("range");
+    range_ = range * range;
+    
     ci::ObjLoader loader(Asset::load("relic.obj"));
     
     auto shader_prog = readShader("color", "color");
@@ -40,12 +46,17 @@ public:
     rotation_ = rotation_ * ci::quat(rotate_speed_);
   }
   
-  void draw(const std::vector<Relic>& relics, const float sea_level) {
+  void draw(const std::vector<Relic>& relics, const ci::vec3& center, const float sea_level) {
     if (relics.empty()) return;
 
     ci::gl::color(color_);
 
     for (const auto& relic : relics) {
+      // 船からの距離によるクリッピング
+      float dx = relic.position.x - center.x;
+      float dz = relic.position.z - center.z;
+      if ((dx * dx + dz * dz) > range_) continue;
+      
       ci::gl::pushModelMatrix();
 
       ci::vec3 pos(relic.position.x, std::max(float(relic.position.y), sea_level), relic.position.z);

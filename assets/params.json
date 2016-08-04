@@ -100,6 +100,7 @@
 
   "relic": {
     "probability": 0.00024,
+    "range": 50,
     
     "color": [ 0.8, 1.0, 1.0 ],
     "rotate_speed": [ 0.02, 0.007, 0.015 ]

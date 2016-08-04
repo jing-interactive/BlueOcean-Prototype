@@ -441,6 +441,7 @@ class Game {
   void drawRelics(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
     // ci::gl::setMatrices(camera);
     // ci::gl::disableAlphaBlending();
+    const auto& center = ship_.getPosition();
     
     for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
       for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
@@ -456,7 +457,7 @@ class Game {
         ci::mat4 transform = glm::translate(pos);
         ci::gl::setModelMatrix(transform);
 
-        relic_drawer_.draw(stage.getRelics(stage_pos), sea_level_);
+        relic_drawer_.draw(stage.getRelics(stage_pos), center - pos, sea_level_);
       }
     }
   }
