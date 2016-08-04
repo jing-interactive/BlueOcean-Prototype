@@ -101,10 +101,12 @@ double calcCost(const int current_height, const int target_height,
 
 
 // 次の経路をキューに積む
-void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
+// 戻り値 trueで到着
+bool stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
                     std::priority_queue<Node, std::vector<Node>, std::greater<Node>>& queue,
                     const Node& prev_node,
                     const ci::ivec3& end,
+                    const int max_distance,
                     const double required,
                     TiledStage& stage, const Sea& sea) {
   // ４方向へ進んでみてコストを計算する
@@ -117,21 +119,23 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
 
   for (const auto& v : vector) {
     auto new_pos = prev_node.pos + v;
+    new_pos.y = getStageHeight(new_pos, stage);
 
     // 一度通った場所はスルー
     if (opened.count(new_pos)) continue;
 
-    new_pos.y = getStageHeight(new_pos, stage);
-
     auto d = end - new_pos;
+    int distance = std::abs(d.x) + std::abs(d.z);
+    // 離れすぎたらスルー
+    if (distance > max_distance) continue;
+
     // 現在位置から最適パターンで到着する場合の所要時間
-    double estimate_time = (std::abs(d.x) + std::abs(d.z)) * required;
+    double estimate_time = distance * required;
 
     // 潮の満ち引きを考慮した到着時間
     double arrived_time = calcCost(prev_node.pos.y, new_pos.y,
                                    prev_node.duration, required,
                                    sea);
-
     
     Node node = {
       new_pos,
@@ -143,7 +147,11 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
 
     queue.push(node);
     opened.insert(std::make_pair(new_pos, node));
+
+    if (new_pos == end) return true;
   }
+  
+  return false;
 }
 
 
@@ -170,25 +178,24 @@ std::vector<Waypoint> search(ci::ivec3 start, ci::ivec3 end,
     duration,
   };
 
+  auto d = end - start;
+  int max_distance = (std::abs(d.x) + std::abs(d.z)) * 1.5;
+  
   opened.insert(std::make_pair(start, node));
   queue.push(node);
 
   bool arrival = false;
-  while (!queue.empty()) {
+  while (!arrival && !queue.empty()) {
     // キューに積まれた位置から、もっとも到着時間が早いものを取り出す
     const auto node = queue.top();
     queue.pop();
 
-    if (node.pos == end) {
-      arrival = true;
-      break;
-    }
-
-    stackNextRoute(opened, queue,
-                   node,
-                   end,
-                   required,
-                   stage, sea);
+    arrival = stackNextRoute(opened, queue,
+                             node,
+                             end,
+                             max_distance,
+                             required,
+                             stage, sea);
   }
 
   if (!arrival) {
