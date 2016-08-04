@@ -608,7 +608,7 @@ class Game {
       
       // カメラ設定
       ship_camera_.start();
-      ship_camera_.update(ship_.getPosition());
+      ship_camera_.update(search_pos_);
       translate_ = ship_camera_.getPosition();
       distance_  = ship_camera_.getDistance();
     }
