@@ -10,6 +10,7 @@
 #include "JsonUtil.hpp"
 #include "Time.hpp"
 #include "Light.hpp"
+#include "Waypoint.hpp"
 
 
 namespace ngs {
@@ -24,38 +25,50 @@ class Ship {
   ci::Color color_;
   ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
+  
+  std::vector<Waypoint> route_;
 
-  std::vector<ci::ivec3> route_;
-
+  float height_;
+  
   float speed_;
-  size_t route_index_;
 
   bool do_route_;
-  // 移動開始時間
-  Time route_start_time_;
 
 
   // 現在時間の移動位置を求める
-  void calcCurrentPosition(const Time& current_time, const float sea_level) {
-    double duration = current_time - route_start_time_;
-    
-    double total_time = (route_.size() - 1) / speed_;
-    if (duration >= total_time) {
+  void calcCurrentPosition(const double duration) {
+    if (duration <= route_[0].duration) {
+      // まだ移動開始時刻ではない
+      position_ = route_[0].pos;
+      height_   = position_.y;
+    }
+    else if (duration >= route_.back().duration) {
       // 終点に着いた
-      position_ = route_.back();
+      position_ = route_.back().pos;
+      height_   = position_.y;
       do_route_ = false;
 
       event_.signal("ship_arrival", Arguments());
     }
     else {
-      int index = duration / speed_;
-      double t = (duration - speed_ * index) / speed_;
-      
+      double required_time = getRequiredTime();
+
+      size_t index;
+      for (index = 0; index < (route_.size() - 1); ++index) {
+        if (route_[index].duration < duration
+            && route_[index + 1].duration >= duration) {
+          break;
+        }
+      }
+
+      float t = 1.0 - std::min(route_[index + 1].duration - duration, required_time) / required_time;
+
       // ２点間の線形補間を利用した移動
-      ci::vec3 start = route_[index];
-      ci::vec3 end   = route_[index + 1];
+      ci::vec3 start = route_[index].pos;
+      ci::vec3 end   = route_[index + 1].pos;
       position_ = glm::mix(start, end, t);
-      
+      height_   = position_.y;
+
       // 移動量から向きを決定
       // TIPS:Y軸回転のみ
       start.y = 0;
@@ -63,8 +76,6 @@ class Ship {
       auto d = glm::normalize(end - start);
       rotation_ = glm::rotation(ci::vec3(0, 0, -1), d);
     }
-
-    position_.y = sea_level;
   }
   
   
@@ -93,6 +104,14 @@ public:
     position_ = position;
   }
 
+  void setHeight(const float height) {
+    height_ = height;
+  }
+
+  float getHeight() const {
+    return height_;
+  }
+
   const ci::quat& getRotation() const {
     return rotation_;
   }
@@ -102,28 +121,31 @@ public:
   }
   
   
-  void setRoute(std::vector<ci::ivec3> route) {
+  void setRoute(std::vector<Waypoint> route) {
     route_ = std::move(route);
   }
 
-  const std::vector<ci::ivec3>& getRoute() const {
+  const std::vector<Waypoint>& getRoute() const {
     return route_;
+  }
+
+  // １ブロック移動するための所要時間
+  double getRequiredTime() const {
+    return 1.0 / speed_;
   }
 
 
   // 経路による移動開始
-  void start(const Time& start_time) {
+  void start() {
     do_route_ = true;
-    route_start_time_ = start_time;
   }
 
   
-  void update(const Time& current_time, const float sea_level) {
-    position_.y = sea_level;
-
+  void update(const double duration, const float sea_level) {
     if (do_route_) {
-      calcCurrentPosition(current_time, sea_level);
+      calcCurrentPosition(duration);
     }
+    position_.y = std::max(sea_level, height_);
   }
 
   void draw(const Light& light) {

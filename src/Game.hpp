@@ -349,25 +349,30 @@ class Game {
   // 経路探索
   void searchRoute() {
     ci::ivec3 start = ship_.getPosition();
-    ci::ivec3 end   = glm::floor(ci::vec3(picked_pos_.x, sea_level_, picked_pos_.z));
+    ci::ivec3 end   = glm::floor(picked_pos_);
 
-    if (Route::canSearch(end, stage)) {
-      // TIPS:end地点からstart地点に向かって探す
-      end.y = sea_level_;
-      auto route = Route::search(end, start, stage);
+    // if (Route::canSearch(end, stage))
+    {
+      Time current_time;
+      double duration = current_time - start_time_;
+
+      auto route = Route::search(start, end,
+                                 duration, ship_.getRequiredTime(),
+                                 stage, sea_);
 
       if (!route.empty()) {
-        const auto& p = route.back();
-        search_pos_ = p;
-      
+        const auto& waypoint = route.back();
+        search_pos_ = waypoint.pos;
+#if 0
         // end地点が海面より高い→１つ手前が終点
         if (p.y > sea_level_) {
           route.pop_back();
         }
+#endif
       
         ship_.setRoute(route);
         route_start_time_ = Time();
-        ship_.start(route_start_time_);
+        ship_.start();
         target_.setPosition(search_pos_);
         ship_camera_.start();
 
@@ -444,8 +449,8 @@ class Game {
     
     ci::gl::color(1, 0, 0);
     const auto& route = ship_.getRoute();
-    for (const auto& r : route) {
-      ci::vec3 pos(r.x, std::max(sea_level_, float(r.y)), r.z);
+    for (const auto& waypoint : route) {
+      ci::vec3 pos(waypoint.pos.x, std::max(sea_level_, float(waypoint.pos.y)), waypoint.pos.z);
       ci::gl::drawCube(pos + ci::vec3(0.5, 0.2, 0.5), ci::vec3(0.2, 0.2, 0.2));
     }
   }
@@ -476,8 +481,9 @@ class Game {
     object.pushBack(ci::JsonTree("has_route", has_route_));
     if (has_route_) {
       auto route = ci::JsonTree::makeArray("route");
-      for (const auto& r : ship_.getRoute()) {
-        ci::JsonTree value = Json::createFromVec(r);
+      for (const auto& waypoint : ship_.getRoute()) {
+        ci::JsonTree value = Json::createFromVec(waypoint.pos);
+        value.pushBack(ci::JsonTree("", waypoint.duration));
         route.pushBack(value);
       }
 
@@ -494,6 +500,7 @@ class Game {
     {
       auto position = Json::createFromVec("position", ship_.getPosition());
       ship_info.pushBack(position);
+      ship_info.pushBack(ci::JsonTree("height", ship_.getHeight()));
     }
     {
       auto rotation = Json::createFromVec("rotation", ship_.getRotation());
@@ -501,6 +508,14 @@ class Game {
     }
     object.pushBack(ship_info);
 
+    // 海の情報
+    ci::JsonTree sea_info = ci::JsonTree::makeObject("sea");
+    {
+      sea_info.pushBack(ci::JsonTree("level", sea_level_));
+      
+    }
+    object.pushBack(sea_info);
+    
     // カメラ情報
     ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
     {
@@ -538,8 +553,8 @@ class Game {
 
     // ゲーム開始時刻を復元
     start_time_ = Time(record.getValueForKey<double>("start_time"));
-
     ship_.setPosition(Json::getVec<ci::vec3>(record["ship.position"]));
+    ship_.setHeight(record.getValueForKey<float>("ship.height"));
     ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
 
     // カメラ
@@ -554,16 +569,18 @@ class Game {
     has_route_ = record.getValueForKey<bool>("has_route");
     if (has_route_) {
       const auto& route = record["route"];
-      std::vector<ci::ivec3> ship_route;
-      for (const auto& r : route) {
-        auto pos = Json::getVec<ci::ivec3>(r);
-        ship_route.push_back(pos);
+      std::vector<Waypoint> ship_route;
+      for (const auto& waypoint : route) {
+        auto pos = Json::getVec<ci::ivec3>(waypoint);
+        double duration = waypoint.getValueAtIndex<double>(3);
+        
+        ship_route.push_back({ pos, duration });
       }
 
       route_start_time_ = Time(record.getValueForKey<double>("route_start_time"));
 
       ship_.setRoute(ship_route);
-      ship_.start(route_start_time_);
+      ship_.start();
 
       search_pos_ = Json::getVec<ci::vec3>(record["search_pos"]);
       target_.setPosition(search_pos_);
@@ -573,8 +590,9 @@ class Game {
       ship_camera_.update(ship_.getPosition());
       translate_ = ship_camera_.getPosition();
       distance_  = ship_camera_.getDistance();
-
     }
+
+    sea_level_ = record.getValueForKey<float>("sea.level");
 
     // デバッグ設定
     if (record.hasChild("debug")) {
@@ -662,6 +680,12 @@ public:
 
     registerCallbacks();
 
+    {
+      // 船の現在位置の高さを取得
+      int height = Route::getStageHeight(ci::ivec3(ship_.getPosition()), stage);
+      ship_.setHeight(height);
+    }
+    
     // 記録ファイルがあるなら読み込んでみる
     restoreFromRecords();
   }
@@ -823,7 +847,7 @@ public:
 
     sea_offset_ += sea_speed_;
 
-    ship_.update(current_time, sea_level_);
+    ship_.update(duration, sea_level_);
     target_.update(duration, sea_level_);
   }
   

@@ -6,7 +6,9 @@
 //  SOURCE:http://qiita.com/2dgames_jp/items/f29e915357c1decbc4b7
 //
 
+#include "Waypoint.hpp"
 #include "TiledStage.hpp"
+#include "Sea.hpp"
 #include <set>
 #include <queue>
 #include <list>
@@ -17,18 +19,16 @@ namespace ngs { namespace Route {
 struct Node {
   ci::ivec3 pos;
   ci::ivec3 prev_pos;
-  int height;
 
-  int cost;
-  int estimate_cost;
-  int score;
+  double duration;
+  double arrived_duration;
 
   bool operator<(const Node& rhs) const {
-    return score < rhs.score;
+    return arrived_duration < rhs.arrived_duration;
   }
 
   bool operator>(const Node& rhs) const {
-    return score > rhs.score;
+    return arrived_duration > rhs.arrived_duration;
   }
 };
 
@@ -76,12 +76,37 @@ bool canSearch(const ci::ivec3 pos, TiledStage& stage) {
   return false;
 }
 
+
+// 移動コストを計算
+//   １ブロック移動するためには現在地と移動先がどちらも海面より低くなければならない
+// required: １ブロック移動するのに必要な時間
+// 戻り値: 到着時間  
+double calcCost(const int current_height, const int target_height,
+                double duration, const double required,
+                const Sea& sea) {
+  while (1) {
+    int start_level = sea.getLevel(duration);
+    int end_level   = sea.getLevel(duration + required);
+
+    if (current_height < start_level && target_height < end_level) {
+      break;
+    }
+
+    // 移動開始時間を少し遅らせる
+    duration += required * 0.25;
+  }
+  
+  return duration + required;
+}
+
+
 // 次の経路をキューに積む
 void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
                     std::priority_queue<Node, std::vector<Node>, std::greater<Node>>& queue,
-                    const ci::ivec3& prev_pos, const int prev_cost,
+                    const Node& prev_node,
                     const ci::ivec3& end,
-                    TiledStage& stage) {
+                    const double required,
+                    TiledStage& stage, const Sea& sea) {
   // ４方向へ進んでみてコストを計算する
   ci::ivec3 vector[] = {
     {  1, 0,  0 },
@@ -91,25 +116,29 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
   };
 
   for (const auto& v : vector) {
-    auto new_pos = prev_pos + v;
+    auto new_pos = prev_node.pos + v;
+
+    // 一度通った場所はスルー
     if (opened.count(new_pos)) continue;
 
-    int height = getStageHeight(new_pos, stage);
-    if (height > new_pos.y) continue;
+    new_pos.y = getStageHeight(new_pos, stage);
 
     auto d = end - new_pos;
-    int estimate_cost = int(std::abs(d.x) + std::abs(d.z));
-    int cost = prev_cost + 1;
-    int score = estimate_cost + cost;
+    // 現在位置から最適パターンで到着する場合の所要時間
+    double estimate_time = (std::abs(d.x) + std::abs(d.z)) * required;
+
+    // 潮の満ち引きを考慮した到着時間
+    double arrived_time = calcCost(prev_node.pos.y, new_pos.y,
+                                   prev_node.duration, required,
+                                   sea);
+
     
     Node node = {
       new_pos,
-      prev_pos,
-      height,
+      prev_node.pos,
       
-      cost,
-      estimate_cost,
-      score,
+      arrived_time,
+      arrived_time + estimate_time,
     };
 
     queue.push(node);
@@ -118,13 +147,18 @@ void stackNextRoute(std::map<ci::ivec3, Node, LessVec<ci::ivec3>>& opened,
 }
 
 
-std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
-                              TiledStage& stage) {
+// 経路探索
+// duration  移動開始時間
+// required  １ブロック移動の所要時間
+std::vector<Waypoint> search(ci::ivec3 start, ci::ivec3 end,
+                             double duration, const double required,
+                             TiledStage& stage, const Sea& sea) {
   std::map<ci::ivec3, Node, LessVec<ci::ivec3>> opened;
   std::priority_queue<Node, std::vector<Node>, std::greater<Node>> queue;  
 
-  int height = getStageHeight(start, stage);
-
+  start.y = getStageHeight(start, stage);
+  end.y   = getStageHeight(end, stage);
+  
   DOUT << "start:" << start << std::endl;
   DOUT << "  end:" << end << std::endl;
   
@@ -132,10 +166,8 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
   Node node = {
     start,
     start,
-    height,
-    0,
-    0,
-    0,
+    duration,
+    duration,
   };
 
   opened.insert(std::make_pair(start, node));
@@ -143,6 +175,7 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
 
   bool arrival = false;
   while (!queue.empty()) {
+    // キューに積まれた位置から、もっとも到着時間が早いものを取り出す
     const auto node = queue.top();
     queue.pop();
 
@@ -152,32 +185,30 @@ std::vector<ci::ivec3> search(const ci::ivec3& start, const ci::ivec3& end,
     }
 
     stackNextRoute(opened, queue,
-                   node.pos, node.cost,
+                   node,
                    end,
-                   stage);
+                   required,
+                   stage, sea);
   }
 
   if (!arrival) {
     DOUT << "No route." << std::endl;
-    return std::vector<ci::ivec3>();
+    return std::vector<Waypoint>();
   }
-  
+
   // ゴール地点からスタート地点までを辿る
   ci::ivec3 pos = end;
-  std::vector<ci::ivec3> roots;
+  std::vector<Waypoint> roots;
   while (1) {
     auto node = opened.at(pos);
-    
-    ci::ivec3 p(pos.x, node.height, pos.z);
-    roots.push_back(p);
+    roots.push_back({ pos, node.duration });
 
-    // コストが0: スタート地点
-    if (!node.cost) break;
+    if (pos == start) break;
     
     pos = node.prev_pos;
   }
 
-  // std::reverse(std::begin(roots), std::end(roots));
+  std::reverse(std::begin(roots), std::end(roots));
 
   return roots;
 }
