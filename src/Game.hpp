@@ -20,6 +20,7 @@
 #include "TiledStage.hpp"
 #include "StageDraw.hpp"
 #include "StageObjDraw.hpp"
+#include "RelicDraw.hpp"
 #include "Ship.hpp"
 #include "ShipCamera.hpp"
 #include "Route.hpp"
@@ -96,6 +97,7 @@ class Game {
   
   StageDrawer stage_drawer_;
   StageObjDrawer stageobj_drawer_;
+  RelicDrawer relic_drawer_;
 
   bool picked_;
   ci::AxisAlignedBox picked_aabb_;
@@ -107,7 +109,7 @@ class Game {
 
   // 経路
   bool has_route_;
-  Time route_start_time_;
+  double route_start_time_;
   // 探索地点(経路の終点と一致しない場合もある)
   ci::ivec3 search_pos_;
 
@@ -351,7 +353,6 @@ class Game {
     ci::ivec3 start = ship_.getPosition();
     ci::ivec3 end   = glm::floor(picked_pos_);
 
-    // if (Route::canSearch(end, stage))
     {
       Time current_time;
       double duration = current_time - start_time_;
@@ -363,15 +364,9 @@ class Game {
       if (!route.empty()) {
         const auto& waypoint = route.back();
         search_pos_ = waypoint.pos;
-#if 0
-        // end地点が海面より高い→１つ手前が終点
-        if (p.y > sea_level_) {
-          route.pop_back();
-        }
-#endif
-      
+
         ship_.setRoute(route);
-        route_start_time_ = Time();
+        route_start_time_ = duration;
         ship_.start();
         target_.setPosition(search_pos_);
         ship_camera_.start();
@@ -443,6 +438,29 @@ class Game {
     }
   }
 
+  void drawRelics(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
+    // ci::gl::setMatrices(camera);
+    // ci::gl::disableAlphaBlending();
+    
+    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
+      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
+        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+
+        // 視錐台カリング
+        ci::ivec2 stage_pos(x, z);
+        const auto& s = stage.getStage(stage_pos);
+        const auto& b = s.getAABB();
+        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
+        if (!frustum.intersects(aabb)) continue;
+
+        ci::mat4 transform = glm::translate(pos);
+        ci::gl::setModelMatrix(transform);
+
+        relic_drawer_.draw(s, sea_level_);
+      }
+    }
+  }
+
   // 経路表示
   void drawRoute() {
     ci::gl::setModelMatrix(ci::mat4(1.0f));
@@ -475,7 +493,7 @@ class Game {
 
     // 開始時間
     auto duration = start_time_.getDuration();
-    object.pushBack(ci::JsonTree("start_time", duration.count()));
+    object.pushBack(ci::JsonTree("start_time", duration));
 
     // 船の経路
     object.pushBack(ci::JsonTree("has_route", has_route_));
@@ -489,7 +507,7 @@ class Game {
 
       object.pushBack(route);
 
-      object.pushBack(ci::JsonTree("route_start_time", route_start_time_.getDuration().count()));
+      object.pushBack(ci::JsonTree("route_start_time", route_start_time_));
 
       auto p = Json::createFromVec("search_pos", search_pos_);
       object.pushBack(p);
@@ -580,7 +598,7 @@ class Game {
         ship_route.push_back({ pos, duration });
       }
 
-      route_start_time_ = Time(record.getValueForKey<double>("route_start_time"));
+      route_start_time_ = record.getValueForKey<double>("route_start_time");
 
       ship_.setRoute(ship_route);
       ship_.start();
@@ -637,6 +655,7 @@ public:
       sea_(params_["sea"]),
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
+      relic_drawer_(params_["relic"]),
       picked_(false),
       ship_(event_, params_["ship"]),
       ship_camera_(event_, params_),
@@ -856,6 +875,8 @@ public:
 
     ship_.update(duration, sea_level_);
     target_.update(duration, sea_level_);
+
+    relic_drawer_.update();
   }
   
   void draw() {
@@ -864,6 +885,7 @@ public:
 
     stage_drawer_.setupLight(light_);
     stageobj_drawer_.setupLight(light_);
+    relic_drawer_.setupLight(light_);
     
     // 陸地の描画
     // 画面中央の座標をレイキャストして求めている
@@ -913,6 +935,8 @@ public:
       }
       
       drawStage(pos, frustum);
+      drawRelics(pos, frustum);
+      
       ship_.draw(light_);
       target_.draw();
 

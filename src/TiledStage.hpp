@@ -7,6 +7,7 @@
 #include <map>
 #include <cinder/Perlin.h>
 #include "StageObjFactory.hpp"
+#include "RelicFactory.hpp"
 #include "Stage.hpp"
 #include "Misc.hpp"
 
@@ -21,6 +22,7 @@ class TiledStage {
   float height_scale_;
 
   StageObjFactory stageobj_factory_;
+  RelicFactory relic_factory_;
   
   std::map<ci::ivec2, Stage, LessVec<ci::ivec2>> stages;
   
@@ -33,7 +35,8 @@ public:
       random_(random),
       random_scale_(random_scale),
       height_scale_(height_scale),
-      stageobj_factory_(params)
+      stageobj_factory_(params["stage_obj"]),
+      relic_factory_(params["relic"])
   {}
 
 
@@ -48,6 +51,7 @@ public:
                                          pos.x, pos.y,
                                          random_,
                                          stageobj_factory_,
+                                         relic_factory_,
                                          random_scale_, height_scale_)));
     }
     

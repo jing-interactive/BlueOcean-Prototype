@@ -26,12 +26,12 @@ public:
   {}
 
 
-  Duration getDuration() const {
-    return begin_.time_since_epoch();
+  double getDuration() const {
+    return begin_.time_since_epoch().count();
   }
 
   double operator-(const Time& rhs) const {
-    return (getDuration() - rhs.getDuration()).count();
+    return (begin_.time_since_epoch() - rhs.begin_.time_since_epoch()).count();
   }
   
 };

@@ -21,8 +21,7 @@ class StageObjFactory {
 
 public:
   StageObjFactory(const ci::JsonTree& params) {
-    const auto& param_array = params["stage_obj"];
-    for (const auto& p : param_array) {
+    for (const auto& p : params) {
       Info info = {
         p.getValueForKey<std::string>("name"),
         p.getValueForKey<float>("probability"),

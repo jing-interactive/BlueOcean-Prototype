@@ -7,15 +7,11 @@
 namespace ngs {
 
 class Sea {
-  // 海面高
-  float level_;
-
   // 潮の満ち引きの速度
   ci::vec2 tide_speed_;
   ci::vec2 tide_level_;
+
   
-
-
 public:
   Sea(const ci::JsonTree& params)
     : tide_speed_(Json::getVec<ci::vec2>(params["tide_speed"])),
@@ -36,15 +32,6 @@ public:
 
   ci::vec2& tideLevel() {
     return tide_level_;
-  }
-
-
-  void setTideSpeed(const ci::vec2& tide_speed) {
-    tide_speed_ = tide_speed;
-  }
-
-  void setTideLevel(const ci::vec2& tide_level) {
-    tide_level_ = tide_level;
   }
   
 };
