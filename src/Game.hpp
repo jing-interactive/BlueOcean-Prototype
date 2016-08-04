@@ -512,7 +512,10 @@ class Game {
     ci::JsonTree sea_info = ci::JsonTree::makeObject("sea");
     {
       sea_info.pushBack(ci::JsonTree("level", sea_level_));
-      
+      sea_info.pushBack(ci::JsonTree("wave", sea_wave_));
+
+      sea_info.pushBack(Json::createFromVec("speed", sea_speed_));
+      sea_info.pushBack(Json::createFromVec("color", ci::vec4(sea_color_)));
     }
     object.pushBack(sea_info);
     
@@ -592,6 +595,10 @@ class Game {
       distance_  = ship_camera_.getDistance();
     }
 
+    // 海演出
+    sea_color_ = Json::getColorA<float>(record["sea.color"]);
+    sea_speed_ = Json::getVec<ci::vec2>(record["sea.speed"]);
+    sea_wave_  = record.getValueForKey<float>("sea.wave");
     sea_level_ = record.getValueForKey<float>("sea.level");
 
     // デバッグ設定
