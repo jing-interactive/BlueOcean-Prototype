@@ -98,7 +98,23 @@
   ],
 
   "relic": {
-    "probability": 0.00024,
+    "probability": 0.0001,
+
+    "height_probability": [
+      {
+        "height": [ -5, 6 ],
+        "probability": 0.0001
+      },
+      {
+        "height": [ 7, 10 ],
+        "probability": 0.005
+      },
+      {
+        "height": [ 11, 15 ],
+        "probability": 0.0001
+      }
+    ],
+    
     "range": 80,
     
     "color": [

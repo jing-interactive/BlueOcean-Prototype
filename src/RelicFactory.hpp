@@ -14,6 +14,9 @@ namespace ngs {
 class RelicFactory {
   float probability_;
 
+  // 高さごとの生成確率
+  std::map<int, float> height_probability_;
+
   double search_required_time_;
   
 
@@ -21,12 +24,26 @@ public:
   RelicFactory(const ci::JsonTree& params)
     : probability_(params.getValueForKey<float>("probability")),
       search_required_time_(params.getValueForKey<double>("search_required_time"))
-  {}
+  {
+    // 高さごとの生成確率
+    for (const auto& p : params["height_probability"]) {
+      ci::ivec2 v = Json::getVec<ci::ivec2>(p["height"]);
+      float probability = p.getValueForKey<float>("probability");
+      assert(v.x <= v.y);
+      for (int i = v.x; i <= v.y; ++i) {
+        height_probability_.insert(std::make_pair(i, probability));
+      }
+    }
+  }
 
   
   std::pair<bool, Relic> create(const ci::ivec3& pos) const {
     float probability = ci::randFloat();
-    if (probability > probability_) {
+
+    float p = height_probability_.count(pos.y) ? height_probability_.at(pos.y)
+                                               : probability_;
+    
+    if (probability > p) {
       return std::make_pair(false, Relic());
     }
 
