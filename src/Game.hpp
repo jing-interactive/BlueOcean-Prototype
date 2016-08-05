@@ -313,7 +313,32 @@ class Game {
     return std::make_pair(cross, cross_min_z);
   }
 
+  std::tuple<bool, float, ci::vec3> intersect(const ci::Ray& ray, const std::vector<Relic>& relics) {
+    bool  cross       = false;
+    float cross_min_z = std::numeric_limits<float>::max();
+    ci::vec3 cross_pos;
 
+    for (const auto& relic : relics) {
+      ci::vec3 p(relic.position);
+      // 遺物のマーカーは海上に浮いている
+      p.y = std::max(p.y, sea_level_);
+      
+      ci::AxisAlignedBox aabb(p, p + ci::vec3(1, 1, 1));
+
+      float min_z, max_z;
+      if (aabb.intersect(ray, &min_z, &max_z) > 0) {
+        cross = true;
+        if (min_z < cross_min_z) {
+          cross_min_z = min_z;
+          cross_pos   = p;
+        }
+      }
+    }
+    
+    return std::make_tuple(cross, cross_min_z, cross_pos);
+  }
+
+  
   void pickStage(const ci::vec2& pos) {
     // スクリーン座標→正規化座標
     float x = pos.x / ci::app::getWindowWidth();
@@ -364,6 +389,18 @@ class Game {
           ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
           picked_aabb_ = s.getAABB().transformed(m);
         }
+
+        // 遺物を直接クリックしてるか調べる
+        auto relic_cross = intersect(t_ray, stage.getRelics(ci::ivec2(x, z)));
+        if (std::get<0>(relic_cross) && (std::get<1>(relic_cross) < cross_min_z)) {
+          picked_ = true;
+          cross_min_z = std::get<1>(relic_cross);
+
+          ci::vec3 p(std::get<2>(relic_cross)); 
+          picked_pos_ = p + ci::vec3(x * BLOCK_SIZE + 0.5, 0, z * BLOCK_SIZE + 0.5);
+
+          DOUT << "picked relics " << picked_pos_ << std::endl;
+        }
       }
     }
 
@@ -372,6 +409,7 @@ class Game {
     // クリックした場所が海面より低い→Rayと海面の交差を優先
     if (picked_pos_.y < sea_pos.y) {
       picked_pos_ = sea_pos;
+      DOUT << "picked sea " << picked_pos_ << std::endl;
     }
   }
 
