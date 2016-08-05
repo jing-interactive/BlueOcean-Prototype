@@ -114,7 +114,9 @@
 
   "route": {
     "max_distance": 1.2,
-    "require_rate": 0.25
+    "require_rate": 0.25,
+
+    "color": [1, 0, 0]
   },
 
   "ship": {

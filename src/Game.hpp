@@ -29,6 +29,7 @@
 #include "DayLighting.hpp"
 #include "Target.hpp"
 #include "Sea.hpp"
+#include "RouteDraw.hpp"
 
 
 namespace ngs {
@@ -98,6 +99,7 @@ class Game {
   StageDrawer stage_drawer_;
   StageObjDrawer stageobj_drawer_;
   RelicDrawer relic_drawer_;
+  RouteDrawer route_drawer_;
 
   bool picked_;
   ci::AxisAlignedBox picked_aabb_;
@@ -245,11 +247,11 @@ class Game {
 
     params->addSeparator();
 
-    params->addParam("Sea Color", &sea_color_);
+    params->addParam("Sea Color",   &sea_color_);
     params->addParam("Sea Speed x", &sea_speed_.x).step(0.00001f);
     params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
-    params->addParam("Sea Wave", &sea_wave_).step(0.001f);
-    params->addParam("Sea Level", &sea_level_).step(0.25f);
+    params->addParam("Sea Wave",    &sea_wave_).step(0.001f);
+    params->addParam("Sea Level",   &sea_level_).step(0.25f);
 
     params->addSeparator();
 
@@ -269,9 +271,9 @@ class Game {
         light_.direction.z = light_direction_.z;
       });
     
-    params->addParam("Light ambient",   &light_.ambient);
-    params->addParam("Light diffuse",   &light_.diffuse);
-    params->addParam("Light specular",  &light_.specular);
+    params->addParam("Light ambient",  &light_.ambient);
+    params->addParam("Light diffuse",  &light_.diffuse);
+    params->addParam("Light specular", &light_.specular);
     
     params->addSeparator();
 
@@ -479,14 +481,8 @@ class Game {
 
   // 経路表示
   void drawRoute() {
-    ci::gl::setModelMatrix(ci::mat4(1.0f));
-    
-    ci::gl::color(1, 0, 0);
-    const auto& route = ship_.getRoute();
-    for (const auto& waypoint : route) {
-      ci::vec3 pos(waypoint.pos.x, std::max(sea_level_, float(waypoint.pos.y)), waypoint.pos.z);
-      ci::gl::drawCube(pos + ci::vec3(0.5, 0.2, 0.5), ci::vec3(0.2, 0.2, 0.2));
-    }
+    route_drawer_.setupLight(light_);
+    route_drawer_.draw(ship_.getRoute(), sea_level_);
   }
 
 
@@ -677,6 +673,7 @@ public:
       sea_color_(Json::getColorA<float>(params_["stage.sea_color"])),
       sea_wave_(params_.getValueForKey<float>("stage.sea_wave")),
       relic_drawer_(params_["relic"]),
+      route_drawer_(params_["route"]),
       picked_(false),
       ship_(event_, params_["ship"]),
       ship_camera_(event_, params_),

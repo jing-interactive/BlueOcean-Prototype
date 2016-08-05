@@ -30,10 +30,10 @@ public:
     float range = params.getValueForKey<float>("range");
     range_ = range * range;
     
-    ci::ObjLoader loader(Asset::load("relic.obj"));
-    
     auto shader_prog = readShader("color", "color");
     shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
+
+    ci::ObjLoader loader(Asset::load("relic.obj"));
     model_ = ci::gl::Batch::create(loader, shader_);
   }
 
