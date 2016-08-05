@@ -256,7 +256,6 @@ class Game {
     params->addParam("Disp Stage",    &disp_stage_);
     params->addParam("Disp StageObj", &disp_stage_obj_);
     params->addParam("Disp Sea",      &disp_sea_);
-    params->addParam("Disp Stage",    &disp_stage_);
 
     params->addSeparator();
 

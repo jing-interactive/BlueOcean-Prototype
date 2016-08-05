@@ -15,8 +15,13 @@ struct Relic {
 
   // 探索終了
   bool searched;
-  // 探索終了までの残り時間
-  double time_remains;
+  // 探索に必要な時間
+  double search_required_time;
+  // 探索した時間
+  double searched_time;
+
+  // レア度(1.0でSSS)
+  float rare;
 };
 
 }

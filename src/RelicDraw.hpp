@@ -9,7 +9,7 @@ namespace ngs {
 class RelicDrawer {
   float range_;
   
-  ci::Color color_;
+  std::vector<ci::Color> color_;
   ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
 
@@ -20,9 +20,12 @@ class RelicDrawer {
 
 public:
   RelicDrawer(const ci::JsonTree& params)
-    : color_(Json::getColor<float>(params["color"])),
-      rotate_speed_(Json::getVec<ci::vec3>(params["rotate_speed"]))
+    : rotate_speed_(Json::getVec<ci::vec3>(params["rotate_speed"]))
   {
+    for (size_t i = 0; i < params["color"].getNumChildren(); ++i) {
+      color_.push_back(Json::getColor<float>(params["color"][i]));
+    }
+    
     // 計算量を減らすため２乗した値を保存
     float range = params.getValueForKey<float>("range");
     range_ = range * range;
@@ -49,7 +52,7 @@ public:
   void draw(const std::vector<Relic>& relics, const ci::vec3& offset, const ci::vec3& center, const float sea_level) {
     if (relics.empty()) return;
 
-    ci::gl::color(color_);
+    ci::gl::color(color_[0]);
 
     for (const auto& relic : relics) {
       // 船からの距離によるクリッピング

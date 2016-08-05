@@ -36,9 +36,10 @@ class TiledStage {
     for (int z = 0; z < block_size_; ++z) {
       for (int x = 0; x < block_size_; ++x) {
         int y = height_map[z][x];
-        if (!relic_factory_.create(y)) continue;
+        auto relic = relic_factory_.create(ci::ivec3(x, y, z));
+        if (!relic.first) continue;
 
-        relics.push_back({ ci::ivec3(x, y, z), "", false, false, 10.0 });
+        relics.push_back(relic.second);
       }
     }
 
@@ -112,7 +113,9 @@ public:
           b.pushBack(ci::JsonTree("type", r.type));
           b.pushBack(ci::JsonTree("found", r.found));
           b.pushBack(ci::JsonTree("searched", r.searched));
-          b.pushBack(ci::JsonTree("time_remains", r.time_remains));
+          b.pushBack(ci::JsonTree("search_required_time", r.search_required_time));
+          b.pushBack(ci::JsonTree("searched_time", r.searched_time));
+          b.pushBack(ci::JsonTree("rare", r.rare));
 
           body.pushBack(b);
         }
@@ -141,7 +144,9 @@ public:
               b.getValueForKey<std::string>("type"),
               b.getValueForKey<bool>("found"),
               b.getValueForKey<bool>("searched"),
-              b.getValueForKey<double>("time_remains"),
+              b.getValueForKey<double>("search_required_time"),
+              b.getValueForKey<double>("searched_time"),
+              b.getValueForKey<float>("rare"),
             });
         }
         relics_.insert(std::make_pair(pos, body));

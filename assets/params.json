@@ -102,8 +102,19 @@
     "probability": 0.00024,
     "range": 50,
     
-    "color": [ 0.8, 1.0, 1.0 ],
-    "rotate_speed": [ 0.02, 0.007, 0.015 ]
+    "color": [
+      [ 1.0, 1.0, 1.0 ],
+      [ 1.0, 0.8, 0.8 ]
+    ],
+    
+    "rotate_speed": [ 0.02, 0.007, 0.015 ],
+
+    "search_required_time": 30
+  },
+
+  "route": {
+    "max_distance": 1.2,
+    "require_rate": 0.25
   },
 
   "ship": {
