@@ -1006,6 +1006,7 @@ public:
         sea_shader_->uniform("offset", sea_offset_);
         sea_shader_->uniform("wave", sea_wave_);
         sea_shader_->uniform("color", sea_color_);
+        sea_shader_->uniform("window_size", ci::app::toPixels(ci::vec2(ci::app::getWindowSize())));
         
         for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
           for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {

@@ -118,8 +118,9 @@ CINDER_APP(ngs::GameApp, ci::app::RendererGl,
              settings->setWindowSize(ngs::Json::getVec<ci::ivec2>(params["app.size"]));
              
              settings->setMultiTouchEnabled();
-             settings->setPowerManagementEnabled(false);
-             settings->setHighDensityDisplayEnabled(false);
+             settings->setPowerManagementEnabled(params.getValueForKey<bool>("app.power_management"));
+             settings->setHighDensityDisplayEnabled(params.getValueForKey<bool>("app.high_density_display"));
+             settings->setFrameRate(params.getValueForKey<int>("app.frame_rate"));
              
              // settings->disableFrameRate();
              // ci::gl::enableVerticalSync();
