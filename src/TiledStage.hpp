@@ -86,7 +86,11 @@ public:
     return stages_.at(pos);
   }
 
-  const std::vector<Relic> getRelics(const ci::ivec2& pos) const {
+  const std::vector<Relic>& getRelics(const ci::ivec2& pos) const {
+    return relics_.at(pos);
+  }
+
+  std::vector<Relic>& getRelics(const ci::ivec2& pos) {
     return relics_.at(pos);
   }
 

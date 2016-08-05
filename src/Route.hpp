@@ -88,7 +88,7 @@ double calcCost(const int current_height, const int target_height,
     int start_level = sea.getLevel(duration);
     int end_level   = sea.getLevel(duration + required);
 
-    if (current_height < start_level && target_height < end_level) {
+    if (current_height <= start_level && target_height <= end_level) {
       break;
     }
 
@@ -166,9 +166,28 @@ std::vector<Waypoint> search(ci::ivec3 start, ci::ivec3 end,
 
   start.y = getStageHeight(start, stage);
   end.y   = getStageHeight(end, stage);
-  
-  DOUT << "start:" << start << std::endl;
-  DOUT << "  end:" << end << std::endl;
+
+  {
+    DOUT << "start:" << start;
+
+    int block_x = glm::floor(start.x / 64.0f);
+    int block_z = glm::floor(start.z / 64.0f);
+    DOUT << " [" << block_x << ", " << block_z << "]";
+
+    int x = glm::mod(float(start.x), 64.0f);
+    int z = glm::mod(float(start.z), 64.0f);
+    DOUT << " (" << x << ", " << z << ")" << std::endl;
+
+    
+    DOUT << "  end:" << end;
+    block_x = glm::floor(end.x / 64.0f);
+    block_z = glm::floor(end.z / 64.0f);
+    DOUT << " [" << block_x << ", " << block_z << "]";
+
+    x = glm::mod(float(end.x), 64.0f);
+    z = glm::mod(float(end.z), 64.0f);
+    DOUT << " (" << x << ", " << z << ")" << std::endl;
+  }
   
   // スタート地点をキューに積む
   Node node = {

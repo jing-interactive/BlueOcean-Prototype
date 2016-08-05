@@ -10,8 +10,9 @@ class RelicDrawer {
   float range_;
   
   std::vector<ci::Color> color_;
-  ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
+  ci::gl::BatchRef model_;
+  ci::gl::BatchRef model2_;
 
   ci::quat rotation_;
 
@@ -33,8 +34,15 @@ public:
     auto shader_prog = readShader("color", "color");
     shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
 
-    ci::ObjLoader loader(Asset::load("relic.obj"));
-    model_ = ci::gl::Batch::create(loader, shader_);
+    {
+      ci::ObjLoader loader(Asset::load("relic.obj"));
+      model_ = ci::gl::Batch::create(loader, shader_);
+    }
+
+    {
+      ci::ObjLoader loader(Asset::load("relic_get.obj"));
+      model2_ = ci::gl::Batch::create(loader, shader_);
+    }
   }
 
   
@@ -52,8 +60,6 @@ public:
   void draw(const std::vector<Relic>& relics, const ci::vec3& offset, const ci::vec3& center, const float sea_level) {
     if (relics.empty()) return;
 
-    ci::gl::color(color_[0]);
-
     for (const auto& relic : relics) {
       // 船からの距離によるクリッピング
       float dx = relic.position.x - center.x;
@@ -66,8 +72,14 @@ public:
       ci::mat4 transform = glm::translate(pos + ci::vec3(0.5, 0.5, 0.5) + offset)
         * glm::mat4_cast(rotation_);
       ci::gl::setModelMatrix(transform);
-      
-      model_->draw();
+
+      // 探索すると色が変わる
+      float t = std::min(relic.searched_time / relic.search_required_time, 1.0);
+      auto color = color_[0].lerp(t, color_[1]);
+      ci::gl::color(color);
+
+      relic.searched ? model2_->draw()
+                     : model_->draw();
     }
   }
 

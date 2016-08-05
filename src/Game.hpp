@@ -117,6 +117,12 @@ class Game {
   ci::ivec3 search_pos_;
 
   Target target_;
+
+  // 遺物の探索
+  bool searching_;
+  ci::ivec2 search_block_;
+  size_t search_index_;
+  double search_start_time_;
   
   // 時間管理
   Time start_time_;
@@ -374,30 +380,60 @@ class Game {
     ci::ivec3 start = ship_.getPosition();
     ci::ivec3 end   = glm::floor(picked_pos_);
 
-    {
-      Time current_time;
-      double duration = current_time - start_time_;
+    Time current_time;
+    double duration = current_time - start_time_;
 
-      auto route = Route::search(start, end,
-                                 duration, ship_.getRequiredTime(),
-                                 stage, sea_);
+    auto route = Route::search(start, end,
+                               duration, ship_.getRequiredTime(),
+                               stage, sea_);
 
-      if (!route.empty()) {
-        const auto& waypoint = route.back();
-        search_pos_ = waypoint.pos;
+    if (!route.empty()) {
+      const auto& waypoint = route.back();
+      search_pos_ = waypoint.pos;
 
-        ship_.setRoute(route);
-        route_start_time_ = duration;
-        ship_.start();
-        target_.setPosition(search_pos_);
-        ship_camera_.start();
+      ship_.setRoute(route);
+      route_start_time_ = duration;
+      ship_.start();
+      target_.setPosition(search_pos_);
+      ship_camera_.start();
 
-        has_route_ = true;
-      }
+      has_route_ = true;
+      // 探索は中止
+      searching_ = false;
     }
   }
-  
 
+  // 遺物探索
+  void searchRelic(const double duration) {
+    // 遺物が海上に出ている間、探索が可能
+    auto& relics = stage.getRelics(search_block_);
+    auto& relic = relics[search_index_];
+    
+    // 一定間隔で高さを調べる
+    // FIXME:隣のブロックの場合は高低差が１ブロックまで
+    double current_time = search_start_time_;
+    while(current_time < duration) {
+      double dt = std::min(duration - current_time, 1.0);
+      
+      float h0 = sea_.getLevel(current_time);
+      float h1 = sea_.getLevel(current_time + dt);
+
+      if ((h0 < relic.position.y) && (h1 < relic.position.y)) {
+        relic.searched_time += dt;
+        if (relic.searched_time >= relic.search_required_time) {
+          relic.searched = true;
+          searching_     = false;
+          DOUT << "Searcing relic finished." << std::endl;
+          break;
+        }
+      }
+      current_time += dt;
+    }
+
+    search_start_time_ = current_time;
+  }
+
+  
   // 回転操作
   void handlingRotation(const ci::vec2& current_pos, const ci::vec2& prev_pos) {
     ci::vec2 d{ current_pos - prev_pos };
@@ -491,7 +527,7 @@ class Game {
   void registerCallbacks() {
     event_.connect("ship_arrival",
                    [this](const Connection&, const Arguments&) {
-        ci::app::console() << "ship_arrival" << std::endl;
+        DOUT << "ship_arrival" << std::endl;
         has_route_ = false;
         target_.arrived();
         ship_camera_.arrived();
@@ -501,9 +537,16 @@ class Game {
         auto result = Search::checkNearRelic(ship_pos, stage);
         if (result.first) {
           DOUT << "Start seach." << std::endl;
+
+          searching_    = true;
+          search_block_ = result.second.block_pos;
+          search_index_ = result.second.index;
+
+          // 到着した直後から探索開始
+          const auto& route = ship_.getRoute();
+          search_start_time_ = route.back().duration;
         }
       });
-    
   }
 
 
@@ -515,6 +558,17 @@ class Game {
     auto duration = start_time_.getDuration();
     object.pushBack(ci::JsonTree("start_time", duration));
 
+    // 探索情報
+    {
+      object.pushBack(ci::JsonTree("searching", searching_));
+
+      if (searching_) {
+        object.pushBack(Json::createFromVec("search_block", search_block_));
+        object.pushBack(ci::JsonTree("search_index", int(search_index_)));
+        object.pushBack(ci::JsonTree("search_start_time", search_start_time_));
+      }
+    }
+
     // 船の経路
     object.pushBack(ci::JsonTree("has_route", has_route_));
     if (has_route_) {
@@ -524,49 +578,46 @@ class Game {
         value.pushBack(ci::JsonTree("", waypoint.duration));
         route.pushBack(value);
       }
-
       object.pushBack(route);
 
       object.pushBack(ci::JsonTree("route_start_time", route_start_time_));
-
-      auto p = Json::createFromVec("search_pos", search_pos_);
-      object.pushBack(p);
+      object.pushBack(Json::createFromVec("search_pos", search_pos_));
     }
 
     // 船の情報
-    ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
     {
-      auto position = Json::createFromVec("position", ship_.getPosition());
-      ship_info.pushBack(position);
+      ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
+
+      ship_info.pushBack(Json::createFromVec("position", ship_.getPosition()));
       ship_info.pushBack(ci::JsonTree("height", ship_.getHeight()));
+      ship_info.pushBack(Json::createFromVec("rotation", ship_.getRotation()));
+      
+      object.pushBack(ship_info);
     }
-    {
-      auto rotation = Json::createFromVec("rotation", ship_.getRotation());
-      ship_info.pushBack(rotation);
-    }
-    object.pushBack(ship_info);
 
     // 海の情報
-    ci::JsonTree sea_info = ci::JsonTree::makeObject("sea");
     {
+      ci::JsonTree sea_info = ci::JsonTree::makeObject("sea");
+
       sea_info.pushBack(ci::JsonTree("level", sea_level_));
       sea_info.pushBack(ci::JsonTree("wave", sea_wave_));
 
       sea_info.pushBack(Json::createFromVec("speed", sea_speed_));
       sea_info.pushBack(Json::createFromVec("color", ci::vec4(sea_color_)));
+
+      object.pushBack(sea_info);
     }
-    object.pushBack(sea_info);
     
     // カメラ情報
-    ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
     {
-      auto rotate = Json::createFromVec("angle", camera_angle_);
-      camera_info.pushBack(rotate);
-
+      ci::JsonTree camera_info = ci::JsonTree::makeObject("camera");
+      
+      camera_info.pushBack(Json::createFromVec("angle", camera_angle_));
       camera_info.pushBack(ci::JsonTree("distance", distance_));
-    }
-    object.pushBack(camera_info);
 
+      object.pushBack(camera_info);
+    }
+    
     // デバッグ設定
     {
       ci::JsonTree debug_info = ci::JsonTree::makeObject("debug");
@@ -596,6 +647,16 @@ class Game {
 
     // ゲーム開始時刻を復元
     start_time_ = Time(record.getValueForKey<double>("start_time"));
+
+    // 探索状況
+    searching_ = record.getValueForKey<bool>("searching");
+    if (searching_) {
+      search_block_      = Json::getVec<ci::ivec2>(record["search_block"]);
+      search_index_      = record.getValueForKey<int>("search_index");
+      search_start_time_ = record.getValueForKey<double>("search_start_time");
+    }
+    
+    // 船の状態
     ship_.setPosition(Json::getVec<ci::vec3>(record["ship.position"]));
     ship_.setHeight(record.getValueForKey<float>("ship.height"));
     ship_.setRotation(Json::getVec<ci::quat>(record["ship.rotation"]));
@@ -687,6 +748,7 @@ public:
       ship_camera_(event_, params_),
       has_route_(false),
       target_(params_["target"]),
+      searching_(false),
       day_lighting_(params_["day_lighting"]),
       disp_stage_(true),
       disp_stage_obj_(true),
@@ -903,6 +965,11 @@ public:
     target_.update(duration, sea_level_);
 
     relic_drawer_.update();
+
+    // 遺物の探索
+    if (searching_) {
+      searchRelic(duration);
+    }
   }
   
   void draw() {
