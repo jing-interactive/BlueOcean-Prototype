@@ -90,6 +90,9 @@ public:
     return relics_.at(pos);
   }
 
+  int getBlockSize() const {
+    return block_size_;
+  }
 
   // シリアライズ
   ci::JsonTree serialize() const {

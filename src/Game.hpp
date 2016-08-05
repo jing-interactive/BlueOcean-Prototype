@@ -30,6 +30,7 @@
 #include "Target.hpp"
 #include "Sea.hpp"
 #include "RouteDraw.hpp"
+#include "Search.hpp"
 
 
 namespace ngs {
@@ -494,6 +495,13 @@ class Game {
         has_route_ = false;
         target_.arrived();
         ship_camera_.arrived();
+
+        // 遺物を探す
+        ci::ivec3 ship_pos(ship_.getPosition());
+        auto result = Search::checkNearRelic(ship_pos, stage);
+        if (result.first) {
+          DOUT << "Start seach." << std::endl;
+        }
       });
     
   }
