@@ -46,7 +46,7 @@ public:
     rotation_ = rotation_ * ci::quat(rotate_speed_);
   }
   
-  void draw(const std::vector<Relic>& relics, const ci::vec3& center, const float sea_level) {
+  void draw(const std::vector<Relic>& relics, const ci::vec3& offset, const ci::vec3& center, const float sea_level) {
     if (relics.empty()) return;
 
     ci::gl::color(color_);
@@ -57,17 +57,14 @@ public:
       float dz = relic.position.z - center.z;
       if ((dx * dx + dz * dz) > range_) continue;
       
-      ci::gl::pushModelMatrix();
-
       ci::vec3 pos(relic.position.x, std::max(float(relic.position.y), sea_level), relic.position.z);
       
       // TIPS:マス目の中央に位置するようオフセットを加えている
-      ci::mat4 transform = glm::translate(pos + ci::vec3(0.5, 0.5, 0.5))
+      ci::mat4 transform = glm::translate(pos + ci::vec3(0.5, 0.5, 0.5) + offset)
         * glm::mat4_cast(rotation_);
-      ci::gl::multModelMatrix(transform);
+      ci::gl::setModelMatrix(transform);
       
       model_->draw();
-      ci::gl::popModelMatrix();
     }
   }
 

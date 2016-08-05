@@ -454,10 +454,7 @@ class Game {
         ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
         if (!frustum.intersects(aabb)) continue;
 
-        ci::mat4 transform = glm::translate(pos);
-        ci::gl::setModelMatrix(transform);
-
-        relic_drawer_.draw(stage.getRelics(stage_pos), center - pos, sea_level_);
+        relic_drawer_.draw(stage.getRelics(stage_pos), pos, center - pos, sea_level_);
       }
     }
   }
