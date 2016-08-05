@@ -120,6 +120,8 @@ class Game {
 
   Light light_;
   DayLighting day_lighting_;
+  // 調整用
+  ci::vec3 light_direction_;
 
   
   // デバッグ用
@@ -254,7 +256,24 @@ class Game {
     params->addParam("Disp Stage",    &disp_stage_);
     params->addParam("Disp StageObj", &disp_stage_obj_);
     params->addParam("Disp Sea",      &disp_sea_);
+    params->addParam("Disp Stage",    &disp_stage_);
 
+    params->addSeparator();
+
+    light_direction_.x = light_.direction.x;
+    light_direction_.y = light_.direction.y;
+    light_direction_.z = light_.direction.z;
+    
+    params->addParam("Light direction", &light_direction_).updateFn([this]() {
+        light_.direction.x = light_direction_.x;
+        light_.direction.y = light_direction_.y;
+        light_.direction.z = light_direction_.z;
+      });
+    
+    params->addParam("Light ambient",   &light_.ambient);
+    params->addParam("Light diffuse",   &light_.diffuse);
+    params->addParam("Light specular",  &light_.specular);
+    
     params->addSeparator();
 
     params->addParam("Pause Day Lighting", &pause_day_lighting_);
