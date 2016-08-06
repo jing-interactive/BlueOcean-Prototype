@@ -331,7 +331,7 @@ class Game {
     ci::vec3 p = ray.calcPosition(z);
 
     // 中央ブロックの座標
-    ci::ivec2 center_pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+    ci::ivec2 center_pos(glm::floor(p.x / BLOCK_SIZE), glm::floor(p.z / BLOCK_SIZE));
     for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
       for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
         // Rayを平行移動
@@ -545,52 +545,78 @@ class Game {
   }
 
   
-  // 陸地の描画
-  void drawStage(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
-    ci::gl::ScopedGlslProg shader(stage_drawer_.getShader());
+  void checkContainsStage(const int x, const int z,
+                          bool checked[][7],
+                          std::vector<ci::ivec2>& disp_stages,
+                          const ci::ivec2& center,
+                          const ci::Frustum& frustum) {
+    // すでにチェック済み
+    if (checked[x + 3][z + 3]) return;
+    checked[x + 3][z + 3] = true;
+
+    // 判定用のAABBを取得
+    ci::ivec2 stage_pos(x + center.x, z + center.y);
+    const auto& s = stage.getStage(stage_pos);
+    const auto& b = s.getAABB();
+
+    // TIPS:海面の描画を含む
+    ci::vec3 min_pos = b.getMin();
+    ci::vec3 max_pos = b.getMax();
+    max_pos.y = std::max(max_pos.y, sea_level_);
     
-    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+    ci::vec3 pos((x + center.x) * BLOCK_SIZE, 0, (z + center.y) * BLOCK_SIZE);
+    ci::AxisAlignedBox aabb(min_pos + pos, max_pos + pos);
+    if (!frustum.intersects(aabb)) return;
+    
+    disp_stages.push_back(stage_pos);
+    
+    // 再帰で周囲の地形もチェック
+    if (x > -3) checkContainsStage(x - 1,     z, checked, disp_stages, center, frustum);
+    if (x <  3) checkContainsStage(x + 1,     z, checked, disp_stages, center, frustum);
+    if (z > -3) checkContainsStage(    x, z - 1, checked, disp_stages, center, frustum);
+    if (z <  3) checkContainsStage(    x, z + 1, checked, disp_stages, center, frustum);
+  }
+  
+  
+  // カメラから見える地形を選出
+  std::vector<ci::ivec2> checkContainsStage(const ci::ivec2& center,
+                                            const ci::Frustum& frustum) {
+    // TIPS:再帰を利用して周囲のブロックの可視判定
+    std::vector<ci::ivec2> disp_stages;
+    bool checked[7][7] = {};
+    checkContainsStage(0, 0, checked, disp_stages, center, frustum);
 
-        // 視錐台カリング
-        ci::ivec2 stage_pos(x, z);
-        const auto& s = stage.getStage(stage_pos);
-        const auto& b = s.getAABB();
-        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
-        if (!frustum.intersects(aabb)) continue;
+    return disp_stages;
+  }
 
-        ci::mat4 transform = glm::translate(pos);
-        ci::gl::setModelMatrix(transform);
+  
+  // 陸地の描画
+  void drawStage(const std::vector<ci::ivec2>& draw_stages) {
+    ci::gl::ScopedGlslProg shader(stage_drawer_.getShader());
 
-        if (disp_stage_) {
-          stage_drawer_.draw(stage_pos, s);
-        }
-        if (disp_stage_obj_) {
-          stageobj_drawer_.draw(stage_pos, s);
-        }
+    for (const auto& stage_pos : draw_stages) {
+      ci::vec3 pos(ci::vec3(stage_pos.x * BLOCK_SIZE, 0, stage_pos.y * BLOCK_SIZE));
+
+      ci::mat4 transform = glm::translate(pos);
+      ci::gl::setModelMatrix(transform);
+      
+      const auto& s = stage.getStage(stage_pos);
+      if (disp_stage_) {
+        stage_drawer_.draw(stage_pos, s);
+      }
+      if (disp_stage_obj_) {
+        stageobj_drawer_.draw(stage_pos, s);
       }
     }
   }
 
-  void drawRelics(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
-    // ci::gl::setMatrices(camera);
-    // ci::gl::disableAlphaBlending();
-    const auto& center = ship_.getPosition();
+  void drawRelics(const std::vector<ci::ivec2>& draw_stages) {
+    const ci::vec3 center = ship_.getPosition();
     
-    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-        ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
+    for (const auto& stage_pos : draw_stages) {
+      ci::vec3 pos(ci::vec3(stage_pos.x * BLOCK_SIZE, 0, stage_pos.y * BLOCK_SIZE));
 
-        // 視錐台カリング
-        ci::ivec2 stage_pos(x, z);
-        const auto& s = stage.getStage(stage_pos);
-        const auto& b = s.getAABB();
-        ci::AxisAlignedBox aabb(b.getMin() + pos, b.getMax() + pos);
-        if (!frustum.intersects(aabb)) continue;
-
-        relic_drawer_.draw(stage.getRelics(stage_pos), pos, center - pos, sea_level_);
-      }
+      relic_drawer_.draw(stage.getRelics(stage_pos), pos, center - pos, sea_level_);
     }
   }
 
@@ -1072,15 +1098,17 @@ public:
       ci::Frustum frustum(camera);
 
       // 中央ブロックの座標
-      ci::ivec2 pos(p.x / BLOCK_SIZE, p.z / BLOCK_SIZE);
+      ci::ivec2 pos(glm::floor(p.x / BLOCK_SIZE), glm::floor(p.z / BLOCK_SIZE));
+      auto draw_stages = checkContainsStage(pos, frustum);
+
       {
         // 海面演出のためにFBOへ描画
         ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo_->getSize());
         ci::gl::ScopedFramebuffer fboScope(fbo_);
         ci::gl::clear(bg_color);
 
-        drawStage(pos, frustum);
-        drawRelics(pos, frustum);
+        drawStage(draw_stages);
+        drawRelics(draw_stages);
         ship_.draw(light_);
       }
       
@@ -1100,27 +1128,21 @@ public:
         // TIPS:まっさらな画面に描画するので
         //      デプステストは必要ない
         glDepthFunc(GL_ALWAYS);
-        
-        for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
-          for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
-            // 視錐台カリング
-            ci::vec3 pos(ci::vec3(x * BLOCK_SIZE, sea_level_, z * BLOCK_SIZE));
-            ci::AxisAlignedBox aabb(pos, pos + ci::vec3(BLOCK_SIZE, 0, BLOCK_SIZE));
-            if (!frustum.intersects(aabb)) continue;
 
-            ci::mat4 transform = glm::translate(pos);
-            ci::gl::setModelMatrix(transform);
+        for (const auto& stage_pos : draw_stages) {
+          ci::vec3 pos(ci::vec3(stage_pos.x * BLOCK_SIZE, sea_level_, stage_pos.y * BLOCK_SIZE));
+          ci::mat4 transform = glm::translate(pos);
+          ci::gl::setModelMatrix(transform);
 
-            ci::gl::draw(sea_mesh_);
-          }
+          ci::gl::draw(sea_mesh_);
         }
 
         // デプステストを元に戻す
         glDepthFunc(GL_LESS);
       }
       
-      drawStage(pos, frustum);
-      drawRelics(pos, frustum);
+      drawStage(draw_stages);
+      drawRelics(draw_stages);
       
       ship_.draw(light_);
       target_.draw(ui_light_);
