@@ -1121,6 +1121,7 @@ public:
       ship_.draw(light_);
       target_.draw(ui_light_);
 
+#if 0
       if (picked_) {
         ci::gl::setModelMatrix(ci::mat4(1.0f));
 
@@ -1128,6 +1129,7 @@ public:
         ci::gl::drawStrokedCube(picked_aabb_);
         ci::gl::drawSphere(picked_pos_, 0.1f);
       }
+#endif
 
       if (has_route_) {
         drawRoute();
@@ -1149,24 +1151,12 @@ public:
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
         UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 1, 0));
-        
-        // ci::gl::color(0.0, 0.0, 0.0);
-        // Draw::fillArc(pos.x, pos.y, 0.0025, 0, -M_PI* 2.0, 20);
-
-        // ci::gl::color(0, 1, 0);
-        // Draw::fillArc(pos.x, pos.y, 0.002, 0, r, 20);
       }
       else if (searching_) {
         float t = (search_end_time_ - duration) / (search_end_time_ - search_start_time_);
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
         UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 0, 1));
-        
-        // ci::gl::color(0.0, 0.0, 0.0);
-        // Draw::fillArc(pos.x, pos.y, 0.0025, 0, -M_PI* 2.0, 20);
-
-        // ci::gl::color(0, 0, 1);
-        // Draw::fillArc(pos.x, pos.y, 0.002, 0, r, 20);
       }
     }
     
