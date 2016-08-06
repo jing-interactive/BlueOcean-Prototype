@@ -110,7 +110,7 @@ private:
 
 
 // アプリのラウンチコード
-CINDER_APP(ngs::GameApp, ci::app::RendererGl,
+CINDER_APP(ngs::GameApp, ci::app::RendererGl(ci::app::RendererGl::Options().msaa(0)),
            [](ci::app::App::Settings* settings) {
              // FIXME:ここで設定ファイルを読むなんて...
              auto params = ngs::Params::load("params.json");
