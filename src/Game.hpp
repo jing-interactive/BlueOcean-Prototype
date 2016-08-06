@@ -136,6 +136,9 @@ class Game {
   // 調整用
   ci::vec3 light_direction_;
 
+  // UI用
+  Light ui_light_;
+  
   
   // デバッグ用
   bool disp_stage_;
@@ -589,8 +592,7 @@ class Game {
 
   // 経路表示
   void drawRoute() {
-    route_drawer_.setupLight(light_);
-    route_drawer_.draw(ship_.getRoute(), sea_level_);
+    route_drawer_.draw(ship_.getRoute(), ui_light_, sea_level_);
   }
 
 
@@ -812,7 +814,9 @@ public:
       searching_(false),
       search_resolution_time_(params_.getValueForKey<double>("search.resolution")),
       search_state_rate_(Json::getVec<ci::vec2>(params_["search.state_rate"])),
+      light_(createLight(params_["light"])),
       day_lighting_(params_["day_lighting"]),
+      ui_light_(createLight(params_["ui_light"])),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
@@ -838,12 +842,6 @@ public:
     bg_color = ci::Color(0, 0, 0);
 
     createSeaMesh();
-
-    // Lighting
-    light_.direction = Json::getVec<ci::vec4>(params_["light.direction"]);
-    light_.ambient   = Json::getColorA<float>(params_["light.ambient"]);
-    light_.diffuse   = Json::getColorA<float>(params_["light.diffuse"]);
-    light_.specular  = Json::getColorA<float>(params_["light.specular"]);
     
     // FBO
     auto format = ci::gl::Fbo::Format()
@@ -1042,7 +1040,7 @@ public:
 
     stage_drawer_.setupLight(light_);
     stageobj_drawer_.setupLight(light_);
-    relic_drawer_.setupLight(light_);
+    relic_drawer_.setupLight(ui_light_);
     
     // 陸地の描画
     // 画面中央の座標をレイキャストして求めている
@@ -1097,7 +1095,7 @@ public:
       drawRelics(pos, frustum);
       
       ship_.draw(light_);
-      target_.draw();
+      target_.draw(ui_light_);
 
       if (picked_) {
         ci::gl::setModelMatrix(ci::mat4(1.0f));

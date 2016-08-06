@@ -28,9 +28,8 @@ public:
   {
     ci::ObjLoader loader(Asset::load("target.obj"));
 
-    // auto shader_prog = readShader("color", "color");
-    // shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
-    shader_ = ci::gl::getStockShader(ci::gl::ShaderDef().color().lambert());
+    auto shader_prog = readShader("color", "color");
+    shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
     model_  = ci::gl::Batch::create(loader, shader_);
   }
 
@@ -53,14 +52,23 @@ public:
     position_.y = std::max(target_y_, sea_level);
   }
 
-  void draw() {
+  void setupLight(const Light& light) {
+    shader_->uniform("LightPosition", light.direction);
+    shader_->uniform("LightAmbient",  light.ambient);
+    shader_->uniform("LightDiffuse",  light.diffuse);
+  }
+
+  void draw(const Light& light) {
     if (!active_) return;
 
+    setupLight(light);
+    
     ci::mat4 transform = glm::translate(position_)
                        * glm::scale(scaling_);
 
     ci::gl::setModelMatrix(transform);
     ci::gl::color(color_);
+
     model_->draw();
   }
   

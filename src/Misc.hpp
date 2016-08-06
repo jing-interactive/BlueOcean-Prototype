@@ -4,6 +4,9 @@
 // 細々した実装
 //
 
+#include "Light.hpp"
+
+
 namespace ngs {
 
 // 比較関数(a < b を計算する)
@@ -62,6 +65,18 @@ std::tuple<bool, float, ci::vec3> intersect(const ci::Ray& ray, const std::vecto
   }
     
   return std::make_tuple(cross, cross_min_z, cross_pos);
+}
+
+
+Light createLight(const ci::JsonTree& params) {
+  Light light;
+
+  light.direction = Json::getVec<ci::vec4>(params["direction"]);
+  light.ambient   = Json::getColorA<float>(params["ambient"]);
+  light.diffuse   = Json::getColorA<float>(params["diffuse"]);
+  light.specular  = Json::getColorA<float>(params["specular"]);
+
+  return light;
 }
 
 }

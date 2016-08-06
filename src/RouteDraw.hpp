@@ -12,7 +12,14 @@ class RouteDrawer {
   ci::gl::GlslProgRef shader_;
   ci::gl::BatchRef model_;
 
+  
+  void setupLight(const Light& light) {
+    shader_->uniform("LightPosition", light.direction);
+    shader_->uniform("LightAmbient",  light.ambient);
+    shader_->uniform("LightDiffuse",  light.diffuse);
+  }
 
+  
 public:
   RouteDrawer(const ci::JsonTree& params)
     : color_(Json::getColor<float>(params["color"]))
@@ -23,15 +30,11 @@ public:
     ci::ObjLoader loader(Asset::load("route.obj"));
     model_ = ci::gl::Batch::create(loader, shader_);
   }
-
              
-  void setupLight(const Light& light) {
-    shader_->uniform("LightPosition", light.direction);
-    shader_->uniform("LightAmbient",  light.ambient);
-    shader_->uniform("LightDiffuse",  light.diffuse);
-  }
 
-  void draw(const std::vector<Waypoint>& route, const float sea_level) {
+  void draw(const std::vector<Waypoint>& route, const Light& light, const float sea_level) {
+    setupLight(light);
+    
     for (const auto& waypoint : route) {
       ci::vec3 pos(waypoint.pos.x, std::max(sea_level, float(waypoint.pos.y)), waypoint.pos.z);
 
