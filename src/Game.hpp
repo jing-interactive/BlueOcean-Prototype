@@ -995,6 +995,7 @@ public:
         ci::gl::clear();
 
         drawStage(pos, frustum);
+        ship_.draw(light_);
       }
       
       ci::gl::clear(bg_color);
