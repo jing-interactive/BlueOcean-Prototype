@@ -128,7 +128,7 @@
     
     "rotate_speed": [ 0.02, 0.007, 0.015 ],
 
-    "search_required_time": 30
+    "search_required_time": 60
   },
 
   "route": {
@@ -136,6 +136,11 @@
     "require_rate": 0.25,
 
     "color": [1, 0, 0]
+  },
+
+  "search": {
+    "resolution": 5,
+    "state_rate": [ 0.333, 0.5 ]
   },
 
   "ship": {

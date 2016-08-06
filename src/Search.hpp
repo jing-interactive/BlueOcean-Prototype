@@ -44,9 +44,7 @@ std::pair<bool, Result> getRelic(const ci::ivec3& pos, const TiledStage& stage) 
   
   
 // 近くに未調査の遺物があるか判定
-std::pair<bool, Result> checkNearRelic(const ci::vec3& ship_pos, const TiledStage& stage) {
-  ci::ivec3 pos(ship_pos);
-    
+std::pair<bool, Result> checkNearRelic(const ci::ivec3& pos, const TiledStage& stage) {
   ci::ivec3 tbl[] = {
     { 0, 0, 0 },
 

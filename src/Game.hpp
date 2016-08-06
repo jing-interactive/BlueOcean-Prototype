@@ -113,7 +113,7 @@ class Game {
   // 経路
   bool has_route_;
   double route_start_time_;
-  // 探索地点(経路の終点と一致しない場合もある)
+  double route_end_time_;
   ci::ivec3 search_pos_;
 
   Target target_;
@@ -123,6 +123,10 @@ class Game {
   ci::ivec2 search_block_;
   size_t search_index_;
   double search_start_time_;
+  double search_end_time_;
+
+  double search_resolution_time_;
+  ci::vec2 search_state_rate_;
   
   // 時間管理
   Time start_time_;
@@ -387,44 +391,117 @@ class Game {
 
       ship_.setRoute(route);
       route_start_time_ = duration;
+      route_end_time_   = waypoint.duration;
       ship_.start();
       target_.setPosition(search_pos_);
       ship_camera_.start();
 
       has_route_ = true;
-      // 探索は中止
-      searching_ = false;
     }
   }
 
   // 遺物探索
-  void searchRelic(const double duration) {
-    // 遺物が海上に出ている間、探索が可能
-    auto& relics = stage.getRelics(search_block_);
-    auto& relic = relics[search_index_];
+  void searchRelic() {
+    // 到着地点周囲に遺物があるか調べる
+    auto search_result = Search::checkNearRelic(search_pos_, stage);
+    if (!search_result.first) return;
     
-    // 一定間隔で高さを調べる
-    // FIXME:隣のブロックの場合は高低差が１ブロックまで
-    double current_time = search_start_time_;
-    while(current_time < duration) {
-      double dt = std::min(duration - current_time, 1.0);
-      
-      float h0 = sea_.getLevel(current_time);
-      float h1 = sea_.getLevel(current_time + dt);
+    const auto& result = search_result.second;
+    
+    auto& relics = stage.getRelics(result.block_pos);
+    auto& relic  = relics[result.index];
 
-      if ((h0 < relic.position.y) && (h1 < relic.position.y)) {
-        relic.searched_time += dt;
-        if (relic.searched_time >= relic.search_required_time) {
-          relic.searched = true;
-          searching_     = false;
-          DOUT << "Searcing relic finished." << std::endl;
-          break;
-        }
+    double required_time = relic.search_required_time;
+
+    // 経路終了時間から探索開始
+    double current_time = route_end_time_;
+    while(required_time > 0.0) {
+      // 一定間隔で高さを調べる
+      float h0 = sea_.getLevel(current_time);
+      float h1 = sea_.getLevel(current_time + search_resolution_time_);
+
+      // 探索時間を決める
+      // 1. 常に海面上なら通常時間
+      // 2. 海面下にある場合は通常の３倍
+      // 3. 分解能の間で海面上と海面下が同居する場合は２倍
+      double time = search_resolution_time_;
+      current_time += time;
+      
+      if ((h0 >= relic.position.y) && (h1 >= relic.position.y)) {
+        // ずっと海面下
+        time *= search_state_rate_.x;
       }
-      current_time += dt;
+      else if ((h0 >= relic.position.y) || (h1 >= relic.position.y)) {
+        // 時々海面上
+        time *= search_state_rate_.y;
+      }
+      // else {
+      //   // ずっと海面上
+      // }
+      
+      required_time -= time;
+      if (required_time < 0.0) {
+        // 引きすぎた分を差し戻す
+        current_time += required_time;
+      }
     }
 
-    search_start_time_ = current_time;
+    // 結果を保存
+    searching_         = true;
+    search_block_      = result.block_pos;
+    search_index_      = result.index;
+    search_start_time_ = route_end_time_;
+    search_end_time_   = current_time;
+  }
+
+  
+  // 画面クリックからの行動を始める
+  void startAction() {
+    // それまでの行動を中止
+    // FIXME:ルートが見つからなかった場合は行動続行としたい
+    has_route_ = false;
+    searching_ = false;
+    
+    searchRoute();
+    if (has_route_) {
+      searchRelic();
+    }
+
+    DOUT << "route:" << has_route_ << std::endl;
+    if (has_route_) {
+      DOUT << "to:" << search_pos_ << std::endl
+           << "arrived time:" << route_end_time_
+           << "(" << route_end_time_ - route_start_time_ << ")"
+           << std::endl;
+    }
+
+    DOUT << "search:" << searching_ << std::endl;
+    if (searching_) {
+      DOUT << "search finish time:" << search_end_time_
+           << "(" << search_end_time_ - search_start_time_ << ")"
+           << std::endl;
+    }
+  }
+
+  
+  // 探索を進める
+  void progressSearch(const double duration) {
+    // まだ時間じゃない
+    if (duration < search_start_time_) return;
+
+    auto& relics = stage.getRelics(search_block_);
+    auto& relic  = relics[search_index_];
+    
+    if (duration >= search_end_time_) {
+      // 終了
+      relic.searched = true;
+      relic.searched_time = relic.search_required_time;
+
+      searching_ = false;
+      return;
+    }
+
+    relic.searched_time = duration - search_start_time_;
   }
 
   
@@ -521,26 +598,11 @@ class Game {
   void registerCallbacks() {
     event_.connect("ship_arrival",
                    [this](const Connection&, const Arguments&) {
-        DOUT << "ship_arrival" << std::endl;
-        has_route_ = false;
-        target_.arrived();
-        ship_camera_.arrived();
-
-        // 遺物を探す
-        ci::ivec3 ship_pos(ship_.getPosition());
-        auto result = Search::checkNearRelic(ship_pos, stage);
-        if (result.first) {
-          DOUT << "Start seach." << std::endl;
-
-          searching_    = true;
-          search_block_ = result.second.block_pos;
-          search_index_ = result.second.index;
-
-          // 到着した直後から探索開始
-          const auto& route = ship_.getRoute();
-          search_start_time_ = route.back().duration;
-        }
-      });
+                     DOUT << "ship_arrival" << std::endl;
+                     has_route_ = false;
+                     target_.arrived();
+                     ship_camera_.arrived();
+                   });
   }
 
 
@@ -558,8 +620,9 @@ class Game {
 
       if (searching_) {
         object.pushBack(Json::createFromVec("search_block", search_block_));
-        object.pushBack(ci::JsonTree("search_index", int(search_index_)));
-        object.pushBack(ci::JsonTree("search_start_time", search_start_time_));
+        object.pushBack(ci::JsonTree("search_index",        int(search_index_)));
+        object.pushBack(ci::JsonTree("search_start_time",   search_start_time_));
+        object.pushBack(ci::JsonTree("search_end_time",     search_end_time_));
       }
     }
 
@@ -575,6 +638,7 @@ class Game {
       object.pushBack(route);
 
       object.pushBack(ci::JsonTree("route_start_time", route_start_time_));
+      object.pushBack(ci::JsonTree("route_end_time",   route_end_time_));
       object.pushBack(Json::createFromVec("search_pos", search_pos_));
     }
 
@@ -583,8 +647,8 @@ class Game {
       ci::JsonTree ship_info = ci::JsonTree::makeObject("ship");
 
       ship_info.pushBack(Json::createFromVec("position", ship_.getPosition()));
-      ship_info.pushBack(ci::JsonTree("height", ship_.getHeight()));
       ship_info.pushBack(Json::createFromVec("rotation", ship_.getRotation()));
+      ship_info.pushBack(ci::JsonTree("height", ship_.getHeight()));
       
       object.pushBack(ship_info);
     }
@@ -648,6 +712,7 @@ class Game {
       search_block_      = Json::getVec<ci::ivec2>(record["search_block"]);
       search_index_      = record.getValueForKey<int>("search_index");
       search_start_time_ = record.getValueForKey<double>("search_start_time");
+      search_end_time_   = record.getValueForKey<double>("search_end_time");
     }
     
     // 船の状態
@@ -679,6 +744,7 @@ class Game {
       }
 
       route_start_time_ = record.getValueForKey<double>("route_start_time");
+      route_end_time_   = record.getValueForKey<double>("route_end_time");
 
       ship_.setRoute(ship_route);
       ship_.start();
@@ -744,6 +810,8 @@ public:
       has_route_(false),
       target_(params_["target"]),
       searching_(false),
+      search_resolution_time_(params_.getValueForKey<double>("search.resolution")),
+      search_state_rate_(Json::getVec<ci::vec2>(params_["search.state_rate"])),
       day_lighting_(params_["day_lighting"]),
       disp_stage_(true),
       disp_stage_obj_(true),
@@ -853,8 +921,8 @@ public:
         pickStage(pos);
 
         if (picked_) {
-          // 経路探索
-          searchRoute();
+          // 行動開始
+          startAction();
         }
       }
       camera_modified_ = false;
@@ -911,8 +979,8 @@ public:
         pickStage(pos);
 
         if (picked_) {
-          // 経路探索
-          searchRoute();
+          // 行動開始
+          startAction();
         }
         break;
       }
@@ -927,8 +995,14 @@ public:
   
   void update() {
     Time current_time;
+    // アプリ開始時からの経過時間
     double duration = current_time - start_time_;
 
+    // 探索
+    if (searching_) {
+      progressSearch(duration);
+    }
+    
     if (!pause_sea_tide_) {
       sea_level_ = sea_.getLevel(duration);
     }
@@ -960,11 +1034,6 @@ public:
     target_.update(duration, sea_level_);
 
     relic_drawer_.update();
-
-    // 遺物の探索
-    if (searching_) {
-      searchRelic(duration);
-    }
   }
   
   void draw() {
