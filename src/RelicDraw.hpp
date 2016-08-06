@@ -11,8 +11,9 @@ class RelicDrawer {
   
   std::vector<ci::Color> color_;
   ci::gl::GlslProgRef shader_;
-  ci::gl::BatchRef model_;
-  ci::gl::BatchRef model2_;
+
+  ci::gl::VboMeshRef model_;
+  ci::gl::VboMeshRef model2_;
 
   ci::quat rotation_;
 
@@ -35,12 +36,12 @@ public:
 
     {
       ci::ObjLoader loader(Asset::load("relic.obj"));
-      model_ = ci::gl::Batch::create(loader, shader_);
+      model_ = ci::gl::VboMesh::create(loader);
     }
 
     {
       ci::ObjLoader loader(Asset::load("relic_get.obj"));
-      model2_ = ci::gl::Batch::create(loader, shader_);
+      model2_ = ci::gl::VboMesh::create(loader);
     }
   }
 
@@ -58,6 +59,8 @@ public:
   
   void draw(const std::vector<Relic>& relics, const ci::vec3& offset, const ci::vec3& center, const float sea_level) {
     if (relics.empty()) return;
+
+    ci::gl::ScopedGlslProg shader(shader_);
 
     for (const auto& relic : relics) {
       // 船からの距離によるクリッピング
@@ -77,8 +80,8 @@ public:
       auto color = color_[0].lerp(t, color_[1]);
       ci::gl::color(color);
 
-      relic.searched ? model2_->draw()
-                     : model_->draw();
+      ci::gl::draw(relic.searched ? model2_
+                                  : model_);
     }
   }
 

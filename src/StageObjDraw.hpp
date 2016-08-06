@@ -15,9 +15,8 @@ namespace ngs {
 class StageObjDrawer {
   StageObjMesh mesh_creater_;
   ci::gl::Texture2dRef texture_;
-  ci::gl::GlslProgRef	shader_;
 
-  std::map<ci::ivec2, ci::gl::BatchRef, LessVec<ci::ivec2>> meshes_;
+  std::map<ci::ivec2, ci::gl::VboMeshRef, LessVec<ci::ivec2>> meshes_;
 
 
 public:
@@ -29,30 +28,23 @@ public:
                                          .minFilter(GL_NEAREST)
                                          // .magFilter(GL_NEAREST)
                                          );
-
-    shader_ = createShader("texture", "texture");
   }
 
   void clear() {
     meshes_.clear();
   }
 
-  void setupLight(const Light& light) {
-    shader_->uniform("LightPosition", light.direction);
-    shader_->uniform("LightAmbient",  light.ambient);
-    shader_->uniform("LightDiffuse",  light.diffuse);
-  }
-
+  
   void draw(const ci::ivec2& pos, const Stage& stage) {
     if (stage.getStageObjects().empty()) return;
     
     if (meshes_.count(pos) == 0) {
-      ci::gl::BatchRef mesh = mesh_creater_.createBatch(stage.getStageObjects(), shader_);
+      auto mesh = mesh_creater_.createBatch(stage.getStageObjects());
       meshes_.insert(std::make_pair(pos, mesh));
     }
 
     texture_->bind();
-    meshes_.at(pos)->draw();
+    ci::gl::draw(meshes_.at(pos));
   }
     
 };

@@ -10,7 +10,7 @@ class RouteDrawer {
   ci::Color color_;
   
   ci::gl::GlslProgRef shader_;
-  ci::gl::BatchRef model_;
+  ci::gl::VboMeshRef model_;
 
   
   void setupLight(const Light& light) {
@@ -27,12 +27,14 @@ public:
     shader_ = createShader("color", "color");
 
     ci::ObjLoader loader(Asset::load("route.obj"));
-    model_ = ci::gl::Batch::create(loader, shader_);
+    model_ = ci::gl::VboMesh::create(loader);
   }
              
 
   void draw(const std::vector<Waypoint>& route, const Light& light, const float sea_level) {
     setupLight(light);
+
+    ci::gl::ScopedGlslProg shader(shader_);
     
     for (const auto& waypoint : route) {
       ci::vec3 pos(waypoint.pos.x, std::max(sea_level, float(waypoint.pos.y)), waypoint.pos.z);
@@ -41,7 +43,7 @@ public:
       ci::mat4 transform = glm::translate(pos + ci::vec3(0.5, 0.5, 0.5));
       ci::gl::setModelMatrix(transform);
       
-      model_->draw();
+      ci::gl::draw(model_);
     }
   }
     

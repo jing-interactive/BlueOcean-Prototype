@@ -96,7 +96,7 @@ class Game {
   
   ci::gl::Texture2dRef sea_texture_;
   ci::gl::GlslProgRef	sea_shader_;
-  ci::gl::BatchRef sea_mesh_;
+  ci::gl::VboMeshRef sea_mesh_;
   
   ci::gl::FboRef fbo_;
   
@@ -133,6 +133,7 @@ class Game {
   
   // 時間管理
   Time start_time_;
+  double duration_;
 
   Light light_;
   DayLighting day_lighting_;
@@ -216,7 +217,7 @@ class Game {
     sea_shader_->uniform("uTex1", 1);
     sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("water_normal.png")),
                                              ci::gl::Texture2d::Format().wrap(GL_REPEAT));
-    sea_mesh_ = ci::gl::Batch::create(mesh, sea_shader_);
+    sea_mesh_ = ci::gl::VboMesh::create(mesh);
   }
   
   
@@ -546,8 +547,7 @@ class Game {
   
   // 陸地の描画
   void drawStage(const ci::ivec2& center_pos, const ci::Frustum& frustum) {
-    // ci::gl::setMatrices(camera);
-    // ci::gl::disableAlphaBlending();
+    ci::gl::ScopedGlslProg shader(stage_drawer_.getShader());
     
     for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
       for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
@@ -818,6 +818,7 @@ public:
       searching_(false),
       search_resolution_time_(params_.getValueForKey<double>("search.resolution")),
       search_state_rate_(Json::getVec<ci::vec2>(params_["search.state_rate"])),
+      duration_(0.0),
       light_(createLight(params_["light"])),
       day_lighting_(params_["day_lighting"]),
       ui_light_(createLight(params_["ui_light"])),
@@ -861,8 +862,6 @@ public:
       .colorTexture()
       ;
     fbo_ = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
-
-    ci::gl::enable(GL_CULL_FACE);
 
     registerCallbacks();
 
@@ -1012,19 +1011,19 @@ public:
   void update() {
     Time current_time;
     // アプリ開始時からの経過時間
-    double duration = current_time - start_time_;
+    duration_ = current_time - start_time_;
 
     // 探索
     if (searching_) {
-      progressSearch(duration);
+      progressSearch(duration_);
     }
     
     if (!pause_sea_tide_) {
-      sea_level_ = sea_.getLevel(duration);
+      sea_level_ = sea_.getLevel(duration_);
     }
 
     if (!pause_day_lighting_) {
-      auto l = day_lighting_.update(duration);
+      auto l = day_lighting_.update(duration_);
       light_.ambient = l.ambient;
       light_.diffuse = l.diffuse;
     }
@@ -1046,24 +1045,19 @@ public:
 
     sea_offset_ += sea_speed_;
 
-    ship_.update(duration, sea_level_);
-    target_.update(duration, sea_level_);
+    ship_.update(duration_, sea_level_);
+    target_.update(duration_, sea_level_);
 
     relic_drawer_.update();
   }
   
   void draw() {
-    Time current_time;
-    // アプリ開始時からの経過時間
-    double duration = current_time - start_time_;
-
     ci::gl::setMatrices(camera);
     ci::gl::disableAlphaBlending();
-
     ci::gl::enableDepth(true);
+    ci::gl::enable(GL_CULL_FACE);
 
     stage_drawer_.setupLight(light_);
-    stageobj_drawer_.setupLight(light_);
     relic_drawer_.setupLight(ui_light_);
     
     // 陸地の描画
@@ -1094,6 +1088,8 @@ public:
 
       // 海面の描画
       if (disp_sea_) {
+        ci::gl::ScopedGlslProg shader(sea_shader_);
+        
         fbo_->getColorTexture()->bind(0);
         sea_texture_->bind(1);
         sea_shader_->uniform("offset", sea_offset_);
@@ -1115,7 +1111,7 @@ public:
             ci::mat4 transform = glm::translate(pos);
             ci::gl::setModelMatrix(transform);
 
-            sea_mesh_->draw();
+            ci::gl::draw(sea_mesh_);
           }
         }
 
@@ -1147,6 +1143,7 @@ public:
     // UI
     ci::gl::setMatrices(ui_camera_);
     ci::gl::enableDepth(false);
+    ci::gl::disable(GL_CULL_FACE);
 
     ci::mat4 transform = glm::translate(ci::vec3(0, 0, -ui_camera_.getNearClip()));
     ci::gl::setModelMatrix(transform);
@@ -1155,13 +1152,13 @@ public:
       ci::gl::ScopedGlslProg shader(ui_shader_);
 
       if (has_route_) {
-        float t = (route_end_time_ - duration) / (route_end_time_ - route_start_time_);
+        float t = (route_end_time_ - duration_) / (route_end_time_ - route_start_time_);
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
         UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 1, 0));
       }
       else if (searching_) {
-        float t = (search_end_time_ - duration) / (search_end_time_ - search_start_time_);
+        float t = (search_end_time_ - duration_) / (search_end_time_ - search_start_time_);
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
         UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 0, 1));

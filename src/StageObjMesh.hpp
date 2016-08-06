@@ -28,14 +28,14 @@ class StageObjMesh {
 public:
   StageObjMesh() = default;
 
-  ci::gl::BatchRef createBatch(const std::vector<StageObj>& objects, const ci::gl::GlslProgRef& shader) {
+  ci::gl::VboMeshRef createBatch(const std::vector<StageObj>& objects) {
     ci::geom::SourceMods mods;
     for (const auto& obj : objects) {
       // モデルをアフィン変換して追加
       mods &= loadMesh(obj.getName()) >> ci::geom::Transform(obj.getTransfomation());
     }
 
-    return ci::gl::Batch::create(mods, shader);
+    return ci::gl::VboMesh::create(mods);
   }
 
 };

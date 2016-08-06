@@ -12,7 +12,7 @@
 namespace ngs {
 
 class StageDrawer {
-  std::map<ci::ivec2, ci::gl::BatchRef, LessVec<ci::ivec2>> meshes_;
+  std::map<ci::ivec2, ci::gl::VboMeshRef, LessVec<ci::ivec2>> meshes_;
 
   ci::gl::Texture2dRef texture_;
   ci::gl::GlslProgRef	shader_;
@@ -41,15 +41,21 @@ public:
     shader_->uniform("LightAmbient",  light.ambient);
     shader_->uniform("LightDiffuse",  light.diffuse);
   }
+
+
+  const ci::gl::GlslProgRef& getShader() const {
+    return shader_;
+  }
+
   
   void draw(const ci::ivec2& pos, const Stage& stage) {
     if (meshes_.count(pos) == 0) {
-      ci::gl::BatchRef mesh = ci::gl::Batch::create(stage.getLandMesh(), shader_);
+      auto mesh = ci::gl::VboMesh::create(stage.getLandMesh());
       meshes_.insert(std::make_pair(pos, mesh));
     }
 
     texture_->bind();
-    meshes_.at(pos)->draw();
+    ci::gl::draw(meshes_.at(pos));
   }
   
 };
