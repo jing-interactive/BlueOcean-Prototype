@@ -22,6 +22,12 @@
     "distance_restriction": [30, 1000]
   },
 
+  "ui_camera": {
+    "fov": 5,
+    "near_z": 1,
+    "far_z": 100
+  },
+
   "fbo": {
     "width":  512,
     "height": 512

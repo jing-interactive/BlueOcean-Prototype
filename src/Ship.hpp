@@ -89,9 +89,8 @@ public:
   {
     ci::ObjLoader loader(Asset::load("ship.obj"));
 
-    auto shader_prog = readShader("color", "color");
-    shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
-    model_ = ci::gl::Batch::create(loader, shader_);
+    shader_ = createShader("color", "color");
+    model_  = ci::gl::Batch::create(loader, shader_);
   }
 
 

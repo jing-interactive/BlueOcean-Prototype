@@ -28,8 +28,7 @@ public:
   {
     ci::ObjLoader loader(Asset::load("target.obj"));
 
-    auto shader_prog = readShader("color", "color");
-    shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
+    shader_ = createShader("color", "color");
     model_  = ci::gl::Batch::create(loader, shader_);
   }
 

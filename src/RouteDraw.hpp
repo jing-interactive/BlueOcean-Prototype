@@ -24,8 +24,7 @@ public:
   RouteDrawer(const ci::JsonTree& params)
     : color_(Json::getColor<float>(params["color"]))
   {
-    auto shader_prog = readShader("color", "color");
-    shader_ = ci::gl::GlslProg::create(shader_prog.first, shader_prog.second);
+    shader_ = createShader("color", "color");
 
     ci::ObjLoader loader(Asset::load("route.obj"));
     model_ = ci::gl::Batch::create(loader, shader_);

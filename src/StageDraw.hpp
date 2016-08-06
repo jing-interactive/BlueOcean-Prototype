@@ -28,8 +28,7 @@ public:
                                          // .magFilter(GL_NEAREST)
                                          );
 
-    auto shader = readShader("texture", "texture");
-    shader_ = ci::gl::GlslProg::create(shader.first, shader.second);
+    shader_ = createShader("texture", "texture");
   }
 
   void clear() {

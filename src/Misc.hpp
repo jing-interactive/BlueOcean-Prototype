@@ -79,4 +79,9 @@ Light createLight(const ci::JsonTree& params) {
   return light;
 }
 
+ci::gl::GlslProgRef createShader(const std::string& vtx_shader, const std::string& frag_shader) {
+  auto shader = readShader(vtx_shader, frag_shader);
+  return ci::gl::GlslProg::create(shader.first, shader.second);
+}
+
 }

@@ -32,6 +32,7 @@
 #include "RouteDraw.hpp"
 #include "Search.hpp"
 #include "UI.hpp"
+#include "Draw.hpp"
 
 
 namespace ngs {
@@ -49,6 +50,7 @@ class Game {
   ci::JsonTree params_;
   
   ci::CameraPersp camera;
+  ci::CameraPersp ui_camera_;
 
   float fov;
   float near_z;
@@ -140,6 +142,7 @@ class Game {
   // UI用
   Light ui_light_;
   
+  ci::gl::GlslProgRef ui_shader_;
   
   // デバッグ用
   bool disp_stage_;
@@ -207,8 +210,7 @@ class Game {
     mesh.appendTriangle(0, 2, 1);
     mesh.appendTriangle(1, 2, 3);
 
-    auto shader = readShader("water", "water");
-    sea_shader_ = ci::gl::GlslProg::create(shader.first, shader.second);
+    sea_shader_ = createShader("water", "water");
     sea_shader_->uniform("uTex0", 0);
     sea_shader_->uniform("uTex1", 1);
     sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("water_normal.png")),
@@ -818,6 +820,7 @@ public:
       light_(createLight(params_["light"])),
       day_lighting_(params_["day_lighting"]),
       ui_light_(createLight(params_["ui_light"])),
+      ui_shader_(createShader("ui", "ui")),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
@@ -834,6 +837,14 @@ public:
 
     camera.setEyePoint(ci::vec3());
     camera.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
+
+    ui_camera_ = ci::CameraPersp(width, height,
+                                 params_.getValueForKey<float>("ui_camera.fov"),
+                                 params_.getValueForKey<float>("ui_camera.near_z"),
+                                 params_.getValueForKey<float>("ui_camera.far_z"));
+
+    ui_camera_.setEyePoint(ci::vec3());
+    ui_camera_.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
 
     rotate_ = glm::angleAxis(ci::toRadians(camera_angle_.y), ci::vec3(0.0f, 1.0f, 0.0f))
       * glm::angleAxis(ci::toRadians(camera_angle_.x), ci::vec3(1.0f, 0.0f, 0.0f));
@@ -1034,11 +1045,14 @@ public:
   }
   
   void draw() {
+    Time current_time;
+    // アプリ開始時からの経過時間
+    double duration = current_time - start_time_;
+
     ci::gl::setMatrices(camera);
     ci::gl::disableAlphaBlending();
 
-    ci::gl::enableDepthRead();
-    ci::gl::enableDepthWrite();
+    ci::gl::enableDepth(true);
 
     stage_drawer_.setupLight(light_);
     stageobj_drawer_.setupLight(light_);
@@ -1121,11 +1135,39 @@ public:
     }
 
     // UI
-    ci::gl::disableDepthRead();
-    ci::gl::disableDepthWrite();
+    ci::gl::setMatrices(ui_camera_);
+    ci::gl::enableDepth(false);
+
+    ci::mat4 transform = glm::translate(ci::vec3(0, 0, -ui_camera_.getNearClip()));
+    ci::gl::setModelMatrix(transform);
 
     {
-      ci::vec3 pos = UI::getScreenPosition(ship_.getPosition(), camera);
+      ci::gl::ScopedGlslProg shader(ui_shader_);
+
+      if (has_route_) {
+        float t = (route_end_time_ - duration) / (route_end_time_ - route_start_time_);
+        
+        ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
+        UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 1, 0));
+        
+        // ci::gl::color(0.0, 0.0, 0.0);
+        // Draw::fillArc(pos.x, pos.y, 0.0025, 0, -M_PI* 2.0, 20);
+
+        // ci::gl::color(0, 1, 0);
+        // Draw::fillArc(pos.x, pos.y, 0.002, 0, r, 20);
+      }
+      else if (searching_) {
+        float t = (search_end_time_ - duration) / (search_end_time_ - search_start_time_);
+        
+        ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
+        UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 0, 1));
+        
+        // ci::gl::color(0.0, 0.0, 0.0);
+        // Draw::fillArc(pos.x, pos.y, 0.0025, 0, -M_PI* 2.0, 20);
+
+        // ci::gl::color(0, 0, 1);
+        // Draw::fillArc(pos.x, pos.y, 0.002, 0, r, 20);
+      }
     }
     
     // ダイアログ表示
