@@ -307,68 +307,116 @@ class Game {
 #endif
 
   
-  void pickStage(const ci::vec2& pos) {
-    // スクリーン座標→正規化座標
-    float x = pos.x / ci::app::getWindowWidth();
-    float y = 1.0f - pos.y / ci::app::getWindowHeight();
-    
-    ci::Ray ray = camera.generateRay(x, y,
-                                     camera.getAspectRatio());
+  void checkContainsStage(const int x, const int z,
+                          bool checked[][7],
+                          std::vector<ci::ivec2>& disp_stages,
+                          const ci::ivec2& center,
+                          const ci::Frustum& frustum) {
+    // すでにチェック済み
+    if (checked[x + 3][z + 3]) return;
+    checked[x + 3][z + 3] = true;
 
+    // 判定用のAABBを取得
+    ci::ivec2 stage_pos(x + center.x, z + center.y);
+    const auto& s = stage.getStage(stage_pos);
+    const auto& b = s.getAABB();
+
+    // TIPS:海面の描画を含む
+    ci::vec3 min_pos = b.getMin();
+    ci::vec3 max_pos = b.getMax();
+    max_pos.y = std::max(max_pos.y, sea_level_);
+    
+    ci::vec3 pos((x + center.x) * BLOCK_SIZE, 0, (z + center.y) * BLOCK_SIZE);
+    ci::AxisAlignedBox aabb(min_pos + pos, max_pos + pos);
+    if (!frustum.intersects(aabb)) return;
+    
+    disp_stages.push_back(stage_pos);
+    
+    // 再帰で周囲の地形もチェック
+    if (x > -3) checkContainsStage(x - 1,     z, checked, disp_stages, center, frustum);
+    if (x <  3) checkContainsStage(x + 1,     z, checked, disp_stages, center, frustum);
+    if (z > -3) checkContainsStage(    x, z - 1, checked, disp_stages, center, frustum);
+    if (z <  3) checkContainsStage(    x, z + 1, checked, disp_stages, center, frustum);
+  }
+  
+  
+  // カメラから見える地形を選出
+  std::vector<ci::ivec2> checkContainsStage(const ci::ivec2& center,
+                                            const ci::Frustum& frustum) {
+    // TIPS:再帰を利用して周囲のブロックの可視判定
+    std::vector<ci::ivec2> disp_stages;
+    bool checked[7][7] = {};
+    checkContainsStage(0, 0, checked, disp_stages, center, frustum);
+
+    return disp_stages;
+  }
+
+  
+  void pickStage(const ci::vec2& pos) {
     picked_ = false;
-    float cross_min_z = std::numeric_limits<float>::max();
+
+    // スクリーン座標→正規化座標
+    float sx = pos.x / ci::app::getWindowWidth();
+    float sy = 1.0f - pos.y / ci::app::getWindowHeight();
+    
+    ci::Ray ray = camera.generateRay(sx, sy,
+                                     camera.getAspectRatio());
 
     // 海面と交差する必要がある
     float sea_z;
     if (!ray.calcPlaneIntersection(ci::vec3(0, sea_level_, 0), ci::vec3(0, 1, 0), &sea_z)) return;
+
     ci::vec3 sea_pos = ray.calcPosition(sea_z);
     // TIPS:誤差があると経路検索で目的地にたどり着かないw
     sea_pos.y = sea_level_;
 
     // どの区画をクリックしたか判定
-    float z;
-    if (!ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) return;
-    ci::vec3 p = ray.calcPosition(z);
+    float click_z;
+    if (!ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &click_z)) return;
+    ci::vec3 p = ray.calcPosition(click_z);
 
-    // 中央ブロックの座標
+    float cross_min_z = std::numeric_limits<float>::max();
     ci::ivec2 center_pos(glm::floor(p.x / BLOCK_SIZE), glm::floor(p.z / BLOCK_SIZE));
-    for (int z = (center_pos.y - 2); z < (center_pos.y + 3); ++z) {
-      for (int x = (center_pos.x - 2); x < (center_pos.x + 3); ++x) {
-        // Rayを平行移動
-        ci::Ray t_ray = ray;
-        t_ray.setOrigin(ray.getOrigin() + ci::vec3(x * -BLOCK_SIZE, 0, z * -BLOCK_SIZE));
+    ci::Frustum frustum(camera);
+    auto draw_stages = checkContainsStage(center_pos, frustum);
+
+    DOUT << "draw_stages:" << draw_stages.size() << std::endl;
+    
+    for (const auto& stage_pos : draw_stages) {
+      // Rayを平行移動
+      ci::Ray t_ray = ray;
+      t_ray.setOrigin(ray.getOrigin() + ci::vec3(stage_pos.x * -BLOCK_SIZE, 0, stage_pos.y * -BLOCK_SIZE));
           
-        const auto& s = stage.getStage(ci::ivec2(x, z));
+      const auto& s = stage.getStage(stage_pos);
 
-        float cross_z[2];
-        if (!s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) continue;
-        if (cross_z[0] >= cross_min_z) continue;
+      float cross_z[2];
+      if (!s.getAABB().intersect(t_ray, &cross_z[0], &cross_z[1])) continue;
+      if (cross_z[0] >= cross_min_z) continue;
           
-        // TriMeshを調べて交差点を特定する
-        auto result = intersect(t_ray, s.getLandMesh());
-        if (result.first && result.second < cross_min_z) {
-          picked_ = true;
+      // TriMeshを調べて交差点を特定する
+      auto result = intersect(t_ray, s.getLandMesh());
+      if (result.first && result.second < cross_min_z) {
+        picked_ = true;
 
-          // Pick座標を保持
-          cross_min_z = result.second;
-          picked_pos_ = ray.calcPosition(result.second);
+        // Pick座標を保持
+        cross_min_z = result.second;
+        picked_pos_ = ray.calcPosition(result.second);
 
-          // AABBも保持
-          ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(x * BLOCK_SIZE, 0, z * BLOCK_SIZE));
-          picked_aabb_ = s.getAABB().transformed(m);
-        }
+        // AABBも保持
+        ci::mat4 m = glm::translate(ci::mat4(1.0), ci::vec3(stage_pos.x * BLOCK_SIZE, 0, stage_pos.y * BLOCK_SIZE));
+        picked_aabb_ = s.getAABB().transformed(m);
+      }
 
-        // 遺物を直接クリックしてるか調べる
-        auto relic_cross = intersect(t_ray, stage.getRelics(ci::ivec2(x, z)), sea_level_);
-        if (std::get<0>(relic_cross) && (std::get<1>(relic_cross) < cross_min_z)) {
-          picked_ = true;
-          cross_min_z = std::get<1>(relic_cross);
+      // 遺物を直接クリックしてるか調べる
+      auto relic_cross = intersect(t_ray, stage.getRelics(stage_pos), sea_level_);
+      if (std::get<0>(relic_cross) && (std::get<1>(relic_cross) < cross_min_z)) {
+        picked_ = true;
+        cross_min_z = std::get<1>(relic_cross);
 
-          ci::vec3 p(std::get<2>(relic_cross)); 
-          picked_pos_ = p + ci::vec3(x * BLOCK_SIZE + 0.5, 0, z * BLOCK_SIZE + 0.5);
+        ci::vec3 p(std::get<2>(relic_cross)); 
+        picked_pos_ = p + ci::vec3(stage_pos.x * BLOCK_SIZE + 0.5, 0, stage_pos.y * BLOCK_SIZE + 0.5);
 
-          DOUT << "picked relics " << picked_pos_ << std::endl;
-        }
+        DOUT << "picked relics " << picked_pos_ << std::endl;
       }
     }
 
@@ -544,52 +592,7 @@ class Game {
     distance_ = glm::clamp(distance_- zooming * t, distance_restriction_.x, distance_restriction_.y);
   }
 
-  
-  void checkContainsStage(const int x, const int z,
-                          bool checked[][7],
-                          std::vector<ci::ivec2>& disp_stages,
-                          const ci::ivec2& center,
-                          const ci::Frustum& frustum) {
-    // すでにチェック済み
-    if (checked[x + 3][z + 3]) return;
-    checked[x + 3][z + 3] = true;
-
-    // 判定用のAABBを取得
-    ci::ivec2 stage_pos(x + center.x, z + center.y);
-    const auto& s = stage.getStage(stage_pos);
-    const auto& b = s.getAABB();
-
-    // TIPS:海面の描画を含む
-    ci::vec3 min_pos = b.getMin();
-    ci::vec3 max_pos = b.getMax();
-    max_pos.y = std::max(max_pos.y, sea_level_);
     
-    ci::vec3 pos((x + center.x) * BLOCK_SIZE, 0, (z + center.y) * BLOCK_SIZE);
-    ci::AxisAlignedBox aabb(min_pos + pos, max_pos + pos);
-    if (!frustum.intersects(aabb)) return;
-    
-    disp_stages.push_back(stage_pos);
-    
-    // 再帰で周囲の地形もチェック
-    if (x > -3) checkContainsStage(x - 1,     z, checked, disp_stages, center, frustum);
-    if (x <  3) checkContainsStage(x + 1,     z, checked, disp_stages, center, frustum);
-    if (z > -3) checkContainsStage(    x, z - 1, checked, disp_stages, center, frustum);
-    if (z <  3) checkContainsStage(    x, z + 1, checked, disp_stages, center, frustum);
-  }
-  
-  
-  // カメラから見える地形を選出
-  std::vector<ci::ivec2> checkContainsStage(const ci::ivec2& center,
-                                            const ci::Frustum& frustum) {
-    // TIPS:再帰を利用して周囲のブロックの可視判定
-    std::vector<ci::ivec2> disp_stages;
-    bool checked[7][7] = {};
-    checkContainsStage(0, 0, checked, disp_stages, center, frustum);
-
-    return disp_stages;
-  }
-
-  
   // 陸地の描画
   void drawStage(const std::vector<ci::ivec2>& draw_stages) {
     ci::gl::ScopedGlslProg shader(stage_drawer_.getShader());
@@ -1095,10 +1098,9 @@ public:
     if (ray.calcPlaneIntersection(ci::vec3(0, 0, 0), ci::vec3(0, 1, 0), &z)) {
       ci::vec3 p = ray.calcPosition(z);
 
-      ci::Frustum frustum(camera);
-
       // 中央ブロックの座標
       ci::ivec2 pos(glm::floor(p.x / BLOCK_SIZE), glm::floor(p.z / BLOCK_SIZE));
+      ci::Frustum frustum(camera);
       auto draw_stages = checkContainsStage(pos, frustum);
 
       {
