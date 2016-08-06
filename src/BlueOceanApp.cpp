@@ -121,6 +121,7 @@ CINDER_APP(ngs::GameApp, ci::app::RendererGl,
              settings->setPowerManagementEnabled(params.getValueForKey<bool>("app.power_management"));
              settings->setHighDensityDisplayEnabled(params.getValueForKey<bool>("app.high_density_display"));
              settings->setFrameRate(params.getValueForKey<int>("app.frame_rate"));
+             settings->setTitle(PREPRO_TO_STR(PRODUCT_NAME));
              
              // settings->disableFrameRate();
              // ci::gl::enableVerticalSync();

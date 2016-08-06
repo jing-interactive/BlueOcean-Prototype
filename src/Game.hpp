@@ -31,6 +31,7 @@
 #include "Sea.hpp"
 #include "RouteDraw.hpp"
 #include "Search.hpp"
+#include "UI.hpp"
 
 
 namespace ngs {
@@ -849,8 +850,6 @@ public:
       ;
     fbo_ = ci::gl::Fbo::create(FBO_WIDTH, FBO_HEIGHT, format);
 
-    ci::gl::enableDepthRead();
-    ci::gl::enableDepthWrite();
     ci::gl::enable(GL_CULL_FACE);
 
     registerCallbacks();
@@ -1038,6 +1037,9 @@ public:
     ci::gl::setMatrices(camera);
     ci::gl::disableAlphaBlending();
 
+    ci::gl::enableDepthRead();
+    ci::gl::enableDepthWrite();
+
     stage_drawer_.setupLight(light_);
     stageobj_drawer_.setupLight(light_);
     relic_drawer_.setupLight(ui_light_);
@@ -1059,9 +1061,10 @@ public:
         // 海面演出のためにFBOへ描画
         ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo_->getSize());
         ci::gl::ScopedFramebuffer fboScope(fbo_);
-        ci::gl::clear();
+        ci::gl::clear(bg_color);
 
         drawStage(pos, frustum);
+        drawRelics(pos, frustum);
         ship_.draw(light_);
       }
       
@@ -1075,6 +1078,10 @@ public:
         sea_shader_->uniform("wave", sea_wave_);
         sea_shader_->uniform("color", sea_color_);
         sea_shader_->uniform("window_size", ci::app::toPixels(ci::vec2(ci::app::getWindowSize())));
+
+        // TIPS:まっさらな画面に描画するので
+        //      デプステストは必要ない
+        glDepthFunc(GL_ALWAYS);
         
         for (int z = (pos.y - 2); z < (pos.y + 3); ++z) {
           for (int x = (pos.x - 2); x < (pos.x + 3); ++x) {
@@ -1089,6 +1096,9 @@ public:
             sea_mesh_->draw();
           }
         }
+
+        // デプステストを元に戻す
+        glDepthFunc(GL_LESS);
       }
       
       drawStage(pos, frustum);
@@ -1108,6 +1118,14 @@ public:
       if (has_route_) {
         drawRoute();
       }
+    }
+
+    // UI
+    ci::gl::disableDepthRead();
+    ci::gl::disableDepthWrite();
+
+    {
+      ci::vec3 pos = UI::getScreenPosition(ship_.getPosition(), camera);
     }
     
     // ダイアログ表示
