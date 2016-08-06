@@ -161,10 +161,7 @@ class Game {
 #endif
 
 
-  float getVerticalFov() {
-    float aspect = ci::app::getWindowAspectRatio();
-    camera.setAspectRatio(aspect);
-
+  float getVerticalFov(const float aspect) {
     if (aspect < 1.0) {
       // 画面が縦長になったら、幅基準でfovを求める
       // fovとnear_zから投影面の幅の半分を求める
@@ -186,6 +183,10 @@ class Game {
     stage = TiledStage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale);
     stage_drawer_.clear();
     stageobj_drawer_.clear();
+
+    // 探索は中止
+    searching_ = false;
+    has_route_ = false;
   }
 
   void createSeaMesh() {
@@ -876,7 +877,14 @@ public:
   }
 
   void resize() {
-    camera.setFov(getVerticalFov());
+    float aspect = ci::app::getWindowAspectRatio();
+
+    camera.setAspectRatio(aspect);
+    camera.setFov(getVerticalFov(aspect));
+    
+    ui_camera_.setAspectRatio(aspect);
+    ui_camera_.setFov(getVerticalFov(aspect));
+
     touch_num = 0;
   }
 
