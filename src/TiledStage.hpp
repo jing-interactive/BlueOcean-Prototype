@@ -20,8 +20,7 @@ class TiledStage {
   int block_size_;
   
   ci::Perlin random_;
-  float random_scale_;
-  float height_scale_;
+  ci::vec3 random_scale_;
 
   StageObjFactory stageobj_factory_;
   RelicFactory relic_factory_;
@@ -54,11 +53,10 @@ class TiledStage {
 public:
   TiledStage(const ci::JsonTree& params,
              const int block_size, const ci::Perlin& random,
-             const float random_scale, const float height_scale)
+             ci::vec3 random_scale)
     : block_size_(block_size),
       random_(random),
-      random_scale_(random_scale),
-      height_scale_(height_scale),
+      random_scale_(std::move(random_scale)),
       stageobj_factory_(params["stage_obj"]),
       relic_factory_(params["relic"])
   {}
@@ -75,7 +73,7 @@ public:
                                           pos.x, pos.y,
                                           random_,
                                           stageobj_factory_,
-                                          random_scale_, height_scale_)));
+                                          random_scale_)));
 
       if (!hasRelics(pos)) {
         const auto& stage = stages_.at(pos);

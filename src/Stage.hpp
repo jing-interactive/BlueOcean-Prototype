@@ -14,6 +14,7 @@
 #include <cinder/Rand.h>
 #include "StageObj.hpp"
 #include "StageObjFactory.hpp"
+#include <glm/gtc/noise.hpp>
 
 
 namespace ngs {
@@ -49,7 +50,7 @@ public:
         const int offset_x, const int offset_z,
         const ci::Perlin& random,
         const StageObjFactory& factory,
-        const float random_scale, const float height_scale)
+        const ci::vec3& random_scale)
     : size_(width, deep)
   {
     height_map_.resize(deep + 2);
@@ -61,9 +62,13 @@ public:
     // 周囲１ブロックを余計に生成している
     for (int z = -1; z < (deep + 1); ++z) {
       for (int x = -1; x < (width + 1); ++x) {
-        height_map_[z + 1][x + 1] = glm::clamp(random.fBm((x + offset_x * width) * random_scale,
-                                                         (z + offset_z * deep) * random_scale) * height_scale,
-                                              -15.0f, 15.0f);
+        ci::vec2 ofs((x + offset_x * width) * random_scale.x,
+                     (z + offset_z * deep) * random_scale.x);
+
+        float height = random.fBm(ofs);
+        float scale  = (glm::simplex(ofs * random_scale.y) + 1.0f) * random_scale.z;
+        
+        height_map_[z + 1][x + 1] = glm::clamp(height * scale, -16.0f, 16.0f);
       }
     }
 

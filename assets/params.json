@@ -13,7 +13,7 @@
   "camera": {
     "fov": 5,
     "near_z": 20,
-    "far_z": 3000,
+    "far_z": 2000,
 
     "angle": [ -45, 45 ],
     "angle_restriction": [ -70, -25 ],
@@ -89,11 +89,10 @@
   "stage": {
     "block_size": 64,
 
-    "octave": 6,
+    "octave": 2,
     "seed": 0,
 
-    "random_scale": 0.05,
-    "height_scale": 25.0
+    "random_scale": [ 0.055, 0.15, 18.0 ]
   },
 
   "stage_obj": [

@@ -78,8 +78,7 @@ class Game {
   // Stage生成時の乱数調整用
   int octave;
   int seed;
-  float ramdom_scale;
-  float height_scale;
+  ci::vec3 random_scale;
   ci::Perlin random;
 
   // 陸地
@@ -181,7 +180,7 @@ class Game {
   }
 
   void createStage() {
-    stage = TiledStage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale);
+    stage = TiledStage(params_, BLOCK_SIZE, random, random_scale);
     stage_drawer_.clear();
     stageobj_drawer_.clear();
 
@@ -255,11 +254,15 @@ class Game {
       .updateFn([this]() {
           createStage();
         });
-    params->addParam("Random Scale", &ramdom_scale).min(0.001f).step(0.001f)
+    params->addParam("Random Scale X", &random_scale.x).min(0.001f).step(0.001f)
       .updateFn([this]() {
           createStage();
         });
-    params->addParam("Height Scale", &height_scale).min(1.0f).step(0.1f)
+    params->addParam("Random Scale Y", &random_scale.y).min(0.001f).step(0.001f)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Random Scale Z", &random_scale.z).min(1.0f).step(0.1f)
       .updateFn([this]() {
           createStage();
         });
@@ -851,10 +854,9 @@ public:
       camera_modified_(false),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
-      ramdom_scale(params_.getValueForKey<float>("stage.random_scale")),
-      height_scale(params_.getValueForKey<float>("stage.height_scale")),
+      random_scale(Json::getVec<ci::vec3>(params_["stage.random_scale"])),
       random(octave, seed),
-      stage(params_, BLOCK_SIZE, random, ramdom_scale, height_scale),
+      stage(params_, BLOCK_SIZE, random, random_scale),
       sea_(params_["sea"]),
       sea_color_(Json::getColorA<float>(params_["sea.color"])),
       sea_speed_(Json::getVec<ci::vec2>(params_["sea.speed"])),
