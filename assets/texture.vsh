@@ -22,7 +22,7 @@ void main(void) {
   vec4 position = ciModelViewProjection * ciPosition;
 
   // 簡単なライティングの計算
-  vec3 normal = normalize(ciNormalMatrix * ciNormal);
+  vec3 normal = ciNormalMatrix * ciNormal;
   vec3 light  = normalize((LightPosition * position.w - position * LightPosition.w).xyz);
 
   float diffuse = max(dot(light, normal), 0.0);

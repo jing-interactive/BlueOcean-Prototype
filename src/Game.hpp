@@ -710,6 +710,18 @@ class Game {
 
       object.pushBack(camera_info);
     }
+
+    // 光源
+    {
+      ci::JsonTree light_info = ci::JsonTree::makeObject("light");
+
+      light_info.pushBack(Json::createFromVec("direction", light_.direction));
+      light_info.pushBack(Json::createFromColorA("ambient", light_.ambient));
+      light_info.pushBack(Json::createFromColorA("diffuse", light_.diffuse));
+      light_info.pushBack(Json::createFromColorA("specular", light_.specular));
+
+      object.pushBack(light_info);
+    }
     
     // デバッグ設定
     {
@@ -800,6 +812,16 @@ class Game {
     sea_wave_  = record.getValueForKey<float>("sea.wave");
     sea_level_ = record.getValueForKey<float>("sea.level");
 
+    // 光源
+    light_.direction = Json::getVec<ci::vec4>(record["light.direction"]);
+    light_.ambient   = Json::getColorA<float>(record["light.ambient"]);
+    light_.diffuse   = Json::getColorA<float>(record["light.diffuse"]);
+    light_.specular  = Json::getColorA<float>(record["light.specular"]);
+    
+    light_direction_.x = light_.direction.x;
+    light_direction_.y = light_.direction.y;
+    light_direction_.z = light_.direction.z;
+    
     // デバッグ設定
     if (record.hasChild("debug")) {
       disp_stage_     = record.getValueForKey<bool>("debug.disp_stage");

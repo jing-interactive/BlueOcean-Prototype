@@ -56,6 +56,26 @@ ci::JsonTree createFromVec(const std::string& key, const T& vec) {
   return json;
 }
 
+ci::JsonTree createFromColor(const std::string& key, const ci::Color& color) {
+  auto json = ci::JsonTree::makeObject(key);
+  json.pushBack(ci::JsonTree("", color.r));
+  json.pushBack(ci::JsonTree("", color.g));
+  json.pushBack(ci::JsonTree("", color.b));
+
+  return json;
+}
+
+ci::JsonTree createFromColorA(const std::string& key, const ci::ColorA& color) {
+  auto json = ci::JsonTree::makeObject(key);
+  json.pushBack(ci::JsonTree("", color.r));
+  json.pushBack(ci::JsonTree("", color.g));
+  json.pushBack(ci::JsonTree("", color.b));
+  json.pushBack(ci::JsonTree("", color.a));
+
+  return json;
+}
+
+
 template<typename T>
 ci::ColorT<T> getColor(const ci::JsonTree& json) noexcept {
   return ci::ColorT<T>(json[0].getValue<T>(), json[1].getValue<T>(), json[2].getValue<T>());
