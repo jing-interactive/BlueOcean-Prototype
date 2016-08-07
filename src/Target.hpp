@@ -11,6 +11,8 @@ class Target {
   ci::vec3 scaling_;
 
   float target_y_;
+
+  ci::vec3 offset_;
   
   ci::Color color_;
   ci::gl::BatchRef model_;
@@ -23,6 +25,7 @@ class Target {
 public:
   Target(ci::JsonTree& params)
     : scaling_(Json::getVec<ci::vec3>(params["scaling"])),
+      offset_(Json::getVec<ci::vec3>(params["offset"])),
       color_(Json::getColor<float>(params["color"])),
       active_(false)
   {
@@ -62,7 +65,7 @@ public:
 
     setupLight(light);
     
-    ci::mat4 transform = glm::translate(position_)
+    ci::mat4 transform = glm::translate(position_ + offset_)
                        * glm::scale(scaling_);
 
     ci::gl::setModelMatrix(transform);
