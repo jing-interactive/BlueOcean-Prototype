@@ -3,7 +3,7 @@
     "size": [ 960, 640 ],
 
     "power_management": false,
-    "high_density_display": false,
+    "high_density_display": true,
     "frame_rate": 60,
     
     "camera_rotation_sensitivity":    0.3,
@@ -160,7 +160,10 @@
     "position": [ 0, 0, 0 ],
     "scaling": [ 1, 1, 1 ],
     "color": [ 1.0, 0.647, 0.255 ],
-    "speed": 1
+    "speed": 1,
+
+    "roll":  [ 0.7, 0.1 ],
+    "pitch": [ 0.8, 0.09 ]
   },
 
   "ship_camera": {

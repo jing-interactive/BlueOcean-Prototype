@@ -21,6 +21,11 @@ class Ship {
   ci::quat rotation_;
   ci::vec3 scaling_;
 
+  ci::vec2 roll_;
+  ci::vec2 pitch_;
+
+  ci::quat swing_;
+  
   ci::Color color_;
   ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
@@ -83,6 +88,8 @@ public:
     : event_(event),
       position_(Json::getVec<ci::vec3>(params["position"])),
       scaling_(Json::getVec<ci::vec3>(params["scaling"])),
+      roll_(Json::getVec<ci::vec2>(params["roll"])),
+      pitch_(Json::getVec<ci::vec2>(params["pitch"])),
       color_(Json::getColor<float>(params["color"])),
       speed_(params.getValueForKey<float>("speed")),
       do_route_(false)
@@ -143,7 +150,14 @@ public:
     if (do_route_) {
       calcCurrentPosition(duration);
     }
+
     position_.y = std::max(sea_level, height_);
+
+    if (position_.y == sea_level) {
+      swing_ = ci::quat(ci::vec3(std::sin(std::sin(duration * pitch_.x) * M_PI) * pitch_.y,
+                                 0,
+                                 std::sin(std::sin(duration * roll_.x) * M_PI) * roll_.y));
+    }
   }
 
   void draw(const Light& light) {
@@ -154,6 +168,7 @@ public:
     // TIPS:マス目の中央に位置するようオフセットを加えている
     ci::mat4 transform = glm::translate(position_ + ci::vec3(0.5, 0, 0.5))
                        * glm::mat4_cast(rotation_)
+                       * glm::mat4_cast(swing_)
                        * glm::scale(scaling_);
 
     ci::gl::setModelMatrix(transform);
