@@ -147,6 +147,9 @@ public:
         if ((height_map_[z - 1 + 1][x + 1] < y)) {
           // 側面(z-)
           int dy = y - height_map_[z - 1 + 1][x + 1];
+          int xl_h = height_map_[z - 1 + 1][x + 1 - 1];
+          int xr_h = height_map_[z - 1 + 1][x + 1 + 1];
+          
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z },
@@ -155,13 +158,32 @@ public:
               { x + 1, y - 1 - h, z },
             };
 
-            float v = (h == (dy - 1)) ? -0.5 : -1;
-          
+            float n0 = -1.0;
+            float n1 = -1.0;
+            float n2 = -1.0;
+            float n3 = -1.0;
+            if (h == (dy - 1)) {
+              n2 *= 0.6;
+              n3 *= 0.6;
+            }
+            if (xl_h >= (y - h)) {
+              n0 *= 0.6;
+            }
+            if (xr_h >= (y - h)) {
+              n1 *= 0.6;
+            }
+            if (xl_h >= (y - h - 1)) {
+              n2 *= 0.6;
+            }
+            if (xr_h >= (y - h - 1)) {
+              n3 *= 0.6;
+            }
+            
             ci::vec3 n[] = {
-              { 0, 0, -1 },
-              { 0, 0, -1 },
-              { 0, 0, v },
-              { 0, 0, v },
+              { 0, 0, n0 },
+              { 0, 0, n1 },
+              { 0, 0, n2 },
+              { 0, 0, n3 },
             };
 
             ci::vec2 uv[] = {
@@ -184,6 +206,9 @@ public:
         if ((height_map_[z + 1 + 1][x + 1] < y)) {
           // 側面(z+)
           int dy = y - height_map_[z + 1 + 1][x + 1];
+          int xl_h = height_map_[z + 1 + 1][x + 1 - 1];
+          int xr_h = height_map_[z + 1 + 1][x + 1 + 1];
+
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               {     x,     y - h, z + 1 },
@@ -192,13 +217,32 @@ public:
               { x + 1, y - 1 - h, z + 1 },
             };
 
-            float v = (h == (dy - 1)) ? 0.5 : 1;
+            float n0 = 1.0;
+            float n1 = 1.0;
+            float n2 = 1.0;
+            float n3 = 1.0;
+            if (h == (dy - 1)) {
+              n2 *= 0.6;
+              n3 *= 0.6;
+            }
+            if (xl_h >= (y - h)) {
+              n0 *= 0.6;
+            }
+            if (xr_h >= (y - h)) {
+              n1 *= 0.6;
+            }
+            if (xl_h >= (y - h - 1)) {
+              n2 *= 0.6;
+            }
+            if (xr_h >= (y - h - 1)) {
+              n3 *= 0.6;
+            }
             
             ci::vec3 n[] = {
-              { 0, 0, 1 },
-              { 0, 0, 1 },
-              { 0, 0, v },
-              { 0, 0, v },
+              { 0, 0, n0 },
+              { 0, 0, n1 },
+              { 0, 0, n2 },
+              { 0, 0, n3 },
             };
 
             ci::vec2 uv[] = {
@@ -221,6 +265,9 @@ public:
         if ((height_map_[z + 1][x - 1 + 1] < y)) {
           // 側面(x-)
           int dy = y - height_map_[z + 1][x - 1 + 1];
+          int zl_h = height_map_[z + 1 - 1][x - 1 + 1];
+          int zr_h = height_map_[z + 1 + 1][x - 1 + 1];
+
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x,     y - h,     z },
@@ -229,13 +276,32 @@ public:
               { x, y - 1 - h, z + 1 },
             };
 
-            float v = (h == (dy - 1)) ? -0.5 : -1;
+            float n0 = -1.0;
+            float n1 = -1.0;
+            float n2 = -1.0;
+            float n3 = -1.0;
+            if (h == (dy - 1)) {
+              n2 *= 0.6;
+              n3 *= 0.6;
+            }
+            if (zl_h >= (y - h)) {
+              n0 *= 0.6;
+            }
+            if (zr_h >= (y - h)) {
+              n1 *= 0.6;
+            }
+            if (zl_h >= (y - h - 1)) {
+              n2 *= 0.6;
+            }
+            if (zr_h >= (y - h - 1)) {
+              n3 *= 0.6;
+            }
           
             ci::vec3 n[] = {
-              { -1, 0, 0 },
-              { -1, 0, 0 },
-              { v, 0, 0 },
-              { v, 0, 0 },
+              { n0, 0, 0 },
+              { n1, 0, 0 },
+              { n2, 0, 0 },
+              { n3, 0, 0 },
             };
 
             ci::vec2 uv[] = {
@@ -258,6 +324,9 @@ public:
         if ((height_map_[z + 1][x + 1 + 1] < y)) {
           // 側面(x+)
           int dy = y - height_map_[z + 1][x + 1 + 1];
+          int zl_h = height_map_[z + 1 - 1][x + 1 + 1];
+          int zr_h = height_map_[z + 1 + 1][x + 1 + 1];
+
           for (int h = 0; h < dy; ++h) {
             ci::vec3 p[] = {
               { x + 1,     y - h,     z },
@@ -266,13 +335,32 @@ public:
               { x + 1, y - 1 - h, z + 1 },
             };
 
-            float v = (h == (dy - 1)) ? 0.5 : 1;
-          
+            float n0 = 1.0;
+            float n1 = 1.0;
+            float n2 = 1.0;
+            float n3 = 1.0;
+            if (h == (dy - 1)) {
+              n2 *= 0.6;
+              n3 *= 0.6;
+            }
+            if (zl_h >= (y - h)) {
+              n0 *= 0.6;
+            }
+            if (zr_h >= (y - h)) {
+              n1 *= 0.6;
+            }
+            if (zl_h >= (y - h - 1)) {
+              n2 *= 0.6;
+            }
+            if (zr_h >= (y - h - 1)) {
+              n3 *= 0.6;
+            }
+
             ci::vec3 n[] = {
-              { 1, 0, 0 },
-              { 1, 0, 0 },
-              { v, 0, 0 },
-              { v, 0, 0 },
+              { n0, 0, 0 },
+              { n1, 0, 0 },
+              { n2, 0, 0 },
+              { n3, 0, 0 },
             };
 
             ci::vec2 uv[] = {
