@@ -392,7 +392,7 @@ public:
     }
 
     // ステージ上に乗っかっているオブジェクトを生成
-    createStageObjects(width, deep, factory);
+    // createStageObjects(width, deep, factory);
   }
 
   
