@@ -33,6 +33,7 @@
 #include "Search.hpp"
 #include "UI.hpp"
 #include "Draw.hpp"
+#include "ItemReporter.hpp"
 
 
 namespace ngs {
@@ -143,6 +144,8 @@ class Game {
   Light ui_light_;
   
   ci::gl::GlslProgRef ui_shader_;
+
+  ItemReporter item_reporter_;
   
   // デバッグ用
   bool disp_stage_;
@@ -747,9 +750,9 @@ class Game {
   }
   
   // セーブデータから色々復元
-  void restoreFromRecords() {
+  bool restoreFromRecords() {
     auto path = getDocumentPath() / "record.json";
-    if (!ci::fs::is_regular_file(path)) return;
+    if (!ci::fs::is_regular_file(path)) return false;
     
     ci::JsonTree record(ci::loadFile(path));
 
@@ -835,6 +838,8 @@ class Game {
       pause_sea_tide_     = record.getValueForKey<bool>("debug.pause_sea_tide");
       pause_ship_camera_  = record.getValueForKey<bool>("debug.pause_ship_camera");
     }
+
+    return true;
   }
 
   
@@ -876,6 +881,7 @@ public:
       day_lighting_(params_["day_lighting"]),
       ui_light_(createLight(params_["ui_light"])),
       ui_shader_(createShader("ui", "ui")),
+      item_reporter_(params_["item_reporter"]),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
@@ -923,8 +929,11 @@ public:
       int height = Route::getStageHeight(ci::ivec3(ship_.getPosition()), stage);
       ship_.setHeight(height);
     }
+
+    // アイテム表示
+    item_reporter_.loadItem(params_["item.body"][0]);
     
-    // 記録ファイルがあるなら読み込んでみる
+    // 記録ファイルがあるなら読み込む
     restoreFromRecords();
   }
 
@@ -945,17 +954,19 @@ public:
   }
   
 
-  void mouseDown(ci::app::MouseEvent event) {
+  void mouseDown(ci::app::MouseEvent& event) {
     // マルチタッチ判定中は無視
     if (touch_num > 1) return;
 
     if (event.isLeft()) {
       ci::ivec2 pos = event.getPos();
       mouse_prev_pos = pos;
+
+      item_reporter_.mouseDown(event);
     }
   }
 
-  void mouseDrag(ci::app::MouseEvent event) {
+  void mouseDrag(ci::app::MouseEvent& event) {
     if (touch_num > 1) return;
     if (!event.isLeftDown()) return;
 
@@ -973,15 +984,17 @@ public:
     }
     camera_modified_ = true;
     mouse_prev_pos = mouse_pos;
+
+    item_reporter_.mouseDrag(event);
   }
 
-  void mouseWheel(ci::app::MouseEvent event) {
+  void mouseWheel(ci::app::MouseEvent& event) {
     // OSX:マルチタッチ操作の時に呼ばれる
     if (touch_num > 1) return;
     handlingZooming(-event.getWheelIncrement() * 2.0);
   }
 
-  void mouseUp(ci::app::MouseEvent event) {
+  void mouseUp(ci::app::MouseEvent& event) {
     if (event.isLeft()) {
       if (!camera_modified_) {
         // クリックした位置のAABBを特定
@@ -997,7 +1010,7 @@ public:
     }
   }
 
-  void touchesBegan(ci::app::TouchEvent event) {
+  void touchesBegan(ci::app::TouchEvent& event) {
     const auto& touches = event.getTouches();
 
     if (touch_num == 0) {
@@ -1008,7 +1021,7 @@ public:
     touch_num += touches.size();
   }
 
-  void touchesMoved(ci::app::TouchEvent event) {
+  void touchesMoved(ci::app::TouchEvent& event) {
     const auto& touches = event.getTouches();
 
 #if defined (CINDER_COCOA_TOUCH)
@@ -1035,7 +1048,7 @@ public:
     camera_modified_ = true;
   }
   
-  void touchesEnded(ci::app::TouchEvent event) {
+  void touchesEnded(ci::app::TouchEvent& event) {
     const auto& touches = event.getTouches();
 #if defined (CINDER_COCOA_TOUCH)
     if (!camera_modified_) {
@@ -1212,6 +1225,8 @@ public:
         UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 0, 1));
       }
     }
+
+    item_reporter_.draw();
     
     // ダイアログ表示
     drawDialog();
