@@ -5,6 +5,8 @@
 //
 
 #include "Light.hpp"
+#include "Relic.hpp"
+#include "Shader.hpp"
 
 
 namespace ngs {
@@ -31,7 +33,7 @@ std::pair<bool, float> intersect(const ci::Ray& ray, const ci::TriMesh& mesh) {
   bool  cross       = false;
   float cross_min_z = std::numeric_limits<float>::max();
     
-  for (u_int i = 0; i < indicies.size(); i += 3) {
+  for (size_t i = 0; i < indicies.size(); i += 3) {
     float cross_z;
     if (ray.calcTriangleIntersection(vertex[indicies[i]], vertex[indicies[i + 1]], vertex[indicies[i + 2]], &cross_z)) {
       cross = true;
@@ -101,6 +103,19 @@ float getVerticalFov(const float aspect, const float fov, const float near_z) {
     // 横長の場合、fovは固定
     return fov;
   }
+}
+
+
+std::vector<Touch> createTouchInfo(const std::vector<ci::app::TouchEvent::Touch>& touches) {
+  std::vector<Touch> app_touches;
+  for (const auto& t : touches) {
+    app_touches.push_back({ t.getId(),
+                            t.getPos(),
+                            t.getPrevPos()
+                          });
+  }
+
+  return app_touches;
 }
 
 }

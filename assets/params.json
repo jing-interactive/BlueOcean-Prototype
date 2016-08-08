@@ -233,5 +233,10 @@
         "file": "item007.obj"
       }
     ]
+  },
+
+  "debug_signal": {
+    "g": "scene_game",
+    "i": "scene_item_reporter"
   }
 }

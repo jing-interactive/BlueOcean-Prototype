@@ -23,7 +23,7 @@ class Target {
 
 
 public:
-  Target(ci::JsonTree& params)
+  Target(const ci::JsonTree& params)
     : scaling_(Json::getVec<ci::vec3>(params["scaling"])),
       offset_(Json::getVec<ci::vec3>(params["offset"])),
       color_(Json::getColor<float>(params["color"])),

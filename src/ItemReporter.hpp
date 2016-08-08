@@ -5,6 +5,7 @@
 //
 
 #include <cinder/Arcball.h>
+#include <cinder/ObjLoader.h>
 #include "Item.hpp"
 
 
@@ -22,12 +23,15 @@ class ItemReporter {
   ci::gl::Texture2dRef texture_;
   ci::gl::VboMeshRef  model_;
 
+  ci::AxisAlignedBox aabb_;
+  
   ci::vec3 bg_translate_;
   ci::quat bg_rotate_;
   
   Item item_;
 
   ci::Arcball arcball_;
+  bool draged_;
 
   ci::vec3 offset_;
   ci::vec3 translate_;
@@ -41,6 +45,7 @@ public:
       light_(createLight(params["light"])),
       bg_translate_(Json::getVec<ci::vec3>(params["bg_translate"])),
       bg_rotate_(Json::getVec<ci::vec3>(params["bg_rotate"])),
+      draged_(false),
       offset_(Json::getVec<ci::vec3>(params["offset"])),
       translate_(Json::getVec<ci::vec3>(params["translate"]))
   {
@@ -65,8 +70,12 @@ public:
 
     shader_ = createShader("texture", "texture");
 
-    ci::ObjLoader loader(Asset::load("item_reporter.obj"));
-    model_ = ci::gl::VboMesh::create(loader);
+    ci::TriMesh mesh(ci::ObjLoader(Asset::load("item_reporter.obj")));
+
+    ci::mat4 transform = glm::translate(bg_translate_);
+    aabb_ = mesh.calcBoundingBox(transform);
+
+    model_ = ci::gl::VboMesh::create(mesh);
     
     arcball_ = ci::Arcball(&camera_, ci::Sphere(Json::getVec<ci::vec3>(params["arcball.center"]),
                                                 params.getValueForKey<float>("arcball.radius")));
@@ -78,12 +87,31 @@ public:
   }
 
 
-  void mouseDown(ci::app::MouseEvent &event) {
-    arcball_.mouseDown(event);
+  void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
+    // arcball_.mouseDown(event);
+    draged_ = false;
   }
 
-  void mouseDrag(ci::app::MouseEvent &event) {
-    arcball_.mouseDrag(event);
+  void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
+    // arcball_.mouseDrag(event);
+    draged_ = true;
+  }
+
+  void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
+    // スクリーン座標→正規化座標
+    ci::vec2 pos = touches[0].getPos();
+    float sx = pos.x / ci::app::getWindowWidth();
+    float sy = 1.0f - pos.y / ci::app::getWindowHeight();
+    
+    ci::Ray ray = camera_.generateRay(sx, sy,
+                                      camera_.getAspectRatio());
+
+    if (aabb_.intersects(ray)) {
+      // 終了
+      DOUT << "Finish item reporter." << std::endl;
+    }
+    
+    draged_ = false;
   }
 
   
@@ -115,7 +143,7 @@ public:
     ci::gl::pushModelMatrix();
     
     ci::gl::translate(bg_translate_);
-    ci::gl::rotate(bg_rotate_);
+    // ci::gl::rotate(bg_rotate_);
     
     ci::gl::draw(model_);
     ci::gl::popModelMatrix();

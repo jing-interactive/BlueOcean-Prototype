@@ -17,7 +17,7 @@ class ShipCamera {
 
   
 public:
-  ShipCamera(Event<Arguments>& event, ci::JsonTree& params)
+  ShipCamera(Event<Arguments>& event, const ci::JsonTree& params)
     : event_(event),
       distance_(Json::getVec<ci::vec2>(params["ship_camera.distance"])),
       current_distance_(distance_.x)

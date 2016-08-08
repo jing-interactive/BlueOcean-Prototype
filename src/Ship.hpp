@@ -84,7 +84,7 @@ class Ship {
   
   
 public:
-  Ship(Event<Arguments>& event, ci::JsonTree& params)
+  Ship(Event<Arguments>& event, const ci::JsonTree& params)
     : event_(event),
       position_(Json::getVec<ci::vec3>(params["position"])),
       scaling_(Json::getVec<ci::vec3>(params["scaling"])),

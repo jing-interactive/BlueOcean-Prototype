@@ -10,8 +10,6 @@
 #include <cinder/Perlin.h>
 #include <cinder/Ray.h>
 #include <cinder/Frustum.h> 
-#include "Event.hpp"
-#include "Arguments.hpp"
 #include "Asset.hpp"
 #include "Params.hpp"
 #include "Shader.hpp"
@@ -33,7 +31,6 @@
 #include "Search.hpp"
 #include "UI.hpp"
 #include "Draw.hpp"
-#include "ItemReporter.hpp"
 #include "PieChart.hpp"
 
 
@@ -47,9 +44,8 @@ class Game {
     FBO_HEIGHT = 512,
   };
 
-  Event<Arguments> event_;
-  
-  ci::JsonTree params_;
+  Event<Arguments>& event_;
+  const ci::JsonTree& params_;
   
   ci::CameraPersp camera;
 
@@ -61,9 +57,7 @@ class Game {
   float ui_fov_;
   float ui_near_z_;
 
-  ci::vec2 mouse_prev_pos;
-  int touch_num;
-  uint32_t touch_id;
+  uint32_t touch_id_;
 
   ci::quat rotate_;
   ci::vec3 translate_;
@@ -150,8 +144,6 @@ class Game {
   ci::gl::GlslProgRef ui_shader_;
 
   PieChart pie_chart_;
-  
-  ItemReporter item_reporter_;
   
   // デバッグ用
   bool disp_stage_;
@@ -832,8 +824,9 @@ class Game {
 
   
 public:
-  Game()
-    : params_(Params::load("params.json")),
+  Game(Event<Arguments>& event, const ci::JsonTree& params)
+    : event_(event),
+      params_(params),
       fov(params_.getValueForKey<float>("camera.fov")),
       near_z(params_.getValueForKey<float>("camera.near_z")),
       far_z(params_.getValueForKey<float>("camera.far_z")),
@@ -841,7 +834,6 @@ public:
       ui_near_z_(params_.getValueForKey<float>("ui_camera.near_z")),
       camera_rotation_sensitivity_(params_.getValueForKey<float>("app.camera_rotation_sensitivity")),
       camera_translation_sensitivity_(params_.getValueForKey<float>("app.camera_translation_sensitivity")),
-      touch_num(0),
       camera_angle_(Json::getVec<ci::vec2>(params_["camera.angle"])),
       angle_restriction_(Json::getVec<ci::vec2>(params_["camera.angle_restriction"])),
       distance_(params_.getValueForKey<float>("camera.distance")),
@@ -871,7 +863,6 @@ public:
       day_lighting_(params_["day_lighting"]),
       ui_light_(createLight(params_["ui_light"])),
       ui_shader_(createShader("ui", "ui")),
-      item_reporter_(params_["item_reporter"]),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
@@ -919,33 +910,76 @@ public:
       int height = Route::getStageHeight(ci::ivec3(ship_.getPosition()), stage);
       ship_.setHeight(height);
     }
-
-    // アイテム表示
-    item_reporter_.loadItem(params_["item.body"][6]);
     
     // 記録ファイルがあるなら読み込む
     restoreFromRecords();
   }
 
-  void resize() {
-    float aspect = ci::app::getWindowAspectRatio();
-
+  
+  void resize(const float aspect) {
     camera.setAspectRatio(aspect);
     camera.setFov(getVerticalFov(aspect, fov, near_z));
     
     ui_camera_.setAspectRatio(aspect);
     ui_camera_.setFov(getVerticalFov(aspect, ui_fov_, ui_near_z_));
-
-    item_reporter_.resize(aspect);
-    
-    touch_num = 0;
   }
 
-  void resetTouch() {
-    touch_num = 0;
+
+  void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
+    if (touching_num == 1) {
+      // 最初のを覚えとく
+      touch_id_ = touches[0].getId();
+    }
   }
   
+  void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
+    if (touching_num == 1) {
+      // シングルタッチ操作は回転
+      handlingRotation(touches[0].getPos(),
+                       touches[0].getPrevPos());
+      camera_modified_ = true;
+      return;
+    }
 
+    if (touches.size() < 2) return;
+
+    auto v1 = touches[0].getPos() - touches[1].getPos();
+    auto v2 = touches[0].getPrevPos() - touches[1].getPrevPos();
+
+    float ld = ci::length(v1) - ci::length(v2);
+    
+    if (std::abs(ld) < 3.0f) {
+      handlingTranslation(touches[0].getPos(), touches[0].getPrevPos());
+    }
+    else {
+      handlingZooming(ld * 0.1f);
+    }
+    camera_modified_ = true;
+  }
+  
+  void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
+    if (!camera_modified_ && (touching_num == 0)) {
+      for (const auto& touch : touches) {
+        if (touch.getId() != touch_id_) continue;
+
+        // クリックした位置のAABBを特定
+        ci::ivec2 pos = touch.getPos();
+        pickStage(pos);
+
+        if (picked_) {
+          // 行動開始
+          startAction();
+        }
+        break;
+      }
+    }
+    
+    if (touching_num == 0) camera_modified_ = false;
+  }
+
+  
+
+#if 0
   void mouseDown(ci::app::MouseEvent& event) {
     // マルチタッチ判定中は無視
     if (touch_num > 1) return;
@@ -953,8 +987,6 @@ public:
     if (event.isLeft()) {
       ci::ivec2 pos = event.getPos();
       mouse_prev_pos = pos;
-
-      item_reporter_.mouseDown(event);
     }
   }
 
@@ -976,8 +1008,6 @@ public:
     }
     camera_modified_ = true;
     mouse_prev_pos = mouse_pos;
-
-    item_reporter_.mouseDrag(event);
   }
 
   void mouseWheel(ci::app::MouseEvent& event) {
@@ -1007,7 +1037,7 @@ public:
 
     if (touch_num == 0) {
       // 最初のを覚えとく
-      touch_id = touches[0].getId();
+      touch_id_ = touches[0].getId();
     }
     
     touch_num += touches.size();
@@ -1045,7 +1075,7 @@ public:
 #if defined (CINDER_COCOA_TOUCH)
     if (!camera_modified_) {
       for (const auto& touch : touches) {
-        if (touch.getId() !=touch_id) continue;
+        if (touch.getId() !=touch_id_) continue;
 
         // クリックした位置のAABBを特定
         ci::ivec2 pos = touch.getPos();
@@ -1059,11 +1089,12 @@ public:
       }
     }
 #endif
-
+    
     // 最悪マイナス値にならないよう
     touch_num = std::max(touch_num - int(touches.size()), 0);
     if (!touch_num) camera_modified_ = false;
   }
+#endif
 
   
   void update() {
@@ -1218,8 +1249,6 @@ public:
       }
     }
 
-    item_reporter_.draw();
-    
     // ダイアログ表示
     drawDialog();
   }
