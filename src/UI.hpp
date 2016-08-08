@@ -26,16 +26,4 @@ ci::vec3 getScreenPosition(const ci::vec3& pos,
   return p;
 }
 
-void drawPieChart(const ci::vec2& center, const float rate, const ci::Color& color) {
-  ci::gl::color(0.0, 0.0, 0.0);
-  ci::gl::drawSolidCircle(center, 0.0024, 20);
-
-  ci::gl::color(1.0, 1.0, 1.0);
-  ci::gl::lineWidth(2);
-  ci::gl::drawStrokedCircle(center, 0.0023, 20);
-
-  ci::gl::color(color);
-  Draw::fillArc(center.x, center.y, 0.0019, 0, -M_PI * 2.0 * rate, 20);
-}
-
 } }

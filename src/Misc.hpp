@@ -84,4 +84,23 @@ ci::gl::GlslProgRef createShader(const std::string& vtx_shader, const std::strin
   return ci::gl::GlslProg::create(shader.first, shader.second);
 }
 
+
+float getVerticalFov(const float aspect, const float fov, const float near_z) {
+  if (aspect < 1.0) {
+    // 画面が縦長になったら、幅基準でfovを求める
+    // fovとnear_zから投影面の幅の半分を求める
+    float half_w = std::tan(ci::toRadians(fov / 2)) * near_z;
+
+    // 表示画面の縦横比から、投影面の高さの半分を求める
+    float half_h = half_w / aspect;
+
+    // 投影面の高さの半分とnear_zから、fovが求まる
+    return ci::toDegrees(std::atan(half_h / near_z) * 2);
+  }
+  else {
+    // 横長の場合、fovは固定
+    return fov;
+  }
+}
+
 }

@@ -34,6 +34,7 @@
 #include "UI.hpp"
 #include "Draw.hpp"
 #include "ItemReporter.hpp"
+#include "PieChart.hpp"
 
 
 namespace ngs {
@@ -51,11 +52,14 @@ class Game {
   ci::JsonTree params_;
   
   ci::CameraPersp camera;
-  ci::CameraPersp ui_camera_;
 
   float fov;
   float near_z;
   float far_z;
+
+  ci::CameraPersp ui_camera_;
+  float ui_fov_;
+  float ui_near_z_;
 
   ci::vec2 mouse_prev_pos;
   int touch_num;
@@ -145,6 +149,8 @@ class Game {
   
   ci::gl::GlslProgRef ui_shader_;
 
+  PieChart pie_chart_;
+  
   ItemReporter item_reporter_;
   
   // デバッグ用
@@ -163,24 +169,6 @@ class Game {
   ci::params::InterfaceGlRef params;
 #endif
 
-
-  float getVerticalFov(const float aspect) {
-    if (aspect < 1.0) {
-      // 画面が縦長になったら、幅基準でfovを求める
-      // fovとnear_zから投影面の幅の半分を求める
-      float half_w = std::tan(ci::toRadians(fov / 2)) * near_z;
-
-      // 表示画面の縦横比から、投影面の高さの半分を求める
-      float half_h = half_w / aspect;
-
-      // 投影面の高さの半分とnear_zから、fovが求まる
-      return ci::toDegrees(std::atan(half_h / near_z) * 2);
-    }
-    else {
-      // 横長の場合、fovは固定
-      return fov;
-    }
-  }
 
   void createStage() {
     stage = TiledStage(params_, BLOCK_SIZE, random, random_scale);
@@ -849,6 +837,8 @@ public:
       fov(params_.getValueForKey<float>("camera.fov")),
       near_z(params_.getValueForKey<float>("camera.near_z")),
       far_z(params_.getValueForKey<float>("camera.far_z")),
+      ui_fov_(params_.getValueForKey<float>("ui_camera.fov")),
+      ui_near_z_(params_.getValueForKey<float>("ui_camera.near_z")),
       camera_rotation_sensitivity_(params_.getValueForKey<float>("app.camera_rotation_sensitivity")),
       camera_translation_sensitivity_(params_.getValueForKey<float>("app.camera_translation_sensitivity")),
       touch_num(0),
@@ -900,8 +890,8 @@ public:
     camera.setViewDirection(ci::vec3{ 0.0f, 0.0f, -1.0f });
 
     ui_camera_ = ci::CameraPersp(width, height,
-                                 params_.getValueForKey<float>("ui_camera.fov"),
-                                 params_.getValueForKey<float>("ui_camera.near_z"),
+                                 ui_fov_,
+                                 ui_near_z_,
                                  params_.getValueForKey<float>("ui_camera.far_z"));
 
     ui_camera_.setEyePoint(ci::vec3());
@@ -931,7 +921,7 @@ public:
     }
 
     // アイテム表示
-    item_reporter_.loadItem(params_["item.body"][0]);
+    item_reporter_.loadItem(params_["item.body"][6]);
     
     // 記録ファイルがあるなら読み込む
     restoreFromRecords();
@@ -941,11 +931,13 @@ public:
     float aspect = ci::app::getWindowAspectRatio();
 
     camera.setAspectRatio(aspect);
-    camera.setFov(getVerticalFov(aspect));
+    camera.setFov(getVerticalFov(aspect, fov, near_z));
     
     ui_camera_.setAspectRatio(aspect);
-    ui_camera_.setFov(getVerticalFov(aspect));
+    ui_camera_.setFov(getVerticalFov(aspect, ui_fov_, ui_near_z_));
 
+    item_reporter_.resize(aspect);
+    
     touch_num = 0;
   }
 
@@ -1216,17 +1208,17 @@ public:
         float t = (route_end_time_ - duration_) / (route_end_time_ - route_start_time_);
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
-        UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 1, 0));
+        pie_chart_.draw(ci::vec2(pos.x, pos.y), 0.0024f, t, ci::Color(0, 1, 0));
       }
       else if (searching_) {
         float t = (search_end_time_ - duration_) / (search_end_time_ - search_start_time_);
         
         ci::vec3 pos = UI::getScreenPosition(ship_.getPosition() + ci::vec3(0.5, 1.5, 0.5), camera, ui_camera_);
-        UI::drawPieChart(ci::vec2(pos.x, pos.y), t, ci::Color(0, 0, 1));
+        pie_chart_.draw(ci::vec2(pos.x, pos.y), 0.0024f, t, ci::Color(0, 0, 1));
       }
     }
 
-    item_reporter_.draw();
+    // item_reporter_.draw();
     
     // ダイアログ表示
     drawDialog();

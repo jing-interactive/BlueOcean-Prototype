@@ -177,13 +177,20 @@
 
   "item_reporter": {
     "camera": {
-      "fov": 5,
-      "near_z": 100,
-      "far_z":  1000,
-      "position":  [0, 0, 300 ],
+      "fov": 20,
+      "near_z": 10,
+      "far_z":  500,
+      "position":  [0, 0, 80 ],
       "direction": [0, 0, -1 ]
     },
 
+    "bg_translate": [0, -10, 0],
+    "bg_rotate":  [ 0.0, -0.8, 0.0 ],
+
+    "agree_translate": [0, -12, 0],
+    "agree_rotate": [0, -90, 0],
+    "agree_scale": [0.4, 0.4, 0.4],
+    
     "translate": [0, -8, 0],
     "arcball": {
       "center": [ 0, 0, 0 ],
@@ -191,7 +198,7 @@
     },
 
     "light": {
-    "direction": [ 0, 0.1, 1, 0 ],
+    "direction": [ 0.2, 0.1, 1.0, 0 ],
     "ambient":   [ 0.2, 0.2, 0.2, 1.0 ],
     "diffuse":   [ 0.8, 0.8, 0.8, 1.0 ],
     "specular":  [ 0.2, 0.2, 0.2, 1.0 ]

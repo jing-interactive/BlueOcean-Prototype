@@ -38,6 +38,12 @@ T getVec(const ci::JsonTree& json) noexcept {
   return v;
 }
 
+ci::quat getQuat(const ci::JsonTree& json) {
+  ci::vec3 v = getVec<ci::vec3>(json) * float(M_PI) / 180.0f;
+  return ci::quat(v);
+}
+
+
 template<typename T>
 ci::JsonTree createFromVec(const T& vec) {
   ci::JsonTree json;
