@@ -22,10 +22,6 @@ class ItemReporter {
   ci::gl::Texture2dRef texture_;
   ci::gl::VboMeshRef  model_;
 
-  ci::vec3 agree_translate_;
-  ci::quat agree_rotate_;
-  ci::vec3 agree_scale_;
-
   ci::vec3 bg_translate_;
   ci::quat bg_rotate_;
   
@@ -33,6 +29,7 @@ class ItemReporter {
 
   ci::Arcball arcball_;
 
+  ci::vec3 offset_;
   ci::vec3 translate_;
   
   
@@ -42,11 +39,9 @@ public:
     : fov_(params.getValueForKey<float>("camera.fov")),
       near_z_(params.getValueForKey<float>("camera.near_z")),
       light_(createLight(params["light"])),
-      agree_translate_(Json::getVec<ci::vec3>(params["agree_translate"])),
-      agree_rotate_(Json::getQuat(params["agree_rotate"])),
-      agree_scale_(Json::getVec<ci::vec3>(params["agree_scale"])),
       bg_translate_(Json::getVec<ci::vec3>(params["bg_translate"])),
       bg_rotate_(Json::getVec<ci::vec3>(params["bg_rotate"])),
+      offset_(Json::getVec<ci::vec3>(params["offset"])),
       translate_(Json::getVec<ci::vec3>(params["translate"]))
   {
     int width  = ci::app::getWindowWidth();
@@ -70,7 +65,7 @@ public:
 
     shader_ = createShader("texture", "texture");
 
-    ci::ObjLoader loader(Asset::load("agree.obj"));
+    ci::ObjLoader loader(Asset::load("item_reporter.obj"));
     model_ = ci::gl::VboMesh::create(loader);
     
     arcball_ = ci::Arcball(&camera_, ci::Sphere(Json::getVec<ci::vec3>(params["arcball.center"]),
@@ -119,15 +114,16 @@ public:
 
     ci::gl::pushModelMatrix();
     
-    ci::gl::translate(agree_translate_);
-    ci::gl::rotate(agree_rotate_);
-    ci::gl::scale(agree_scale_);
+    ci::gl::translate(bg_translate_);
+    ci::gl::rotate(bg_rotate_);
     
     ci::gl::draw(model_);
     ci::gl::popModelMatrix();
 
+    ci::gl::translate(offset_);
     ci::gl::rotate(arcball_.getQuat());
     ci::gl::translate(translate_);
+    
     item_.draw();
   }
 

@@ -1218,7 +1218,7 @@ public:
       }
     }
 
-    // item_reporter_.draw();
+    item_reporter_.draw();
     
     // ダイアログ表示
     drawDialog();
