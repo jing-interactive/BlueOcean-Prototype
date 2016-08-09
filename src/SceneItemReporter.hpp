@@ -6,6 +6,7 @@
 
 #include "SceneBase.hpp"
 #include "ItemReporter.hpp"
+#include "ConnectionHolder.hpp"
 
 
 namespace ngs {
@@ -15,6 +16,7 @@ class SceneItemReporter
 
   // FIXME:スマートポインタの方が安全
   Event<Arguments>& event_;
+  ConnectionHolder holder_;
 
   ci::gl::FboRef fbo_;
   ci::gl::GlslProgRef shader_;
@@ -82,10 +84,13 @@ public:
     shader_ = createShader("bg", "bg");
     model_  = ci::gl::VboMesh::create(ci::ObjLoader(Asset::load("bg.obj")));
     
-    event_.connect("close_item_reporter",
-                   [this](const Connection&, const Arguments&) {
-                     active_ = false;
-                   });
+    holder_ += event_.connect("close_item_reporter",
+                              [this](const Connection& connection, const Arguments&) {
+                                event_.signal("resume_game", Arguments());
+                                active_ = false;
+                              });
+
+    event_.signal("pause_game", Arguments());
   }
 
 };

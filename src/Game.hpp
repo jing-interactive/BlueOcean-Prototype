@@ -32,6 +32,7 @@
 #include "UI.hpp"
 #include "Draw.hpp"
 #include "PieChart.hpp"
+#include "ConnectionHolder.hpp"
 
 
 namespace ngs {
@@ -45,6 +46,8 @@ class Game {
   };
 
   Event<Arguments>& event_;
+  ConnectionHolder holder_;
+  
   const ci::JsonTree& params_;
   
   ci::CameraPersp camera;
@@ -202,97 +205,7 @@ class Game {
     sea_mesh_ = ci::gl::VboMesh::create(mesh);
   }
   
-  
-  // ダイアログ関連
-#if defined (CINDER_COCOA_TOUCH)
-  void createDialog() {}
-  void drawDialog() {}
-#else
-  void createDialog() {
-    // 各種パラメーター設定
-    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(300, 600)));
-
-    params->addParam("Fov", &fov).min(1.0f).max(180.0f).updateFn([this]() {
-        camera.setFov(fov);
-      });
-
-    params->addParam("Near Z", &near_z).min(0.1f).updateFn([this]() {
-        camera.setNearClip(near_z);
-      });
-    params->addParam("Far Z", &far_z).min(0.1f).updateFn([this]() {
-        camera.setFarClip(far_z);
-      });
-
-    params->addSeparator();
-
-    params->addParam("BG", &bg_color);
-
-    params->addSeparator();
-
-    params->addParam("Octave", &octave).min(0).max(255)
-      .updateFn([this]() {
-          createStage();
-        });
-    params->addParam("Seed", &seed)
-      .updateFn([this]() {
-          createStage();
-        });
-    params->addParam("Random Scale X", &random_scale.x).min(0.001f).step(0.001f)
-      .updateFn([this]() {
-          createStage();
-        });
-    params->addParam("Random Scale Y", &random_scale.y).min(0.001f).step(0.001f)
-      .updateFn([this]() {
-          createStage();
-        });
-    params->addParam("Random Scale Z", &random_scale.z).min(1.0f).step(0.1f)
-      .updateFn([this]() {
-          createStage();
-        });
-
-    params->addSeparator();
-
-    params->addParam("Sea Color",   &sea_color_);
-    params->addParam("Sea Speed x", &sea_speed_.x).step(0.00001f);
-    params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
-    params->addParam("Sea Wave",    &sea_wave_).step(0.001f);
-    params->addParam("Sea Level",   &sea_level_).step(0.25f);
-
-    params->addSeparator();
-
-    params->addParam("Disp Stage",    &disp_stage_);
-    params->addParam("Disp StageObj", &disp_stage_obj_);
-    params->addParam("Disp Sea",      &disp_sea_);
-
-    params->addSeparator();
-
-    light_direction_.x = light_.direction.x;
-    light_direction_.y = light_.direction.y;
-    light_direction_.z = light_.direction.z;
-    
-    params->addParam("Light direction", &light_direction_).updateFn([this]() {
-        light_.direction.x = light_direction_.x;
-        light_.direction.y = light_direction_.y;
-        light_.direction.z = light_direction_.z;
-      });
-    
-    params->addParam("Light ambient",  &light_.ambient);
-    params->addParam("Light diffuse",  &light_.diffuse);
-    params->addParam("Light specular", &light_.specular);
-    
-    params->addSeparator();
-
-    params->addParam("Pause Day Lighting", &pause_day_lighting_);
-    params->addParam("Pause Sea Tide",     &pause_sea_tide_);
-    params->addParam("Pause Ship Camera",  &pause_ship_camera_);    
-  }
-
-  void drawDialog() {
-    params->draw();
-  }
-#endif
-
-  
+   
   void checkContainsStage(const int x, const int z,
                           bool checked[][7],
                           std::vector<ci::ivec2>& disp_stages,
@@ -617,13 +530,13 @@ class Game {
 
   // 各種コールバックを登録
   void registerCallbacks() {
-    event_.connect("ship_arrival",
-                   [this](const Connection&, const Arguments&) {
-                     DOUT << "ship_arrival" << std::endl;
-                     has_route_ = false;
-                     target_.arrived();
-                     ship_camera_.arrived();
-                   });
+    holder_ += event_.connect("ship_arrival",
+                              [this](const Connection&, const Arguments&) {
+                                DOUT << "ship_arrival" << std::endl;
+                                has_route_ = false;
+                                target_.arrived();
+                                ship_camera_.arrived();
+                              });
   }
 
 
@@ -1261,6 +1174,102 @@ public:
 
     storeRecords();
   }
+
+
+  // ダイアログ関連
+#if defined (CINDER_COCOA_TOUCH)
+  void createDialog() {}
+  void drawDialog() {}
+  void destroyDialog() {}
+#else
+  void createDialog() {
+    // 各種パラメーター設定
+    params = ci::params::InterfaceGl::create("Preview params", ci::app::toPixels(ci::ivec2(300, 600)));
+
+    params->addParam("Fov", &fov).min(1.0f).max(180.0f).updateFn([this]() {
+        camera.setFov(fov);
+      });
+
+    params->addParam("Near Z", &near_z).min(0.1f).updateFn([this]() {
+        camera.setNearClip(near_z);
+      });
+    params->addParam("Far Z", &far_z).min(0.1f).updateFn([this]() {
+        camera.setFarClip(far_z);
+      });
+
+    params->addSeparator();
+
+    params->addParam("BG", &bg_color);
+
+    params->addSeparator();
+
+    params->addParam("Octave", &octave).min(0).max(255)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Seed", &seed)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Random Scale X", &random_scale.x).min(0.001f).step(0.001f)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Random Scale Y", &random_scale.y).min(0.001f).step(0.001f)
+      .updateFn([this]() {
+          createStage();
+        });
+    params->addParam("Random Scale Z", &random_scale.z).min(1.0f).step(0.1f)
+      .updateFn([this]() {
+          createStage();
+        });
+
+    params->addSeparator();
+
+    params->addParam("Sea Color",   &sea_color_);
+    params->addParam("Sea Speed x", &sea_speed_.x).step(0.00001f);
+    params->addParam("Sea Speed y", &sea_speed_.y).step(0.00001f);
+    params->addParam("Sea Wave",    &sea_wave_).step(0.001f);
+    params->addParam("Sea Level",   &sea_level_).step(0.25f);
+
+    params->addSeparator();
+
+    params->addParam("Disp Stage",    &disp_stage_);
+    params->addParam("Disp StageObj", &disp_stage_obj_);
+    params->addParam("Disp Sea",      &disp_sea_);
+
+    params->addSeparator();
+
+    light_direction_.x = light_.direction.x;
+    light_direction_.y = light_.direction.y;
+    light_direction_.z = light_.direction.z;
+    
+    params->addParam("Light direction", &light_direction_).updateFn([this]() {
+        light_.direction.x = light_direction_.x;
+        light_.direction.y = light_direction_.y;
+        light_.direction.z = light_direction_.z;
+      });
+    
+    params->addParam("Light ambient",  &light_.ambient);
+    params->addParam("Light diffuse",  &light_.diffuse);
+    params->addParam("Light specular", &light_.specular);
+    
+    params->addSeparator();
+
+    params->addParam("Pause Day Lighting", &pause_day_lighting_);
+    params->addParam("Pause Sea Tide",     &pause_sea_tide_);
+    params->addParam("Pause Ship Camera",  &pause_ship_camera_);
+  }
+
+  void drawDialog() {
+    if (params) params->draw();
+  }
+
+  void destroyDialog() {
+    params.reset();
+  }
+#endif
+
 };
 
 }

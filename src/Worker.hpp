@@ -6,6 +6,7 @@
 
 #include "Event.hpp"
 #include "Arguments.hpp"
+#include "ConnectionHolder.hpp"
 #include "Params.hpp"
 #include "Touch.hpp"
 #include "SceneGame.hpp"
@@ -18,6 +19,7 @@ namespace ngs {
 class Worker {
   // 汎用的なコールバック管理
   Event<Arguments> event_;
+  ConnectionHolder holder_;
 
   // ゲーム内パラメーター
   ci::JsonTree params_;
@@ -46,23 +48,23 @@ class Worker {
   
   // シーンファクトリー
   void setupFactory() {
-    event_.connect("scene_game",
-                   [this](const Connection&, const Arguments&) {
-                     DOUT << "scene_game" << std::endl;
+    holder_ += event_.connect("scene_game",
+                              [this](const Connection&, const Arguments&) {
+                                DOUT << "scene_game" << std::endl;
 
-                     scene_stack_.push_front(std::make_shared<SceneGame>(event_, params_, game_));
-                   });
+                                scene_stack_.push_front(std::make_shared<SceneGame>(event_, params_, game_));
+                              });
 
-    event_.connect("scene_item_reporter",
-                   [this](const Connection&, const Arguments& arguments) {
-                     DOUT << "scene_item_reporter" << std::endl;
+    holder_ += event_.connect("scene_item_reporter",
+                              [this](const Connection&, const Arguments& arguments) {
+                                DOUT << "scene_item_reporter" << std::endl;
 
-                     // 直前の画面のsnapshot
-                     auto fbo = createSnapshot(scene_stack_.front());
-                     auto index = boost::any_cast<int>(arguments.at("item"));
+                                // 直前の画面のsnapshot
+                                auto fbo = createSnapshot(scene_stack_.front());
+                                auto index = boost::any_cast<int>(arguments.at("item"));
                      
-                     scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, index));
-                   });
+                                scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, index));
+                              });
   }
   
 

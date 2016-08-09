@@ -6,6 +6,7 @@
 
 #include "SceneBase.hpp"
 #include "Game.hpp"
+#include "ConnectionHolder.hpp"
 
 
 namespace ngs {
@@ -15,6 +16,8 @@ class SceneGame
 
   // FIXME:スマートポインタの方が安全
   Event<Arguments>& event_;
+  ConnectionHolder holder_;
+
   const ci::JsonTree& params_;
   
   // ゲーム本編は他のシーンと共有している
@@ -62,19 +65,31 @@ public:
       game_(game)
   {
     // 移動終了時に適当にアイテムをゲットする
-    event_.connect("ship_arrival",
-                   [this](const Connection&, const Arguments&) {
-                     int total_num = params_["item.body"].getNumChildren();
-                     int index = ci::randInt(total_num);
+    holder_ += event_.connect("ship_arrival",
+                              [this](const Connection&, const Arguments&) {
+                                int total_num = params_["item.body"].getNumChildren();
+                                int index = ci::randInt(total_num);
 
-                     DOUT << total_num << "," << index << std::endl;
+                                DOUT << total_num << "," << index << std::endl;
                      
-                     Arguments arguments {
-                       { "item", index }
-                     };
+                                Arguments arguments {
+                                  { "item", index }
+                                };
                      
-                     event_.signal("scene_item_reporter", arguments);
-                   });
+                                event_.signal("scene_item_reporter", arguments);
+                              });
+
+    // アイテムゲット画面起動時はデバッグダイアログを破棄
+    holder_ += event_.connect("pause_game",
+                              [this](const Connection&, const Arguments&) {
+                                game_->destroyDialog();
+                              });
+
+    // アイテムゲット画面終了時にデバッグダイアログを復活
+    holder_ += event_.connect("resume_game",
+                              [this](const Connection&, const Arguments&) {
+                                game_->createDialog();
+                              });
   }
 
 };

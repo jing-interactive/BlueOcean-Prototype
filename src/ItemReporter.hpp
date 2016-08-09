@@ -5,6 +5,9 @@
 //
 
 #include <cinder/ObjLoader.h>
+#include <cinder/Easing.h>
+#include <cinder/Timeline.h>
+#include <cinder/Tween.h>
 #include "Item.hpp"
 
 
@@ -37,6 +40,12 @@ class ItemReporter {
 
   ci::vec3 offset_;
   ci::vec3 translate_;
+
+  ci::TimelineRef timeline_;
+  ci::Anim<float> tween_scale_;
+
+  // UI有効
+  bool active_;
   
   
   
@@ -52,7 +61,10 @@ public:
       draged_(false),
       drag_rotate_(Json::getQuat(params["drag_rotate"])),
       offset_(Json::getVec<ci::vec3>(params["offset"])),
-      translate_(Json::getVec<ci::vec3>(params["translate"]))
+      translate_(Json::getVec<ci::vec3>(params["translate"])),
+      timeline_(ci::Timeline::create()),
+      tween_scale_(0.0f),
+      active_(false)
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -87,6 +99,12 @@ public:
                                bb.getMax() + ci::vec3(0, -31, 0)).transformed(transform);
 
     model_ = ci::gl::VboMesh::create(mesh);
+
+    // 開始演出
+    timeline_->apply(&tween_scale_, 0.0f, 1.0f, 0.5f, ci::EaseOutBack())
+      .finishFn([this]() {
+          active_ = true;
+        });
   }
 
 
@@ -106,7 +124,7 @@ public:
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
     if (touches.size() > 1) return;
     if (touches[0].getId() != touch_id_) return;
-
+    
     ci::vec2 d{ touches[0].getPos() -  touches[0].getPrevPos() };
     float l = length(d);
     if (l > 0.0f) {
@@ -120,9 +138,10 @@ public:
   }
 
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
+    if (!active_) return;
+    
     if ((touching_num == 0) && !draged_) {
       if (touches[0].getId() != touch_id_) return;
-      
     
       // スクリーン座標→正規化座標
       ci::vec2 pos = touches[0].getPos();
@@ -135,7 +154,13 @@ public:
       if (aabb_.intersects(ray)) {
         // 終了
         DOUT << "Finish item reporter." << std::endl;
-        event_.signal("close_item_reporter", Arguments());
+
+        active_ = false;
+        // 終了演出
+        timeline_->apply(&tween_scale_, 0.0f, 0.5f, ci::EaseInBack())
+          .finishFn([this]() {
+              event_.signal("close_item_reporter", Arguments());
+            });
       }
     
       draged_ = false;
@@ -150,9 +175,17 @@ public:
 
   
   void update() {
+    timeline_->step(1 / 60.0);
   }
 
   void draw() {
+    auto vp = ci::gl::getViewport();
+
+    ci::vec2 size(ci::vec2(vp.second) * tween_scale_());
+    ci::vec2 offset((ci::vec2(vp.second) - size) / 2.0f);
+
+    ci::gl::ScopedViewport viewportScope(offset, size);
+    
     ci::gl::ScopedMatrices matricies;
     ci::gl::setMatrices(camera_);
 
