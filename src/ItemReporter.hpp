@@ -56,9 +56,11 @@ public:
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
-
+    // FIXME:生成時に画角を考慮する必要がある
+    float fov = getVerticalFov(width / float(height), fov_, near_z_);
+    
     camera_ = ci::CameraPersp(width, height,
-                              fov_,
+                              fov,
                               near_z_,
                               params.getValueForKey<float>("camera.far_z"));
 
