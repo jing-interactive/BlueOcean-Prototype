@@ -189,10 +189,6 @@
 
     "translate": [0, -8, 0],
     "offset": [0, 2, -10],
-    "arcball": {
-      "center": [ 0, 0, 0 ],
-      "radius": 8
-    },
 
     "light": {
     "direction": [ 0.2, 0.1, 1.0, 0 ],

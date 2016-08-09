@@ -50,8 +50,10 @@ public:
   SceneItemReporter(Event<Arguments>& event,
                     const ci::JsonTree& params)
     : event_(event),
-      item_reporter_(params["item_reporter"])
-  {}
+      item_reporter_(event, params["item_reporter"])
+  {
+    item_reporter_.loadItem(params["item.body"][6]);
+  }
 
 };
 
