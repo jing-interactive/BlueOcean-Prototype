@@ -22,7 +22,7 @@ struct SceneBase {
   virtual void touchesEnded(const int touching_num, const std::vector<Touch>& touches) = 0;
 
   virtual void update() = 0;
-  virtual void draw() = 0;
+  virtual void draw(const bool offscreen) = 0;
 };
 
 }

@@ -29,6 +29,21 @@ class Worker {
   std::deque<std::shared_ptr<SceneBase>> scene_stack_;
 
 
+  ci::gl::FboRef createSnapshot(const std::shared_ptr<SceneBase>& scene) {
+    // FBO
+    auto format = ci::gl::Fbo::Format()
+      .colorTexture()
+      ;
+    auto fbo = ci::gl::Fbo::create(256, 256, format);
+
+    ci::gl::ScopedViewport viewportScope(fbo->getSize());
+    ci::gl::ScopedFramebuffer fboScope(fbo);
+    scene->draw(true);
+
+    return fbo;
+  }
+
+  
   // シーンファクトリー
   void setupFactory() {
     event_.connect("scene_game",
@@ -42,9 +57,11 @@ class Worker {
                    [this](const Connection&, const Arguments& arguments) {
                      DOUT << "scene_item_reporter" << std::endl;
 
+                     // 直前の画面のsnapshot
+                     auto fbo = createSnapshot(scene_stack_.front());
                      const auto& name = boost::any_cast<const std::string&>(arguments.at("name"));
                      
-                     scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, name));
+                     scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, name));
                    });
   }
   
@@ -109,7 +126,7 @@ public:
 
   void draw() {
     // 最前列の画面だけ描画
-    scene_stack_.front()->draw();
+    scene_stack_.front()->draw(false);
   }
 
 

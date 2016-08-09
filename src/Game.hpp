@@ -1165,7 +1165,7 @@ public:
 
       {
         // 海面演出のためにFBOへ描画
-        ci::gl::ScopedViewport viewportScope(ci::ivec2(0), fbo_->getSize());
+        ci::gl::ScopedViewport viewportScope(fbo_->getSize());
         ci::gl::ScopedFramebuffer fboScope(fbo_);
         ci::gl::clear(bg_color);
 
@@ -1173,19 +1173,20 @@ public:
         drawRelics(draw_stages);
         ship_.draw(light_);
       }
-      
+
       ci::gl::clear(bg_color);
 
       // 海面の描画
       if (disp_sea_) {
         ci::gl::ScopedGlslProg shader(sea_shader_);
+        ci::gl::ScopedTextureBind fbo_texture(fbo_->getColorTexture(), 0);
+        ci::gl::ScopedTextureBind sea_texture(sea_texture_, 1);
         
-        fbo_->getColorTexture()->bind(0);
-        sea_texture_->bind(1);
         sea_shader_->uniform("offset", sea_offset_);
         sea_shader_->uniform("wave", sea_wave_);
         sea_shader_->uniform("color", sea_color_);
-        sea_shader_->uniform("window_size", ci::app::toPixels(ci::vec2(ci::app::getWindowSize())));
+        auto vp = ci::gl::getViewport();
+        sea_shader_->uniform("window_size", ci::vec2(vp.second));
 
         // TIPS:まっさらな画面に描画するので
         //      デプステストは必要ない
@@ -1205,10 +1206,9 @@ public:
       
       drawStage(draw_stages);
       drawRelics(draw_stages);
-      
       ship_.draw(light_);
       target_.draw(ui_light_);
-
+      
 #if 0
       if (picked_) {
         ci::gl::setModelMatrix(ci::mat4(1.0f));
@@ -1248,7 +1248,9 @@ public:
         pie_chart_.draw(ci::vec2(pos.x, pos.y), 0.0024f, t, ci::Color(0, 0, 1));
       }
     }
+  }
 
+  void debugDraw() {
     // ダイアログ表示
     drawDialog();
   }

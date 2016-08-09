@@ -47,8 +47,9 @@ class SceneGame
     game_->update();
   }
   
-  void draw() override {
+  void draw(const bool offscreen) override {
     game_->draw();
+    if (!offscreen) game_->debugDraw();
   }
 
   

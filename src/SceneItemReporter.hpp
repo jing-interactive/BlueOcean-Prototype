@@ -16,6 +16,10 @@ class SceneItemReporter
   // FIXME:スマートポインタの方が安全
   Event<Arguments>& event_;
 
+  ci::gl::FboRef fbo_;
+  ci::gl::GlslProgRef shader_;
+  ci::gl::VboMeshRef  model_;
+  
   ItemReporter item_reporter_;
 
   bool active_ = true;
@@ -48,7 +52,18 @@ class SceneItemReporter
     item_reporter_.update();
   }
   
-  void draw() override {
+  void draw(const bool offscreen) override {
+    {
+      ci::gl::ScopedGlslProg shader(shader_);
+      ci::gl::ScopedTextureBind texture(fbo_->getColorTexture());
+
+      ci::gl::enableDepth(false);
+      ci::gl::disable(GL_CULL_FACE);
+      ci::gl::disableAlphaBlending();
+
+      ci::gl::draw(model_);
+    }
+    
     item_reporter_.draw();
   }
 
@@ -56,12 +71,17 @@ class SceneItemReporter
 public:
   SceneItemReporter(Event<Arguments>& event,
                     const ci::JsonTree& params,
+                    const ci::gl::FboRef& fbo,
                     const std::string& name)
     : event_(event),
+      fbo_(fbo),
       item_reporter_(event, params["item_reporter"])
   {
     item_reporter_.loadItem(params["item.body"][name]);
 
+    shader_ = createShader("bg", "bg");
+    model_  = ci::gl::VboMesh::create(ci::ObjLoader(Asset::load("bg.obj")));
+    
     event_.connect("close_item_reporter",
                    [this](const Connection&, const Arguments&) {
                      active_ = false;
