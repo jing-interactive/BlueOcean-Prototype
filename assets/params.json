@@ -225,14 +225,13 @@
         "file": "item006.obj"
       },
       {
-        "name": "item-006",
+        "name": "item-007",
         "file": "item007.obj"
       }
     ]
   },
 
   "debug_signal": {
-    "g": "scene_game",
-    "i": "scene_item_reporter"
+    "g": "scene_game"
   }
 }

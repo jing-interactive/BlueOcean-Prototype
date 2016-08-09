@@ -17,10 +17,17 @@ class SceneItemReporter
   Event<Arguments>& event_;
 
   ItemReporter item_reporter_;
+
+  bool active_ = true;
+
   
 
   // TIPS:SceneBase* 経由でないと呼び出せなくしたいので
   //      わざとprivate
+  bool isActive() const override {
+    return active_;
+  }
+  
   void resize(const float aspect) override {
     item_reporter_.resize(aspect);
   }
@@ -48,11 +55,17 @@ class SceneItemReporter
   
 public:
   SceneItemReporter(Event<Arguments>& event,
-                    const ci::JsonTree& params)
+                    const ci::JsonTree& params,
+                    const std::string& name)
     : event_(event),
       item_reporter_(event, params["item_reporter"])
   {
-    item_reporter_.loadItem(params["item.body"][6]);
+    item_reporter_.loadItem(params["item.body"][name]);
+
+    event_.connect("close_item_reporter",
+                   [this](const Connection&, const Arguments&) {
+                     active_ = false;
+                   });
   }
 
 };

@@ -12,6 +12,8 @@ namespace ngs {
 struct SceneBase {
   virtual ~SceneBase() = default;
 
+  virtual bool isActive() const = 0;
+  
   virtual void resize(const float aspect) = 0;
 
   // TODO:イベント方式にする

@@ -132,6 +132,7 @@ public:
       if (aabb_.intersects(ray)) {
         // 終了
         DOUT << "Finish item reporter." << std::endl;
+        event_.signal("close_item_reporter", Arguments());
       }
     
       draged_ = false;

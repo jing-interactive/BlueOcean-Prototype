@@ -10,6 +10,7 @@
 #include "Touch.hpp"
 #include "SceneGame.hpp"
 #include "SceneItemReporter.hpp"
+#include <deque>
 
 
 namespace ngs {
@@ -25,7 +26,7 @@ class Worker {
   std::shared_ptr<Game> game_;
 
   // 現在の画面
-  std::shared_ptr<SceneBase> scene_;
+  std::deque<std::shared_ptr<SceneBase>> scene_stack_;
 
 
   // シーンファクトリー
@@ -34,17 +35,16 @@ class Worker {
                    [this](const Connection&, const Arguments&) {
                      DOUT << "scene_game" << std::endl;
 
-                     // FIXME:イベント送信元が破棄されてしまうと未定義X(
-                     scene_.reset();
-                     scene_ = std::make_shared<SceneGame>(event_, game_);
+                     scene_stack_.push_front(std::make_shared<SceneGame>(event_, params_, game_));
                    });
 
     event_.connect("scene_item_reporter",
-                   [this](const Connection&, const Arguments&) {
+                   [this](const Connection&, const Arguments& arguments) {
                      DOUT << "scene_item_reporter" << std::endl;
 
-                     scene_.reset();
-                     scene_ = std::make_shared<SceneItemReporter>(event_, params_);
+                     const auto& name = boost::any_cast<const std::string&>(arguments.at("name"));
+                     
+                     scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, name));
                    });
   }
   
@@ -67,33 +67,49 @@ public:
 
   
   void resize(const float aspect) {
-    scene_->resize(aspect);
+    for (const auto& scene : scene_stack_) {
+      if (!scene->isActive()) continue;
+      
+      scene->resize(aspect);
+    }
   }
 
 
   // touching_numはタッチ操作中の数(新たに発生したのも含む)
   // touchesは新たに発生したタッチイベント内容
   void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
-    scene_->touchesBegan(touching_num, touches);
+    scene_stack_.front()->touchesBegan(touching_num, touches);
   }
 
   // touching_numはタッチ操作中の数
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
-    scene_->touchesMoved(touching_num, touches);
+    scene_stack_.front()->touchesMoved(touching_num, touches);
   }
 
   // touching_numは残りのタッチ操作中の数
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
-    scene_->touchesEnded(touching_num, touches);
+    scene_stack_.front()->touchesEnded(touching_num, touches);
   }
   
 
   void update() {
-    scene_->update();
+    // 無効な画面を削除
+    for (auto it = std::begin(scene_stack_); it != std::end(scene_stack_); ) {
+      if (!(*it)->isActive()) {
+        it = scene_stack_.erase(it);
+      }
+      else {
+        ++it;
+      }
+    }
+
+    // 最前列の画面だけ更新
+    scene_stack_.front()->update();
   }
 
   void draw() {
-    scene_->draw();
+    // 最前列の画面だけ描画
+    scene_stack_.front()->draw();
   }
 
 
