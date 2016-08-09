@@ -50,6 +50,7 @@ public:
       bg_translate_(Json::getVec<ci::vec3>(params["bg_translate"])),
       bg_rotate_(Json::getVec<ci::vec3>(params["bg_rotate"])),
       draged_(false),
+      drag_rotate_(Json::getQuat(params["drag_rotate"])),
       offset_(Json::getVec<ci::vec3>(params["offset"])),
       translate_(Json::getVec<ci::vec3>(params["translate"]))
   {

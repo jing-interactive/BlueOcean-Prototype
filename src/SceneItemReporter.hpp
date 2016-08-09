@@ -72,12 +72,12 @@ public:
   SceneItemReporter(Event<Arguments>& event,
                     const ci::JsonTree& params,
                     const ci::gl::FboRef& fbo,
-                    const std::string& name)
+                    const int index)
     : event_(event),
       fbo_(fbo),
       item_reporter_(event, params["item_reporter"])
   {
-    item_reporter_.loadItem(params["item.body"][name]);
+    item_reporter_.loadItem(params["item.body"][index]);
 
     shader_ = createShader("bg", "bg");
     model_  = ci::gl::VboMesh::create(ci::ObjLoader(Asset::load("bg.obj")));

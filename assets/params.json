@@ -3,7 +3,7 @@
     "size": [ 960, 640 ],
 
     "power_management": false,
-    "high_density_display": true,
+    "high_density_display": false,
     "frame_rate": 60,
     
     "camera_rotation_sensitivity":    0.3,
@@ -189,6 +189,7 @@
 
     "translate": [0, -8, 0],
     "offset": [0, 2, -10],
+    "drag_rotate": [ -15, -15, 0 ],
 
     "light": {
     "direction": [ 0.2, 0.1, 1.0, 0 ],

@@ -66,9 +66,11 @@ public:
                    [this](const Connection&, const Arguments&) {
                      int total_num = params_["item.body"].getNumChildren();
                      int index = ci::randInt(total_num);
+
+                     DOUT << total_num << "," << index << std::endl;
                      
                      Arguments arguments {
-                       { "name", params_["item.body"].getValueAtIndex<std::string>(index) }
+                       { "item", index }
                      };
                      
                      event_.signal("scene_item_reporter", arguments);
