@@ -27,6 +27,7 @@ void main(void) {
   float diffuse = max(dot(light, normal), 0.0);
 
   gl_Position = position;
-  Color       = clamp(LightAmbient + LightDiffuse * diffuse,
-                      vec4(0, 0, 0, 0), vec4(1, 1, 1, 1)) * ciColor;
+  Color = (LightAmbient + LightDiffuse * diffuse) * ciColor;
+  // Color       = clamp(LightAmbient + LightDiffuse * diffuse,
+  //                     vec4(0, 0, 0, 0), vec4(1, 1, 1, 1)) * ciColor;
 }

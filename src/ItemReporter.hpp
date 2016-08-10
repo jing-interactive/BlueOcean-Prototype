@@ -214,7 +214,7 @@ public:
       ci::gl::rotate(drag_rotate_);
       ci::gl::translate(translate_);
     
-      item_.draw();
+      item_.draw(light_);
     }
     // ci::gl::popModelMatrix();
     
