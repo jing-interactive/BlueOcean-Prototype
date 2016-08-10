@@ -11,6 +11,7 @@
 #include "Touch.hpp"
 #include "SceneGame.hpp"
 #include "SceneItemReporter.hpp"
+#include "Audio.hpp"
 #include <deque>
 
 
@@ -30,6 +31,8 @@ class Worker {
   // 現在の画面
   std::deque<std::shared_ptr<SceneBase>> scene_stack_;
 
+  Audio audio_;
+  
 
   ci::gl::FboRef createSnapshot(const std::shared_ptr<SceneBase>& scene) {
     // FBO
@@ -72,10 +75,40 @@ class Worker {
 public:
   Worker()
     : params_(Params::load("params.json")),
-      game_(std::make_shared<Game>(event_, params_))
+      game_(std::make_shared<Game>(event_, params_)),
+      audio_(params_["audio"])
   {
     setupFactory();
 
+    holder_ += event_.connect("audio",
+                              [this](const Connection&, const Arguments& arguments) {
+                                const auto& name = boost::any_cast<const std::string&>(arguments.at("name"));
+                                audio_.play(name);
+                              });
+
+    // サウンドデバッグ用
+    holder_ += event_.connect("audio_test",
+                              [this](const Connection&, const Arguments&) {
+                                DOUT << "audio_test" << std::endl;
+
+                                int num = params_["audio"].getNumChildren();
+                                int index = ci::randInt(num);
+                                const auto& name = params_["audio"][index].getValueForKey<std::string>("name");
+
+                                Arguments arguments = {
+                                  { "name", name },
+                                };
+
+                                event_.signal("audio", arguments);
+                              });
+
+    holder_ += event_.connect("audio_stop",
+                              [this](const Connection&, const Arguments&) {
+                                DOUT << "audio_stop" << std::endl;
+                                
+                                audio_.stopAll();
+                              });
+    
     // 最初のシーンを生成
     event_.signal("scene_game", Arguments());
   }

@@ -243,8 +243,44 @@
     ]
   },
 
+
+  "audio": [
+    {
+      "name":     "agree",
+      "file":     "audio/agree.m4a",
+      "looping":  false,
+      "category": "menu",
+      "type":     "se"
+    },
+    {
+      "name":     "allclear",
+      "file":     "audio/regular-stageclear.m4a",
+      "looping":  false,
+      "category": "bgm",
+      "type":     "bgm"
+    },
+    {
+      "name":     "select",
+      "file":     "audio/select.m4a",
+      "looping":  false,
+      "category": "menu",
+      "type":     "se"
+    },
+    {
+      "name":     "clear",
+      "file":     "audio/stageclear.m4a",
+      "looping":  false,
+      "category": "bgm",
+      "type":     "bgm"
+    }
+  ],
+
+  
   "debug_signal": {
     "g": "scene_game",
-    "i": "debug_item_reporter"
+    "i": "debug_item_reporter",
+
+    "s": "audio_test",
+    "S": "audio_stop"
   }
 }
