@@ -4,6 +4,7 @@
 $version$
 
 uniform mat4 ciModelViewProjection;
+uniform mat4 ciModelView;
 uniform mat3 ciNormalMatrix;
 
 uniform vec4 LightPosition;
@@ -18,7 +19,7 @@ out vec4 Color;
 
 
 void main(void) {
-  vec4 position = ciModelViewProjection * ciPosition;
+  vec4 position = ciModelView * ciPosition;
 
   // 簡単なライティングの計算
   vec3 normal = normalize(ciNormalMatrix * ciNormal);
@@ -26,8 +27,6 @@ void main(void) {
 
   float diffuse = max(dot(light, normal), 0.0);
 
-  gl_Position = position;
+  gl_Position = ciModelViewProjection * ciPosition;
   Color = (LightAmbient + LightDiffuse * diffuse) * ciColor;
-  // Color       = clamp(LightAmbient + LightDiffuse * diffuse,
-  //                     vec4(0, 0, 0, 0), vec4(1, 1, 1, 1)) * ciColor;
 }

@@ -5,7 +5,6 @@ $version$
 
 uniform mat4 ciModelViewProjection;
 uniform mat4 ciModelView;
-uniform mat4 ciViewMatrix;
 uniform mat3 ciNormalMatrix;
 
 uniform vec4 LightPosition;
@@ -33,6 +32,5 @@ void main(void) {
 
   gl_Position = ciModelViewProjection * ciPosition;
   TexCoord0   = ciTexCoord0;
-  Color       = clamp(LightAmbient * length + LightDiffuse * diffuse,
-                      vec4(0, 0, 0, 0), vec4(1, 1, 1, 1));
+  Color       = LightAmbient * length + LightDiffuse * diffuse;
 }

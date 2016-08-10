@@ -10,6 +10,7 @@
 #include "JsonUtil.hpp"
 #include "Light.hpp"
 #include "Waypoint.hpp"
+#include "PLY.hpp"
 
 
 namespace ngs {
@@ -20,15 +21,15 @@ class Ship {
   ci::vec3 position_;
   ci::quat rotation_;
   ci::vec3 scaling_;
+  ci::vec3 offset_;
 
   ci::vec2 roll_;
   ci::vec2 pitch_;
 
   ci::quat swing_;
   
-  ci::Color color_;
-  ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
+  ci::gl::VboMeshRef model_;
   
   std::vector<Waypoint> route_;
 
@@ -88,16 +89,14 @@ public:
     : event_(event),
       position_(Json::getVec<ci::vec3>(params["position"])),
       scaling_(Json::getVec<ci::vec3>(params["scaling"])),
+      offset_(Json::getVec<ci::vec3>(params["offset"])),
       roll_(Json::getVec<ci::vec2>(params["roll"])),
       pitch_(Json::getVec<ci::vec2>(params["pitch"])),
-      color_(Json::getColor<float>(params["color"])),
       speed_(params.getValueForKey<float>("speed")),
       do_route_(false)
   {
-    ci::ObjLoader loader(Asset::load("ship.obj"));
-
     shader_ = createShader("color", "color");
-    model_  = ci::gl::Batch::create(loader, shader_);
+    model_  = ci::gl::VboMesh::create(PLY::load("ship.ply"));
   }
 
 
@@ -169,12 +168,13 @@ public:
     ci::mat4 transform = glm::translate(position_ + ci::vec3(0.5, 0, 0.5))
                        * glm::mat4_cast(rotation_)
                        * glm::mat4_cast(swing_)
-                       * glm::scale(scaling_);
+                       * glm::scale(scaling_)
+                       * glm::translate(offset_);
 
     ci::gl::setModelMatrix(transform);
     
-    ci::gl::color(color_);
-    model_->draw();
+    ci::gl::ScopedGlslProg shader(shader_);
+    ci::gl::draw(model_);
   }
 
 };
