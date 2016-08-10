@@ -64,8 +64,8 @@ public:
       params_(params),
       game_(game)
   {
-    // 移動終了時に適当にアイテムをゲットする
-    holder_ += event_.connect("ship_arrival",
+    // 探索終了時に適当にアイテムをゲットする
+    holder_ += event_.connect("search_finish",
                               [this](const Connection&, const Arguments&) {
                                 int total_num = params_["item.body"].getNumChildren();
                                 int index = ci::randInt(total_num);

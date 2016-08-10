@@ -453,6 +453,10 @@ class Game {
       relic.searched_time = relic.search_required_time;
 
       searching_ = false;
+
+      // イベント送信
+      event_.signal("search_finish", Arguments());
+      
       return;
     }
 
