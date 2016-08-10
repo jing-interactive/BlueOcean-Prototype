@@ -647,6 +647,17 @@ class Game {
 
       object.pushBack(light_info);
     }
+
+    // 発見済みアイテム
+    {
+      ci::JsonTree item_info = ci::JsonTree::makeObject("found_items");
+
+      for (const auto& item : found_items_) {
+        item_info.pushBack(ci::JsonTree("", item));
+      }
+      
+      object.pushBack(item_info);
+    }
     
     // デバッグ設定
     {
@@ -746,6 +757,13 @@ class Game {
     light_direction_.x = light_.direction.x;
     light_direction_.y = light_.direction.y;
     light_direction_.z = light_.direction.z;
+
+    // 発見済みアイテム
+    {
+      for (const auto& item : record["found_items"]) {
+        found_items_.insert(item.getValue<std::string>());
+      }
+    }
     
     // デバッグ設定
     if (record.hasChild("debug")) {
