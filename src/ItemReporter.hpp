@@ -36,10 +36,10 @@ class ItemReporter {
 
   uint32_t touch_id_;
   bool draged_;
-  ci::quat drag_rotate_;
 
+  ci::quat drag_rotate_;
+  ci::vec3 center_;
   ci::vec3 offset_;
-  ci::vec3 translate_;
 
   ci::TimelineRef timeline_;
   ci::Anim<float> tween_scale_;
@@ -60,8 +60,7 @@ public:
       bg_rotate_(Json::getVec<ci::vec3>(params["bg_rotate"])),
       draged_(false),
       drag_rotate_(Json::getQuat(params["drag_rotate"])),
-      offset_(Json::getVec<ci::vec3>(params["offset"])),
-      translate_(Json::getVec<ci::vec3>(params["translate"])),
+      center_(Json::getVec<ci::vec3>(params["center"])),
       timeline_(ci::Timeline::create()),
       tween_scale_(0.0f),
       active_(false)
@@ -110,6 +109,9 @@ public:
 
   void loadItem(const ci::JsonTree& params) {
     item_ = Item(params);
+
+    const auto& aabb = item_.getAABB();
+    offset_ = -(aabb.getMin() + aabb.getMax()) / 2.0f;
   }
 
 
@@ -210,9 +212,9 @@ public:
       ci::gl::draw(model_);
       ci::gl::popModelMatrix();
 
-      ci::gl::translate(offset_);
+      ci::gl::translate(center_);
       ci::gl::rotate(drag_rotate_);
-      ci::gl::translate(translate_);
+      ci::gl::translate(offset_);
     
       item_.draw(light_);
     }

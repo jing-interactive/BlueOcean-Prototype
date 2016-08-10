@@ -187,9 +187,8 @@
     "bg_translate": [ 0, -20, -50 ],
     "bg_rotate":  [ 0.0, 0.0, 0.0 ],
 
-    "translate": [0, 0, -8],
-    "drag_rotate": [ 0, 0, 0 ],
-    "offset": [0, 2, -10],
+    "center": [ 0, 2, -10 ],
+    "drag_rotate": [ 30, -30, 0 ],
 
     "light": {
     "direction": [ 0.0, 0.0, 1.0, 0 ],
@@ -203,31 +202,31 @@
     "body": [
       {
         "name": "item-001",
-        "file": "test2.ply"
+        "file": "item001.ply"
       },
       {
         "name": "item-002",
-        "file": "test2.ply"
+        "file": "item002.ply"
       },
       {
         "name": "item-003",
-        "file": "test2.ply"
+        "file": "item003.ply"
       },
       {
         "name": "item-004",
-        "file": "test2.ply"
+        "file": "item004.ply"
       },
       {
         "name": "item-005",
-        "file": "test2.ply"
+        "file": "item005.ply"
       },
       {
         "name": "item-006",
-        "file": "test2.ply"
+        "file": "item006.ply"
       },
       {
         "name": "item-007",
-        "file": "test2.ply"
+        "file": "item007.ply"
       }
     ]
   },

@@ -13,19 +13,24 @@ class Item {
   ci::gl::VboMeshRef model_;
   ci::gl::GlslProgRef shader_;
 
+  ci::AxisAlignedBox aabb_;
+
 
 public:
   Item() = default;
   
-  Item(const ci::JsonTree& param) {
-    shader_ = createShader("color", "color");
-    
-    // ci::ObjLoader loader(Asset::load(param.getValueForKey<std::string>("file")));
-    // model_ = ci::gl::VboMesh::create(loader);
-
-    model_ = ci::gl::VboMesh::create(PLY::load(param.getValueForKey<std::string>("file")));
+  Item(const ci::JsonTree& param)
+    : shader_(createShader("color", "color"))
+  {
+    ci::TriMesh mesh = PLY::load(param.getValueForKey<std::string>("file"));
+    aabb_  = mesh.calcBoundingBox();
+    model_ = ci::gl::VboMesh::create(mesh);
   }
 
+  
+  const ci::AxisAlignedBox& getAABB() const { return aabb_; }
+
+  
   void draw(const Light&light) {
     if (!model_) return;
 
