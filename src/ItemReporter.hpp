@@ -24,7 +24,6 @@ class ItemReporter {
   Light light_;
 
   ci::gl::GlslProgRef shader_;
-  ci::gl::Texture2dRef texture_;
   ci::gl::VboMeshRef  model_;
 
   ci::AxisAlignedBox aabb_;
@@ -78,21 +77,12 @@ public:
     camera_.setEyePoint(Json::getVec<ci::vec3>(params["camera.position"]));
     camera_.setViewDirection(Json::getVec<ci::vec3>(params["camera.direction"]));
 
-    // FIXME:WindowsではMagFilterにGL_NEARESTを指定すると描画が乱れる??
-    texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("item.png")),
-                                         ci::gl::Texture2d::Format()
-                                         .wrap(GL_CLAMP_TO_EDGE)
-                                         .minFilter(GL_NEAREST)
-                                         // .magFilter(GL_NEAREST)
-                                         );
+    shader_ = createShader("color", "color");
 
-    shader_ = createShader("texture", "texture");
-
-    ci::TriMesh mesh(ci::ObjLoader(Asset::load("item_reporter.obj")));
-
-    ci::mat4 transform = glm::translate(bg_translate_);
+    ci::TriMesh mesh(PLY::load("item_reporter.ply"));
 
     // 少しオフセットを加えたAABBをクリック判定に使う
+    ci::mat4 transform = glm::translate(bg_translate_);
     auto bb = mesh.calcBoundingBox();
     aabb_ = ci::AxisAlignedBox(bb.getMin(),
                                bb.getMax() + ci::vec3(0, -31, 0)).transformed(transform);
@@ -194,7 +184,6 @@ public:
     // ci::gl::pushModelMatrix();
     {
       ci::gl::ScopedGlslProg shader(shader_);
-      ci::gl::ScopedTextureBind texture(texture_);
     
       shader_->uniform("LightPosition", light_.direction);
       shader_->uniform("LightAmbient",  light_.ambient);

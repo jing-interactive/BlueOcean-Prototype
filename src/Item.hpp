@@ -22,7 +22,7 @@ public:
   Item(const ci::JsonTree& param)
     : shader_(createShader("color", "color"))
   {
-    ci::TriMesh mesh = PLY::load(param.getValueForKey<std::string>("file"));
+    ci::TriMesh mesh(PLY::load(param.getValueForKey<std::string>("file")));
     aabb_  = mesh.calcBoundingBox();
     model_ = ci::gl::VboMesh::create(mesh);
   }
