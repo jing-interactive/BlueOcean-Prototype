@@ -60,10 +60,11 @@ class Worker {
                                 DOUT << "scene_item_reporter" << std::endl;
 
                                 // 直前の画面のsnapshot
-                                auto fbo = createSnapshot(scene_stack_.front());
-                                auto index = boost::any_cast<int>(arguments.at("item"));
+                                auto fbo      = createSnapshot(scene_stack_.front());
+                                auto index    = boost::any_cast<int>(arguments.at("item"));
+                                auto new_item = boost::any_cast<bool>(arguments.at("new_item"));
                      
-                                scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, index));
+                                  scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, index, new_item));
                               });
   }
   

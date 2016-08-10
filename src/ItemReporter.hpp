@@ -24,15 +24,16 @@ class ItemReporter {
   Light light_;
 
   ci::gl::GlslProgRef shader_;
-  ci::gl::VboMeshRef  model_;
+  ci::gl::VboMeshRef  model_[2];
 
   ci::AxisAlignedBox aabb_;
   
   ci::vec3 bg_translate_;
-  ci::quat bg_rotate_;
+  ci::vec3 new_translate_;
   
   Item item_;
-
+  bool new_item_;
+  
   uint32_t touch_id_;
   bool draged_;
 
@@ -56,7 +57,7 @@ public:
       near_z_(params.getValueForKey<float>("camera.near_z")),
       light_(createLight(params["light"])),
       bg_translate_(Json::getVec<ci::vec3>(params["bg_translate"])),
-      bg_rotate_(Json::getVec<ci::vec3>(params["bg_rotate"])),
+      new_translate_(Json::getVec<ci::vec3>(params["new_translate"])),
       draged_(false),
       drag_rotate_(Json::getQuat(params["drag_rotate"])),
       center_(Json::getVec<ci::vec3>(params["center"])),
@@ -87,7 +88,8 @@ public:
     aabb_ = ci::AxisAlignedBox(bb.getMin(),
                                bb.getMax() + ci::vec3(0, -31, 0)).transformed(transform);
 
-    model_ = ci::gl::VboMesh::create(mesh);
+    model_[0] = ci::gl::VboMesh::create(mesh);
+    model_[1] = ci::gl::VboMesh::create(PLY::load("new.ply"));
 
     // 開始演出
     timeline_->apply(&tween_scale_, 0.0f, 1.0f, 0.5f, ci::EaseOutBack())
@@ -97,11 +99,13 @@ public:
   }
 
 
-  void loadItem(const ci::JsonTree& params) {
+  void loadItem(const ci::JsonTree& params, bool new_item = false) {
     item_ = Item(params);
 
     const auto& aabb = item_.getAABB();
     offset_ = -(aabb.getMin() + aabb.getMax()) / 2.0f;
+
+    new_item_ = new_item;
   }
 
 
@@ -198,9 +202,18 @@ public:
       ci::gl::translate(bg_translate_);
       // ci::gl::rotate(bg_rotate_);
     
-      ci::gl::draw(model_);
+      ci::gl::draw(model_[0]);
       ci::gl::popModelMatrix();
 
+      if (new_item_) {
+        ci::gl::pushModelMatrix();
+
+        ci::gl::translate(new_translate_);
+        ci::gl::draw(model_[1]);
+
+        ci::gl::popModelMatrix();
+      }
+      
       ci::gl::translate(center_);
       ci::gl::rotate(drag_rotate_);
       ci::gl::translate(offset_);

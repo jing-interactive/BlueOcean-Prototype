@@ -184,8 +184,8 @@
       "direction": [0, 0, -1 ]
     },
 
-    "bg_translate": [ 0, -20, -50 ],
-    "bg_rotate":  [ 0.0, 0.0, 0.0 ],
+    "bg_translate":  [ 0, -20, -50 ],
+    "new_translate": [ -11, 15, -49 ],
 
     "center": [ 0, 2, -10 ],
     "drag_rotate": [ 30, -30, 0 ],
@@ -227,12 +227,24 @@
       {
         "name": "item-007",
         "file": "item007.ply"
+      },
+      {
+        "name": "item-008",
+        "file": "item008.ply"
+      },
+      {
+        "name": "item-009",
+        "file": "item009.ply"
+      },
+      {
+        "name": "item-010",
+        "file": "item010.ply"
       }
     ]
   },
 
   "debug_signal": {
     "g": "scene_game",
-    "s": "search_finish"
+    "i": "debug_item_reporter"
   }
 }

@@ -140,13 +140,17 @@ class Game {
   DayLighting day_lighting_;
   // 調整用
   ci::vec3 light_direction_;
-
+  
   // UI用
   Light ui_light_;
   
   ci::gl::GlslProgRef ui_shader_;
 
   PieChart pie_chart_;
+
+  // 見つけたアイテム
+  std::set<std::string> found_items_;
+
   
   // デバッグ用
   bool disp_stage_;
@@ -438,6 +442,26 @@ class Game {
     }
   }
 
+
+  // アイテム発見
+  void foundItem() {
+    // イベント送信
+    // FIXME:適当に決めている
+    int total_num = params_["item.body"].getNumChildren();
+    int index     = ci::randInt(total_num);
+
+    const auto& item = params_["item.body"][index].getValueForKey<std::string>("name");
+    bool new_item    = found_items_.count(item) ? false : true;
+
+    found_items_.insert(item);
+        
+    Arguments arguments = {
+      { "item",     index },
+      { "new_item", new_item },
+    };
+      
+    event_.signal("scene_item_reporter", arguments);
+  }
   
   // 探索を進める
   void progressSearch(const double duration) {
@@ -453,9 +477,7 @@ class Game {
       relic.searched_time = relic.search_required_time;
 
       searching_ = false;
-
-      // イベント送信
-      event_.signal("search_finish", Arguments());
+      foundItem();
       
       return;
     }
@@ -739,6 +761,14 @@ class Game {
     return true;
   }
 
+
+  void setupDebugEvent() {
+    holder_ += event_.connect("debug_item_reporter",
+                              [this](const Connection&, const Arguments&) {
+                                foundItem();                                
+                              });
+  }
+
   
 public:
   Game(Event<Arguments>& event, const ci::JsonTree& params)
@@ -830,6 +860,8 @@ public:
     
     // 記録ファイルがあるなら読み込む
     restoreFromRecords();
+
+    setupDebugEvent();
   }
 
   
