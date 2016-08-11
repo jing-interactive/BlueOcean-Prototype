@@ -158,6 +158,24 @@ public:
       }
     }
   }
+
+
+  // 不要な地形データを破棄する
+  void garbageCollection(const ci::ivec2& center, const ci::ivec2& size) {
+    std::map<ci::ivec2, Stage, LessVec<ci::ivec2>> stages;
+    
+    for (int z = -size.y; z < size.y; ++z) {
+      for (int x = -size.x; x < size.x; ++x) {
+        ci::ivec2 pos(x, z);
+        const auto& it = stages_.find(pos);
+        if (it == std::end(stages_)) continue;
+        
+        stages.insert(std::make_pair(it->first, it->second));
+      }
+    }
+    
+    std::swap(stages_, stages);
+  }
   
 };
 

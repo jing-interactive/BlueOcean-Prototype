@@ -57,6 +57,24 @@ public:
     texture_->bind();
     ci::gl::draw(meshes_.at(pos));
   }
+
+
+  // 不要な地形データを破棄する
+  void garbageCollection(const ci::ivec2& center, const ci::ivec2& size) {
+    std::map<ci::ivec2, ci::gl::VboMeshRef, LessVec<ci::ivec2>> meshes;
+    
+    for (int z = -size.y; z < size.y; ++z) {
+      for (int x = -size.x; x < size.x; ++x) {
+        ci::ivec2 pos(x, z);
+        const auto& it = meshes_.find(pos);
+        if (it == std::end(meshes_)) continue;
+        
+        meshes.insert(std::make_pair(it->first, it->second));
+      }
+    }
+    
+    std::swap(meshes_, meshes);
+  }
   
 };
 

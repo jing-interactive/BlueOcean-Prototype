@@ -1127,6 +1127,17 @@ public:
 
       // 中央ブロックの座標
       ci::ivec2 pos(glm::floor(p.x / BLOCK_SIZE), glm::floor(p.z / BLOCK_SIZE));
+
+      // 時々データを整理
+      {
+        // とりあえず1分に一回程度
+        if ((ci::app::getElapsedFrames() % (60 * 60)) == 0) {
+          DOUT << "Garbage Collection" << std::endl;
+          stage.garbageCollection(pos, ci::ivec2(5, 5));
+          stage_drawer_.garbageCollection(pos, ci::ivec2(5, 5));
+        }
+      }
+
       ci::Frustum frustum(camera);
       auto draw_stages = checkContainsStage(pos, frustum);
 
