@@ -101,7 +101,7 @@ public:
     
     for (const auto& p : params) {
       const auto& file = p.getValueForKey<std::string>("file");
-      auto source = ci::audio::load(Asset::load(file));
+      auto source = ci::audio::load(Asset::load(file), ctx->getSampleRate());
 
       const auto& type = p.getValueForKey<std::string>("type");
       creator.at(type)(p, ctx, source);

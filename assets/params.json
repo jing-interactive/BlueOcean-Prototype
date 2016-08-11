@@ -253,22 +253,38 @@
       "type":     "se"
     },
     {
-      "name":     "allclear",
-      "file":     "audio/regular-stageclear.m4a",
+      "name":     "item_found",
+      "file":     "audio/item_found.m4a",
+      "looping":  false,
+      "category": "jingle",
+      "type":     "se"
+    },
+
+    {
+      "name":     "route_start",
+      "file":     "audio/route_start.m4a",
+      "looping":  false,
+      "category": "jingle",
+      "type":     "se"
+    },
+    {
+      "name":     "search_start",
+      "file":     "audio/search_start.m4a",
+      "looping":  false,
+      "category": "jingle",
+      "type":     "se"
+    },
+
+    {
+      "name":     "start",
+      "file":     "audio/start.m4a",
       "looping":  false,
       "category": "bgm",
       "type":     "bgm"
     },
     {
-      "name":     "select",
-      "file":     "audio/select.m4a",
-      "looping":  false,
-      "category": "menu",
-      "type":     "se"
-    },
-    {
-      "name":     "clear",
-      "file":     "audio/stageclear.m4a",
+      "name":     "arrived",
+      "file":     "audio/arrived.m4a",
       "looping":  false,
       "category": "bgm",
       "type":     "bgm"

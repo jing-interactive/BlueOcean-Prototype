@@ -9,6 +9,7 @@
 #include <cinder/Timeline.h>
 #include <cinder/Tween.h>
 #include "Item.hpp"
+#include "AudioEvent.hpp"
 
 
 namespace ngs {
@@ -95,6 +96,7 @@ public:
     timeline->add(timeline_);
     
     // 開始演出
+    AudioEvent::play(event_, "item_found");
     timeline_->apply(&tween_scale_, 0.0f, 1.0f, 0.5f, ci::EaseOutBack())
       .finishFn([this]() {
           active_ = true;
@@ -161,6 +163,7 @@ public:
 
         active_ = false;
         // 終了演出
+        AudioEvent::play(event_, "agree");
         timeline_->apply(&tween_scale_, 0.0f, 0.5f, ci::EaseInBack())
           .finishFn([this]() {
               event_.signal("close_item_reporter", Arguments());

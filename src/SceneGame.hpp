@@ -75,6 +75,8 @@ public:
                               [this](const Connection&, const Arguments&) {
                                 game_->createDialog();
                               });
+
+    AudioEvent::play(event_, "start");
   }
 
 };

@@ -33,6 +33,7 @@
 #include "Draw.hpp"
 #include "PieChart.hpp"
 #include "ConnectionHolder.hpp"
+#include "AudioEvent.hpp"
 
 
 namespace ngs {
@@ -64,6 +65,7 @@ class Game {
 
   ci::quat rotate_;
   ci::vec3 translate_;
+
   ci::vec2 camera_angle_;
   ci::vec2 angle_restriction_;
   float distance_;
@@ -71,6 +73,9 @@ class Game {
   
   bool camera_modified_;
 
+  bool touching_;
+  double camera_auto_mode_;
+  
   // カメラの操作感
   float camera_rotation_sensitivity_;
   float camera_translation_sensitivity_;
@@ -356,6 +361,8 @@ class Game {
       ship_camera_.start();
 
       has_route_ = true;
+
+      AudioEvent::play(event_, "route_start");
     }
   }
 
@@ -562,6 +569,12 @@ class Game {
                                 has_route_ = false;
                                 target_.arrived();
                                 ship_camera_.arrived();
+                                if (searching_) {
+                                  AudioEvent::play(event_, "search_start");
+                                }
+                                else {
+                                  AudioEvent::play(event_, "arrived");
+                                }
                               });
   }
 
@@ -804,6 +817,8 @@ public:
       distance_(params_.getValueForKey<float>("camera.distance")),
       distance_restriction_(Json::getVec<ci::vec2>(params_["camera.distance_restriction"])),
       camera_modified_(false),
+      touching_(false),
+      camera_auto_mode_(0.0),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
       random_scale(Json::getVec<ci::vec3>(params_["stage.random_scale"])),
@@ -893,13 +908,18 @@ public:
 
 
   void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
+    DOUT << "touchesBegan: " << touching_num << std::endl;
+
     if (touching_num == 1) {
       // 最初のを覚えとく
       touch_id_ = touches[0].getId();
     }
+    touching_ = true;
   }
   
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
+    DOUT << "touchesMoved: " << touching_num << std::endl;
+
     if (touching_num == 1) {
       // シングルタッチ操作は回転
       handlingRotation(touches[0].getPos(),
@@ -925,6 +945,8 @@ public:
   }
   
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
+    DOUT << "touchesEnded: " << touching_num << std::endl;
+    
     if (!camera_modified_ && (touching_num == 0)) {
       for (const auto& touch : touches) {
         if (touch.getId() != touch_id_) continue;
@@ -941,127 +963,13 @@ public:
       }
     }
     
-    if (touching_num == 0) camera_modified_ = false;
-  }
-
-  
-
-#if 0
-  void mouseDown(ci::app::MouseEvent& event) {
-    // マルチタッチ判定中は無視
-    if (touch_num > 1) return;
-
-    if (event.isLeft()) {
-      ci::ivec2 pos = event.getPos();
-      mouse_prev_pos = pos;
-    }
-  }
-
-  void mouseDrag(ci::app::MouseEvent& event) {
-    if (touch_num > 1) return;
-    if (!event.isLeftDown()) return;
-
-    ci::vec2 mouse_pos = event.getPos();
-
-    if (event.isShiftDown()) {
-      handlingTranslation(mouse_pos, mouse_prev_pos);
-    }
-    else if (event.isControlDown()) {
-      float d = mouse_pos.y - mouse_prev_pos.y;
-      handlingZooming(d * 0.5f);
-    }
-    else {
-      handlingRotation(mouse_pos, mouse_prev_pos);
-    }
-    camera_modified_ = true;
-    mouse_prev_pos = mouse_pos;
-  }
-
-  void mouseWheel(ci::app::MouseEvent& event) {
-    // OSX:マルチタッチ操作の時に呼ばれる
-    if (touch_num > 1) return;
-    handlingZooming(-event.getWheelIncrement() * 2.0);
-  }
-
-  void mouseUp(ci::app::MouseEvent& event) {
-    if (event.isLeft()) {
-      if (!camera_modified_) {
-        // クリックした位置のAABBを特定
-        ci::ivec2 pos = event.getPos();
-        pickStage(pos);
-
-        if (picked_) {
-          // 行動開始
-          startAction();
-        }
-      }
+    if (touching_num == 0) {
       camera_modified_ = false;
+      
+      touching_ = false;
+      camera_auto_mode_ = 3.0;
     }
   }
-
-  void touchesBegan(ci::app::TouchEvent& event) {
-    const auto& touches = event.getTouches();
-
-    if (touch_num == 0) {
-      // 最初のを覚えとく
-      touch_id_ = touches[0].getId();
-    }
-    
-    touch_num += touches.size();
-  }
-
-  void touchesMoved(ci::app::TouchEvent& event) {
-    const auto& touches = event.getTouches();
-
-#if defined (CINDER_COCOA_TOUCH)
-    if (touch_num == 1) {
-      handlingRotation(touches[0].getPos(),
-                       touches[0].getPrevPos());
-      camera_modified_ = true;
-      return;
-    }
-#endif
-    if (touches.size() < 2) return;
-
-    auto v1 = touches[0].getPos() - touches[1].getPos();
-    auto v2 = touches[0].getPrevPos() - touches[1].getPrevPos();
-
-    float ld = ci::length(v1) - ci::length(v2);
-    
-    if (std::abs(ld) < 3.0f) {
-      handlingTranslation(touches[0].getPos(), touches[0].getPrevPos());
-    }
-    else {
-      handlingZooming(ld * 0.1f);
-    }
-    camera_modified_ = true;
-  }
-  
-  void touchesEnded(ci::app::TouchEvent& event) {
-    const auto& touches = event.getTouches();
-#if defined (CINDER_COCOA_TOUCH)
-    if (!camera_modified_) {
-      for (const auto& touch : touches) {
-        if (touch.getId() !=touch_id_) continue;
-
-        // クリックした位置のAABBを特定
-        ci::ivec2 pos = touch.getPos();
-        pickStage(pos);
-
-        if (picked_) {
-          // 行動開始
-          startAction();
-        }
-        break;
-      }
-    }
-#endif
-    
-    // 最悪マイナス値にならないよう
-    touch_num = std::max(touch_num - int(touches.size()), 0);
-    if (!touch_num) camera_modified_ = false;
-  }
-#endif
 
   
   void update() {
@@ -1088,12 +996,27 @@ public:
     
     // カメラ位置の計算
     translate_.y = sea_level_;
+
+    // タッチ操作をしばらく行わないと船を中心に捉える
+    if (!touching_) {
+      if (camera_auto_mode_ > 0.0) {
+        camera_auto_mode_ -= 1 / 60.0;
+      }
+      else if(!pause_ship_camera_) {
+        translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
+        distance_  += (ship_camera_.getDistance() - distance_) * 0.1f;
+      }
+    }
+
+#if 0
     if (has_route_) {
       if(!pause_ship_camera_) {
         translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
         distance_  += (ship_camera_.getDistance() - distance_) * 0.1f;
       }
     }
+#endif
+
     auto pos = rotate_ * ci::vec3(0, 0, distance_) + translate_;
     
     camera.setEyePoint(pos);

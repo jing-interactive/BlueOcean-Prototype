@@ -133,13 +133,16 @@ private:
     const auto& touches = event.getTouches();
     touch_num_ = std::max(touch_num_ - int(touches.size()), 0);
 
+    int num = touch_num_;
 #if defined (CINDER_MAC)
     // シングルタッチは無視
     if ((touches.size() == 1) && (touch_num_ == 0)) return;
+
+    if (num == 1) num = 0;
 #endif
 
     auto app_touches = createTouchInfo(touches);
-    worker_->touchesEnded(touch_num_, app_touches);
+    worker_->touchesEnded(num, app_touches);
   }
 
 
