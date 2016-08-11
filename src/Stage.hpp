@@ -68,7 +68,7 @@ public:
         float height = random.fBm(ofs);
         float scale  = (glm::simplex(ofs * random_scale.y) + 1.0f) * random_scale.z;
         
-        height_map_[z + 1][x + 1] = glm::clamp(height * scale, -16.0f, 16.0f);
+        height_map_[z + 1][x + 1] = glm::clamp(height * scale + 2.0f, 0.0f, 16.0f);
       }
     }
 

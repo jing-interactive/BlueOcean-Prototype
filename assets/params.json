@@ -83,7 +83,7 @@
     "level": 7.5,
     
     "tide_speed": [ 0.045, 0.0035 ],
-    "tide_level": [ 0, 13]
+    "tide_level": [ 2, 14 ]
   },
   
   "stage": {
