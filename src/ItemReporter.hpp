@@ -51,7 +51,8 @@ class ItemReporter {
   
 public:
   ItemReporter(Event<Arguments>& event,
-               const ci::JsonTree& params)
+               const ci::JsonTree& params,
+               const ci::TimelineRef& timeline)
     : event_(event),
       fov_(params.getValueForKey<float>("camera.fov")),
       near_z_(params.getValueForKey<float>("camera.near_z")),
@@ -91,11 +92,18 @@ public:
     model_[0] = ci::gl::VboMesh::create(mesh);
     model_[1] = ci::gl::VboMesh::create(PLY::load("new.ply"));
 
+    timeline->add(timeline_);
+    
     // 開始演出
     timeline_->apply(&tween_scale_, 0.0f, 1.0f, 0.5f, ci::EaseOutBack())
       .finishFn([this]() {
           active_ = true;
         });
+  }
+
+  ~ItemReporter() {
+    // 親から取り除く
+    timeline_->removeSelf();
   }
 
 
@@ -171,7 +179,6 @@ public:
 
   
   void update() {
-    timeline_->step(1 / 60.0);
   }
 
   void draw() {

@@ -73,11 +73,12 @@ class SceneItemReporter
 public:
   SceneItemReporter(Event<Arguments>& event,
                     const ci::JsonTree& params,
+                    const ci::TimelineRef& timeline,
                     const ci::gl::FboRef& fbo,
                     const int index, const bool new_item)
     : event_(event),
       fbo_(fbo),
-      item_reporter_(event, params["item_reporter"])
+      item_reporter_(event, params["item_reporter"], timeline)
   {
     item_reporter_.loadItem(params["item.body"][index], new_item);
 

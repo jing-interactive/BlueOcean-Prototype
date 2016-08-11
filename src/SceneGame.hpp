@@ -64,23 +64,6 @@ public:
       params_(params),
       game_(game)
   {
-#if 0
-    // 探索終了時に適当にアイテムをゲットする
-    holder_ += event_.connect("search_finish",
-                              [this](const Connection&, const Arguments&) {
-                                int total_num = params_["item.body"].getNumChildren();
-                                int index = ci::randInt(total_num);
-
-                                DOUT << total_num << "," << index << std::endl;
-                     
-                                Arguments arguments {
-                                  { "item", index }
-                                };
-                     
-                                event_.signal("scene_item_reporter", arguments);
-                              });
-#endif
-
     // アイテムゲット画面起動時はデバッグダイアログを破棄
     holder_ += event_.connect("pause_game",
                               [this](const Connection&, const Arguments&) {

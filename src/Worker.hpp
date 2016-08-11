@@ -25,6 +25,9 @@ class Worker {
   // ゲーム内パラメーター
   ci::JsonTree params_;
 
+  // UIなどきっかけが必要な演出用
+  ci::TimelineRef timeline_;
+
   // ゲーム世界
   std::shared_ptr<Game> game_;
 
@@ -67,7 +70,8 @@ class Worker {
                                 auto index    = boost::any_cast<int>(arguments.at("item"));
                                 auto new_item = boost::any_cast<bool>(arguments.at("new_item"));
                      
-                                  scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, fbo, index, new_item));
+                                scene_stack_.push_front(std::make_shared<SceneItemReporter>(event_, params_, timeline_,
+                                                                                            fbo, index, new_item));
                               });
   }
   
@@ -75,6 +79,7 @@ class Worker {
 public:
   Worker()
     : params_(Params::load("params.json")),
+      timeline_(ci::Timeline::create()),
       game_(std::make_shared<Game>(event_, params_)),
       audio_(params_["audio"])
   {
@@ -146,6 +151,8 @@ public:
   
 
   void update() {
+    timeline_->stepTo(ci::app::getElapsedSeconds());
+
     // 無効な画面を削除
     for (auto it = std::begin(scene_stack_); it != std::end(scene_stack_); ) {
       if (!(*it)->isActive()) {
