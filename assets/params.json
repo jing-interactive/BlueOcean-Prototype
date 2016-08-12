@@ -202,43 +202,53 @@
     "body": [
       {
         "name": "item-001",
-        "file": "item001.ply"
+        "file": "item001.ply",
+        "probability": 1
       },
       {
         "name": "item-002",
-        "file": "item002.ply"
+        "file": "item002.ply",
+        "probability": 1
       },
       {
         "name": "item-003",
-        "file": "item003.ply"
+        "file": "item003.ply",
+        "probability": 0.1
       },
       {
         "name": "item-004",
-        "file": "item004.ply"
+        "file": "item004.ply",
+        "probability": 0.2
       },
       {
         "name": "item-005",
-        "file": "item005.ply"
+        "file": "item005.ply",
+        "probability": 0.2
       },
       {
         "name": "item-006",
-        "file": "item006.ply"
+        "file": "item006.ply",
+        "probability": 1
       },
       {
         "name": "item-007",
-        "file": "item007.ply"
+        "file": "item007.ply",
+        "probability": 0.01
       },
       {
         "name": "item-008",
-        "file": "item008.ply"
+        "file": "item008.ply",
+        "probability": 1
       },
       {
         "name": "item-009",
-        "file": "item009.ply"
+        "file": "item009.ply",
+        "probability": 0.05
       },
       {
         "name": "item-010",
-        "file": "item010.ply"
+        "file": "item010.ply",
+        "probability": 1
       }
     ]
   },

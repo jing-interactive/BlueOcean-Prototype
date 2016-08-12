@@ -34,6 +34,7 @@
 #include "PieChart.hpp"
 #include "ConnectionHolder.hpp"
 #include "AudioEvent.hpp"
+#include "DiscreteRandom.hpp"
 
 
 namespace ngs {
@@ -153,6 +154,8 @@ class Game {
 
   PieChart pie_chart_;
 
+  // アイテム発見用
+  DiscreteRandom random_item_;
   // 見つけたアイテム
   std::set<std::string> found_items_;
 
@@ -173,6 +176,21 @@ class Game {
   ci::params::InterfaceGlRef params;
 #endif
 
+
+
+  // アイテムゲット用の分布配列を生成
+  static std::vector<double> createItemProbabilities(const ci::JsonTree& params) {
+    int total_num = params["item.body"].getNumChildren();
+    std::vector<double> probabilities;
+    probabilities.reserve(total_num);
+
+    for (const auto& p : params["item.body"]) {
+      probabilities.push_back(p.getValueForKey<double>("probability"));
+    }
+
+    return probabilities;
+  }
+  
 
   void createStage() {
     stage = TiledStage(params_, BLOCK_SIZE, random, random_scale);
@@ -453,10 +471,7 @@ class Game {
   // アイテム発見
   void foundItem() {
     // イベント送信
-    // FIXME:適当に決めている
-    int total_num = params_["item.body"].getNumChildren();
-    int index     = ci::randInt(total_num);
-
+    int index = random_item_();
     const auto& item = params_["item.body"][index].getValueForKey<std::string>("name");
     bool new_item    = found_items_.count(item) ? false : true;
 
@@ -843,6 +858,7 @@ public:
       day_lighting_(params_["day_lighting"]),
       ui_light_(createLight(params_["ui_light"])),
       ui_shader_(createShader("ui", "ui")),
+      random_item_(createItemProbabilities(params_)),
       disp_stage_(true),
       disp_stage_obj_(true),
       disp_sea_(true),
