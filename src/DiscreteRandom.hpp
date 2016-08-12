@@ -17,9 +17,9 @@ class DiscreteRandom {
 
 public:
   DiscreteRandom(const std::vector<double>& probabilities,
-                 const std::uint32_t seed = std::mt19937::default_seed)
-    :engine_(seed),
-     dist_(std::begin(probabilities), std::end(probabilities))
+                 const std::uint32_t seed = std::random_device()())
+    : engine_(seed),
+      dist_(std::begin(probabilities), std::end(probabilities))
   {}
 
 
