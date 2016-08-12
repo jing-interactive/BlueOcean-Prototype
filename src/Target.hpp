@@ -9,30 +9,39 @@ namespace ngs {
 class Target {
   ci::vec3 position_;
   ci::vec3 scaling_;
+  ci::vec3 offset_;
 
   float target_y_;
 
-  ci::vec3 offset_;
+  ci::vec2 roll_;
+  ci::vec2 pitch_;
+
+  ci::quat swing_;
   
-  ci::Color color_;
-  ci::gl::BatchRef model_;
   ci::gl::GlslProgRef shader_;
+  ci::gl::VboMeshRef model_;
 
   bool active_;
   
 
 
+  void setupLight(const Light& light) {
+    shader_->uniform("LightPosition", light.direction);
+    shader_->uniform("LightAmbient",  light.ambient);
+    shader_->uniform("LightDiffuse",  light.diffuse);
+  }
+
+  
 public:
   Target(const ci::JsonTree& params)
     : scaling_(Json::getVec<ci::vec3>(params["scaling"])),
       offset_(Json::getVec<ci::vec3>(params["offset"])),
-      color_(Json::getColor<float>(params["color"])),
+      roll_(Json::getVec<ci::vec2>(params["roll"])),
+      pitch_(Json::getVec<ci::vec2>(params["pitch"])),
       active_(false)
   {
-    ci::ObjLoader loader(Asset::load("target.obj"));
-
     shader_ = createShader("color", "color");
-    model_  = ci::gl::Batch::create(loader, shader_);
+    model_  = ci::gl::VboMesh::create(PLY::load("target.ply"));
   }
 
 
@@ -52,12 +61,12 @@ public:
     if (!active_) return;
 
     position_.y = std::max(target_y_, sea_level);
-  }
 
-  void setupLight(const Light& light) {
-    shader_->uniform("LightPosition", light.direction);
-    shader_->uniform("LightAmbient",  light.ambient);
-    shader_->uniform("LightDiffuse",  light.diffuse);
+    if (position_.y == sea_level) {
+      swing_ = ci::quat(ci::vec3(std::sin(std::sin(duration * pitch_.x) * M_PI) * pitch_.y,
+                                 0,
+                                 std::sin(std::sin(duration * roll_.x) * M_PI) * roll_.y));
+    }
   }
 
   void draw(const Light& light) {
@@ -65,13 +74,15 @@ public:
 
     setupLight(light);
     
-    ci::mat4 transform = glm::translate(position_ + offset_)
-                       * glm::scale(scaling_);
+    ci::mat4 transform = glm::translate(position_)
+                       * glm::mat4_cast(swing_)
+                       * glm::scale(scaling_)
+                       * glm::translate(offset_);
 
     ci::gl::setModelMatrix(transform);
-    ci::gl::color(color_);
 
-    model_->draw();
+    ci::gl::ScopedGlslProg shader(shader_);
+    ci::gl::draw(model_);
   }
   
 };

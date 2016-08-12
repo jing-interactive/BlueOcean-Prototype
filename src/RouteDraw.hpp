@@ -32,11 +32,15 @@ public:
              
 
   void draw(const std::vector<Waypoint>& route, const Light& light, const float sea_level) {
+    if (route.empty()) return;
+    
     setupLight(light);
 
     ci::gl::ScopedGlslProg shader(shader_);
-    
-    for (const auto& waypoint : route) {
+    ci::gl::color(color_);
+
+    for (size_t i = 0; i < route.size() - 1; ++i) {
+      const auto& waypoint = route[i];
       ci::vec3 pos(waypoint.pos.x, std::max(sea_level, float(waypoint.pos.y)), waypoint.pos.z);
 
       // TIPS:マス目の中央に位置するようオフセットを加えている
