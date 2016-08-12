@@ -227,7 +227,7 @@ class Game {
     sea_shader_ = createShader("water", "water");
     sea_shader_->uniform("uTex0", 0);
     sea_shader_->uniform("uTex1", 1);
-    sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load("water_normal.png")),
+    sea_texture_ = ci::gl::Texture2d::create(ci::loadImage(Asset::load(params_.getValueForKey<std::string>("sea.wave_texture"))),
                                              ci::gl::Texture2d::Format().wrap(GL_REPEAT));
     sea_mesh_ = ci::gl::VboMesh::create(mesh);
   }
