@@ -46,8 +46,10 @@ class ItemReporter {
   ci::Anim<float> tween_scale_;
 
   // UI有効
-  bool active_;
-  
+  bool active_ = false;
+
+  bool   first_update_ = true;
+  double current_time_ = 0.0;
   
   
 public:
@@ -64,8 +66,7 @@ public:
       drag_rotate_(Json::getQuat(params["drag_rotate"])),
       center_(Json::getVec<ci::vec3>(params["center"])),
       timeline_(ci::Timeline::create()),
-      tween_scale_(0.0f),
-      active_(false)
+      tween_scale_(0.0f)
   {
     int width  = ci::app::getWindowWidth();
     int height = ci::app::getWindowHeight();
@@ -93,7 +94,8 @@ public:
     model_[0] = ci::gl::VboMesh::create(mesh);
     model_[1] = ci::gl::VboMesh::create(PLY::load("new.ply"));
 
-    timeline->add(timeline_);
+    // 親のタイムラインに接続
+    // timeline->add(timeline_);
     
     // 開始演出
     AudioEvent::play(event_, "item_found");
@@ -103,10 +105,10 @@ public:
         });
   }
 
-  ~ItemReporter() {
-    // 親から取り除く
-    timeline_->removeSelf();
-  }
+  // ~ItemReporter() {
+  //   // 親から取り除く
+  //   timeline_->removeSelf();
+  // }
 
 
   void loadItem(const ci::JsonTree& params, bool new_item = false) {
@@ -182,6 +184,17 @@ public:
 
   
   void update() {
+    if (first_update_) {
+      // TIPS:コンストラクタに重い処理が集中しているので
+      //      初回更新時からタイムラインの時間を進め始める
+      current_time_ = ci::app::getElapsedSeconds();
+      first_update_ = false;
+    }
+
+    double ct = ci::app::getElapsedSeconds() - current_time_;
+    timeline_->step(ct);
+
+    current_time_ += ct;
   }
 
   void draw() {
