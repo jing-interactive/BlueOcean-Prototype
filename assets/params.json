@@ -217,27 +217,27 @@
       {
         "name": "item-003",
         "file": "item003.ply",
-        "probability": 0.1
+        "probability": 0.5
       },
       {
-        "name": "item-004",
         "file": "item004.ply",
-        "probability": 0.2
+        "name": "item-004",
+        "probability": 0.5
       },
       {
         "name": "item-005",
         "file": "item005.ply",
-        "probability": 0.2
+        "probability": 0.5
       },
       {
         "name": "item-006",
         "file": "item006.ply",
-        "probability": 1
+        "probability": 0.8
       },
       {
         "name": "item-007",
         "file": "item007.ply",
-        "probability": 0.01
+        "probability": 0.1
       },
       {
         "name": "item-008",
@@ -247,12 +247,27 @@
       {
         "name": "item-009",
         "file": "item009.ply",
-        "probability": 0.05
+        "probability": 0.2
       },
       {
         "name": "item-010",
         "file": "item010.ply",
         "probability": 1
+      },
+      {
+        "name": "item-011",
+        "file": "item011.ply",
+        "probability": 1
+      },
+      {
+        "name": "item-012",
+        "file": "item012.ply",
+        "probability": 1
+      },
+      {
+        "name": "item-013",
+        "file": "item013.ply",
+        "probability": 0.1
       }
     ]
   },
