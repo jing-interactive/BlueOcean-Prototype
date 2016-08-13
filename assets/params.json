@@ -34,7 +34,7 @@
   },
 
   "light": {
-    "direction": [ 0, 1, 0, 0 ],
+    "direction": [ 0.21, 0.78, 0.59, 0 ],
     "ambient":   [ 0.2, 0.2, 0.2, 1.0 ],
     "diffuse":   [ 0.8, 0.8, 0.8, 1.0 ],
     "specular":  [ 0.2, 0.2, 0.2, 1.0 ]
@@ -50,28 +50,28 @@
   "day_lighting": [
     {
       "time":    0,
-      "ambient": [ 0.05, 0.05, 0.05, 1.0 ],
-      "diffuse": [ 0.2, 0.2, 0.8, 1.0 ]
+      "ambient": [ 19,  15,  69, 255 ],
+      "diffuse": [ 54, 176, 140, 255 ]
     },
     {
       "time":    15,
-      "ambient": [ 0.2, 0.1, 0.1, 1.0 ],
-      "diffuse": [ 0.8, 0.5, 0.2, 1.0 ]
+      "ambient": [  23,  95, 105, 255 ],
+      "diffuse": [ 158, 145,  48, 255 ]
     },
     {
       "time":    30,
-      "ambient": [ 0.2, 0.2, 0.2, 1.0 ],
-      "diffuse": [ 0.8, 0.8, 0.8, 1.0 ]
+      "ambient": [  89, 109, 111, 255 ],
+      "diffuse": [ 188, 188, 180, 255 ]
     },
     {
       "time":    45,
-      "ambient": [ 0.2, 0.1, 0.1, 1.0 ],
-      "diffuse": [ 0.8, 0.2, 0.2, 1.0 ]
+      "ambient": [ 136,  42,   8, 255 ],
+      "diffuse": [ 220, 149,  42, 255 ]
     },
     {
       "time":    60,
-      "ambient": [ 0.05, 0.05, 0.05, 1.0 ],
-      "diffuse": [ 0.2, 0.2, 0.8, 1.0 ]
+      "ambient": [ 19,  15,  69, 255 ],
+      "diffuse": [ 54, 176, 140, 255 ]
     }
   ],
 
@@ -121,19 +121,19 @@
     "height_probability": [
       {
         "height": [ -5, 6 ],
-        "probability": 0.0001
+        "probability": 0.001
       },
       {
         "height": [ 7, 10 ],
-        "probability": 0.005
+        "probability": 0.01
       },
       {
         "height": [ 11, 15 ],
-        "probability": 0.0001
+        "probability": 0.001
       }
     ],
     
-    "range": 80,
+    "range": 90,
     
     "color": [
       [ 1.0, 1.0, 1.0 ],
@@ -142,7 +142,7 @@
     
     "rotate_speed": [ 0.02, 0.007, 0.015 ],
 
-    "search_required_time": 60
+    "search_required_time": 30
   },
 
   "route": {

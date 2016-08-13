@@ -96,6 +96,12 @@ ci::ColorAT<T> getColorA(const ci::JsonTree& json) noexcept {
   return ci::ColorAT<T>(json[0].getValue<T>(), json[1].getValue<T>(), json[2].getValue<T>(), json[3].getValue<T>());
 }
 
+template<typename T>
+ci::ColorAT<T> getColorA8(const ci::JsonTree& json) noexcept {
+  ci::vec4 value = getVec<ci::vec4>(json);
+  return ci::ColorAT<T>(value / 255.0f);
+}
+
 
 template<typename T>
 T getValue(const ci::JsonTree& json, const std::string& name, const T& default_value) noexcept {

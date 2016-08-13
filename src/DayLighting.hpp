@@ -26,8 +26,8 @@ public:
       KeyLight key;
 
       key.time = p.getValueForKey<double>("time");
-      key.light.ambient = Json::getColorA<float>(p["ambient"]);
-      key.light.diffuse = Json::getColorA<float>(p["diffuse"]);
+      key.light.ambient = Json::getColorA8<float>(p["ambient"]);
+      key.light.diffuse = Json::getColorA8<float>(p["diffuse"]);
 
       lights_.push_back(key);
     }
