@@ -82,8 +82,8 @@
     
     "level": 7.5,
     
-    "tide_speed": [ 0.045, 0.0035 ],
-    "tide_level": [ 2, 14 ],
+    "tide_speed": [ -0.038, -0.0025 ],
+    "tide_level": [ 2.5, 13.5 ],
 
     "wave_texture": "water_normal.png"
   },
