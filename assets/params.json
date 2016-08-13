@@ -3,11 +3,11 @@
     "size": [ 960, 640 ],
 
     "power_management": false,
-    "high_density_display": false,
+    "high_density_display": true,
     "frame_rate": 60,
     
     "camera_rotation_sensitivity":    0.3,
-    "camera_translation_sensitivity": 0.005
+    "camera_translation_sensitivity": 0.007
   },
   
   "camera": {

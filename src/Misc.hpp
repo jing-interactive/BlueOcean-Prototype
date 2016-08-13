@@ -111,7 +111,8 @@ std::vector<Touch> createTouchInfo(const std::vector<ci::app::TouchEvent::Touch>
   for (const auto& t : touches) {
     app_touches.push_back({ t.getId(),
                             t.getPos(),
-                            t.getPrevPos()
+                            t.getPrevPos(),
+                            false
                           });
   }
 

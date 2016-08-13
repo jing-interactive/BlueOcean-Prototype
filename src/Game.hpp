@@ -924,22 +924,34 @@ public:
 
 
   void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
-    DOUT << "touchesBegan: " << touching_num << std::endl;
-
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版は最初のを覚えとく
     if (touching_num == 1) {
-      // 最初のを覚えとく
       touch_id_ = touches[0].getId();
     }
+#else
+    // PC版はMouseDownを覚えておく
+    if ((touches.size() == 1) && touches[0].isMouse()) {
+      touch_id_ = touches[0].getId();
+    }
+#endif
+
+    
     touching_ = true;
   }
   
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
-    DOUT << "touchesMoved: " << touching_num << std::endl;
-
-    if (touching_num == 1) {
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版はシングルタッチ操作
+    if (touching_num == 1 && touches.size() == 1)
+#else
+      // PCはマウス操作で回転
+    if ((touches.size() == 1) && touches[0].isMouse())
+#endif
+    {
       // シングルタッチ操作は回転
       handlingRotation(touches[0].getPos(),
-                       touches[0].getPrevPos());
+                         touches[0].getPrevPos());
       camera_modified_ = true;
       return;
     }
@@ -961,29 +973,39 @@ public:
   }
   
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
-    DOUT << "touchesEnded: " << touching_num << std::endl;
-    
-    if (!camera_modified_ && (touching_num == 0)) {
-      for (const auto& touch : touches) {
-        if (touch.getId() != touch_id_) continue;
-
-        // クリックした位置のAABBを特定
-        ci::ivec2 pos = touch.getPos();
-        pickStage(pos);
-
-        if (picked_) {
-          // 行動開始
-          startAction();
-        }
-        break;
-      }
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版は最初のタッチが終わったら
+    if (!camera_modified_
+        && (touching_num == 0)
+        && (touches.size() == 1)
+        && touches[0].getId() == touch_id_) {
+      pickAndStartAction(touches[0]);
     }
-    
+#else
+    // PC版はMouseUpで判定
+    if (!camera_modified_
+        && (touches.size() == 1)
+        && (touches[0].isMouse())) {
+      pickAndStartAction(touches[0]);
+    }
+#endif
+
     if (touching_num == 0) {
       camera_modified_ = false;
       
       touching_ = false;
       camera_auto_mode_ = 3.0;
+    }
+  }
+
+  void pickAndStartAction(const Touch& touch) {
+    // クリックした位置のAABBを特定
+    ci::ivec2 pos = touch.getPos();
+    pickStage(pos);
+
+    if (picked_) {
+      // 行動開始
+      startAction();
     }
   }
 

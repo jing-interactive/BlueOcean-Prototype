@@ -16,7 +16,7 @@ namespace ngs {
 
 class App : public ci::app::App {
   // タッチ操作中の数
-  int touch_num_;
+  int touch_num_ = 0;
   ci::vec2 mouse_prev_pos_;
   
   std::unique_ptr<Worker> worker_;
@@ -24,8 +24,7 @@ class App : public ci::app::App {
   
 public:
   App()
-    : touch_num_(0),
-      worker_(std::unique_ptr<Worker>(new Worker))
+    : worker_(std::unique_ptr<Worker>(new Worker))
   {
 #if defined (CINDER_COCOA_TOUCH)
     // 縦横画面両対応
@@ -66,14 +65,16 @@ private:
   void mouseDown(ci::app::MouseEvent event) override {
     // タッチ判定との整合性を取るため左クリック以外は無視
     if (!event.isLeft()) return;
-    
+
     Touch touch(std::numeric_limits<uint32_t>::max(),
                 event.getPos(),
-                event.getPos());
+                event.getPos(),
+                true);
 
     mouse_prev_pos_ = event.getPos();
 
-    worker_->touchesBegan(1, { touch });
+    touch_num_ += 1;
+    worker_->touchesBegan(touch_num_, { touch });
   }
   
   void mouseDrag(ci::app::MouseEvent event) override {
@@ -81,21 +82,24 @@ private:
 
     Touch touch(std::numeric_limits<uint32_t>::max(),
                 event.getPos(),
-                mouse_prev_pos_);
+                mouse_prev_pos_,
+                true);
 
     mouse_prev_pos_ = event.getPos();
 
-    worker_->touchesMoved(1, { touch });
+    worker_->touchesMoved(touch_num_, { touch });
   }
 
   void mouseUp(ci::app::MouseEvent event) override {
     if (!event.isLeft()) return;
-    
+
     Touch touch(std::numeric_limits<uint32_t>::max(),
                 event.getPos(),
-                mouse_prev_pos_);
+                mouse_prev_pos_,
+                true);
 
-    worker_->touchesEnded(0, { touch });
+    touch_num_ = std::max(touch_num_ - 1, 0);
+    worker_->touchesEnded(touch_num_, { touch });
   }
 
 #if 0
@@ -109,21 +113,11 @@ private:
     const auto& touches = event.getTouches();
     touch_num_ += touches.size();
 
-#if defined (CINDER_MAC)
-    // シングルタッチ操作は無視
-    if (touch_num_ == 1) return;
-#endif
-
     auto app_touches = createTouchInfo(touches);
     worker_->touchesBegan(touch_num_, app_touches);
   }
   
   void touchesMoved(ci::app::TouchEvent event) override {
-#if defined (CINDER_MAC)
-    // シングルタッチ操作は無視
-    if (touch_num_ == 1) return;
-#endif
-    
     const auto& touches = event.getTouches();
     auto app_touches = createTouchInfo(touches);
     worker_->touchesMoved(touch_num_, app_touches);
@@ -133,16 +127,8 @@ private:
     const auto& touches = event.getTouches();
     touch_num_ = std::max(touch_num_ - int(touches.size()), 0);
 
-    int num = touch_num_;
-#if defined (CINDER_MAC)
-    // シングルタッチは無視
-    if ((touches.size() == 1) && (touch_num_ == 0)) return;
-
-    if (num == 1) num = 0;
-#endif
-
     auto app_touches = createTouchInfo(touches);
-    worker_->touchesEnded(num, app_touches);
+    worker_->touchesEnded(touch_num_, app_touches);
   }
 
 

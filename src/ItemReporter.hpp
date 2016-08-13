@@ -122,35 +122,65 @@ public:
 
 
   void touchesBegan(const int touching_num, const std::vector<Touch>& touches) {
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版は最初のを覚えとく
     if (touching_num == 1) {
-      // 最初のを覚えておく
       touch_id_ = touches[0].getId();
-      draged_ = false;
+      draged_   = false;
     }
+#else
+    // PC版はMouseDownを覚えておく
+    if ((touches.size() == 1) && touches[0].isMouse()) {
+      touch_id_ = touches[0].getId();
+      draged_   = false;
+    }
+#endif
   }
 
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
-    if (touches.size() > 1) return;
-    if (touches[0].getId() != touch_id_) return;
-    
-    ci::vec2 d{ touches[0].getPos() -  touches[0].getPrevPos() };
-    float l = length(d);
-    if (l > 0.0f) {
-      d = normalize(d);
-      ci::vec3 v(d.y, d.x, 0.0f);
-      ci::quat r = glm::angleAxis(l * 0.01f, v);
-      drag_rotate_ = r * drag_rotate_;
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版はシングルタッチ操作
+    if (touching_num == 1 && touches.size() == 1)
+#else
+      // PCはマウス操作で回転
+    if ((touches.size() == 1) && touches[0].isMouse())
+#endif
+    {
+      ci::vec2 d{ touches[0].getPos() -  touches[0].getPrevPos() };
+      float l = length(d);
+      if (l > 0.0f) {
+        d = normalize(d);
+        ci::vec3 v(d.y, d.x, 0.0f);
+        ci::quat r = glm::angleAxis(l * 0.01f, v);
+        drag_rotate_ = r * drag_rotate_;
         
-      draged_ = true;
+        draged_ = true;
+      }
     }
   }
 
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
     if (!active_) return;
-    
-    if ((touching_num == 0) && !draged_) {
-      if (touches[0].getId() != touch_id_) return;
-    
+
+    bool touch_up = false;
+#if defined (CINDER_COCOA_TOUCH)
+    // iOS版は最初のタッチが終わったら
+    if (!draged_
+        && (touching_num == 0)
+        && (touches.size() == 1)
+        && touches[0].getId() == touch_id_) {
+      touch_up = true;
+    }
+#else
+    // PC版はMouseUpで判定
+    if (!draged_
+        && (touches.size() == 1)
+        && (touches[0].isMouse())) {
+      touch_up = true;
+    }
+#endif
+
+    if (touch_up) {
       // スクリーン座標→正規化座標
       ci::vec2 pos = touches[0].getPos();
       float sx = pos.x / ci::app::getWindowWidth();
