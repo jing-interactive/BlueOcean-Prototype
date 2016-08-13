@@ -76,6 +76,7 @@ class Game {
 
   bool touching_;
   double camera_auto_mode_;
+  ci::vec2 camera_change_speed_;
   
   // カメラの操作感
   float camera_rotation_sensitivity_;
@@ -834,6 +835,7 @@ public:
       camera_modified_(false),
       touching_(false),
       camera_auto_mode_(0.0),
+      camera_change_speed_(Json::getVec<ci::vec2>(params_["camera.change_speed"])),
       octave(params_.getValueForKey<float>("stage.octave")),
       seed(params_.getValueForKey<float>("stage.seed")),
       random_scale(Json::getVec<ci::vec3>(params_["stage.random_scale"])),
@@ -935,9 +937,6 @@ public:
       touch_id_ = touches[0].getId();
     }
 #endif
-
-    
-    touching_ = true;
   }
   
   void touchesMoved(const int touching_num, const std::vector<Touch>& touches) {
@@ -953,6 +952,7 @@ public:
       handlingRotation(touches[0].getPos(),
                          touches[0].getPrevPos());
       camera_modified_ = true;
+      touching_ = true;
       return;
     }
 
@@ -970,6 +970,7 @@ public:
       handlingZooming(ld * 0.1f);
     }
     camera_modified_ = true;
+    touching_ = true;
   }
   
   void touchesEnded(const int touching_num, const std::vector<Touch>& touches) {
@@ -1041,19 +1042,10 @@ public:
         camera_auto_mode_ -= 1 / 60.0;
       }
       else if(!pause_ship_camera_) {
-        translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
-        distance_  += (ship_camera_.getDistance() - distance_) * 0.1f;
+        translate_ += (ship_camera_.getPosition() - translate_) * camera_change_speed_.x;
+        distance_  += (ship_camera_.getDistance() - distance_) * camera_change_speed_.y;
       }
     }
-
-#if 0
-    if (has_route_) {
-      if(!pause_ship_camera_) {
-        translate_ += (ship_camera_.getPosition() - translate_) * 0.1f;
-        distance_  += (ship_camera_.getDistance() - distance_) * 0.1f;
-      }
-    }
-#endif
 
     auto pos = rotate_ * ci::vec3(0, 0, distance_) + translate_;
     

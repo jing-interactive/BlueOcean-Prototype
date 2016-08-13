@@ -19,7 +19,9 @@
     "angle_restriction": [ -70, -25 ],
 
     "distance": 200,
-    "distance_restriction": [30, 1000]
+    "distance_restriction": [30, 1000],
+
+    "change_speed": [ 0.05, 0.025 ]
   },
 
   "ui_camera": {
@@ -154,7 +156,7 @@
 
   "search": {
     "resolution": 5,
-    "state_rate": [ 0.333, 0.5 ]
+    "state_rate": [ 0.5, 0.7 ]
   },
 
   "ship": {

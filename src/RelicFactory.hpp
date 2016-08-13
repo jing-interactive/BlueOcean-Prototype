@@ -49,7 +49,7 @@ public:
 
     // FIXME:いい感じにレア度を計算
     float rare = ci::randFloat();
-    double search_required_time = search_required_time_ * (rare * 2 + 1.0);
+    double search_required_time = search_required_time_ * (rare * 1.5 + 1.0);
     
     Relic relic = {
       pos,
