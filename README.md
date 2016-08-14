@@ -1,6 +1,6 @@
 # プロトタイプ版 Blue Ocean
 
-![スクリーンショット](screen_shot.jpg)
+![スクリーンショット](screen_shot.png)
 
 新作iOSアプリのプロトタイプ版
 
