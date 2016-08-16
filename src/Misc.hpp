@@ -4,6 +4,9 @@
 // 細々した実装
 //
 
+#include <cinder/Ray.h>
+#include <cinder/TriMesh.h>
+#include <cinder/gl/GlslProg.h>
 #include "Light.hpp"
 #include "Relic.hpp"
 #include "Shader.hpp"

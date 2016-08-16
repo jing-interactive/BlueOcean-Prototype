@@ -7,6 +7,7 @@
 
 #include <sstream>
 #include <cinder/Vector.h>
+#include <cinder/Quaternion.h>
 #include "Asset.hpp"
 
 
