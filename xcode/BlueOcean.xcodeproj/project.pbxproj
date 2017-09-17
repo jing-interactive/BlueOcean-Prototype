@@ -19,6 +19,7 @@
 		471BD5BB1D28238800003199 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 471BD5BA1D28238800003199 /* assets */; };
 		4775AE781D2D2005005AEEF2 /* BlueOceanApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4775AE771D2D2005005AEEF2 /* BlueOceanApp.cpp */; };
 		5323E6B20EAFCA74003A9687 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5323E6B10EAFCA74003A9687 /* CoreVideo.framework */; };
+		74CEEA961F6EBCC4002111C2 /* BlueOceanApp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 74CEEA6A1F6EBCC4002111C2 /* BlueOceanApp.cpp */; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		E0932EFDB90B4DE09F51ED8B /* CinderApp.icns in Resources */ = {isa = PBXBuildFile; fileRef = 98C968B9F85744B69AFEB0E6 /* CinderApp.icns */; };
 /* End PBXBuildFile section */
@@ -41,6 +42,52 @@
 		471BD5BA1D28238800003199 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = "<group>"; };
 		4775AE771D2D2005005AEEF2 /* BlueOceanApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlueOceanApp.cpp; path = ../src/BlueOceanApp.cpp; sourceTree = "<group>"; };
 		5323E6B10EAFCA74003A9687 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = /System/Library/Frameworks/CoreVideo.framework; sourceTree = "<absolute>"; };
+		74CEEA661F6EBCC4002111C2 /* Arguments.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Arguments.hpp; path = ../src/Arguments.hpp; sourceTree = "<group>"; };
+		74CEEA671F6EBCC4002111C2 /* Asset.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Asset.hpp; path = ../src/Asset.hpp; sourceTree = "<group>"; };
+		74CEEA681F6EBCC4002111C2 /* Audio.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Audio.hpp; path = ../src/Audio.hpp; sourceTree = "<group>"; };
+		74CEEA691F6EBCC4002111C2 /* AudioEvent.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = AudioEvent.hpp; path = ../src/AudioEvent.hpp; sourceTree = "<group>"; };
+		74CEEA6A1F6EBCC4002111C2 /* BlueOceanApp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BlueOceanApp.cpp; path = ../src/BlueOceanApp.cpp; sourceTree = "<group>"; };
+		74CEEA6C1F6EBCC4002111C2 /* DayLighting.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = DayLighting.hpp; path = ../src/DayLighting.hpp; sourceTree = "<group>"; };
+		74CEEA6D1F6EBCC4002111C2 /* Defines.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Defines.hpp; path = ../src/Defines.hpp; sourceTree = "<group>"; };
+		74CEEA6E1F6EBCC4002111C2 /* DiscreteRandom.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = DiscreteRandom.hpp; path = ../src/DiscreteRandom.hpp; sourceTree = "<group>"; };
+		74CEEA6F1F6EBCC4002111C2 /* Draw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Draw.hpp; path = ../src/Draw.hpp; sourceTree = "<group>"; };
+		74CEEA711F6EBCC4002111C2 /* Game.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Game.hpp; path = ../src/Game.hpp; sourceTree = "<group>"; };
+		74CEEA721F6EBCC4002111C2 /* Holder.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Holder.hpp; path = ../src/Holder.hpp; sourceTree = "<group>"; };
+		74CEEA731F6EBCC4002111C2 /* Item.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Item.hpp; path = ../src/Item.hpp; sourceTree = "<group>"; };
+		74CEEA741F6EBCC4002111C2 /* ItemReporter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ItemReporter.hpp; path = ../src/ItemReporter.hpp; sourceTree = "<group>"; };
+		74CEEA751F6EBCC4002111C2 /* JsonUtil.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = JsonUtil.hpp; path = ../src/JsonUtil.hpp; sourceTree = "<group>"; };
+		74CEEA761F6EBCC4002111C2 /* Light.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Light.hpp; path = ../src/Light.hpp; sourceTree = "<group>"; };
+		74CEEA771F6EBCC4002111C2 /* Misc.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Misc.hpp; path = ../src/Misc.hpp; sourceTree = "<group>"; };
+		74CEEA781F6EBCC4002111C2 /* Params.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Params.hpp; path = ../src/Params.hpp; sourceTree = "<group>"; };
+		74CEEA791F6EBCC4002111C2 /* Path.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Path.hpp; path = ../src/Path.hpp; sourceTree = "<group>"; };
+		74CEEA7A1F6EBCC4002111C2 /* PieChart.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = PieChart.hpp; path = ../src/PieChart.hpp; sourceTree = "<group>"; };
+		74CEEA7B1F6EBCC4002111C2 /* PLY.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = PLY.hpp; path = ../src/PLY.hpp; sourceTree = "<group>"; };
+		74CEEA7C1F6EBCC4002111C2 /* Relic.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Relic.hpp; path = ../src/Relic.hpp; sourceTree = "<group>"; };
+		74CEEA7D1F6EBCC4002111C2 /* RelicDraw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RelicDraw.hpp; path = ../src/RelicDraw.hpp; sourceTree = "<group>"; };
+		74CEEA7E1F6EBCC4002111C2 /* RelicFactory.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RelicFactory.hpp; path = ../src/RelicFactory.hpp; sourceTree = "<group>"; };
+		74CEEA7F1F6EBCC4002111C2 /* Route.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Route.hpp; path = ../src/Route.hpp; sourceTree = "<group>"; };
+		74CEEA801F6EBCC4002111C2 /* RouteDraw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = RouteDraw.hpp; path = ../src/RouteDraw.hpp; sourceTree = "<group>"; };
+		74CEEA811F6EBCC4002111C2 /* SceneBase.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SceneBase.hpp; path = ../src/SceneBase.hpp; sourceTree = "<group>"; };
+		74CEEA821F6EBCC4002111C2 /* SceneGame.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SceneGame.hpp; path = ../src/SceneGame.hpp; sourceTree = "<group>"; };
+		74CEEA831F6EBCC4002111C2 /* SceneItemReporter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = SceneItemReporter.hpp; path = ../src/SceneItemReporter.hpp; sourceTree = "<group>"; };
+		74CEEA841F6EBCC4002111C2 /* Sea.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Sea.hpp; path = ../src/Sea.hpp; sourceTree = "<group>"; };
+		74CEEA851F6EBCC4002111C2 /* Search.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Search.hpp; path = ../src/Search.hpp; sourceTree = "<group>"; };
+		74CEEA861F6EBCC4002111C2 /* shader.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = shader.hpp; path = ../src/shader.hpp; sourceTree = "<group>"; };
+		74CEEA871F6EBCC4002111C2 /* Ship.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Ship.hpp; path = ../src/Ship.hpp; sourceTree = "<group>"; };
+		74CEEA881F6EBCC4002111C2 /* ShipCamera.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ShipCamera.hpp; path = ../src/ShipCamera.hpp; sourceTree = "<group>"; };
+		74CEEA891F6EBCC4002111C2 /* Stage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Stage.hpp; path = ../src/Stage.hpp; sourceTree = "<group>"; };
+		74CEEA8A1F6EBCC4002111C2 /* StageDraw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StageDraw.hpp; path = ../src/StageDraw.hpp; sourceTree = "<group>"; };
+		74CEEA8B1F6EBCC4002111C2 /* StageObj.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StageObj.hpp; path = ../src/StageObj.hpp; sourceTree = "<group>"; };
+		74CEEA8C1F6EBCC4002111C2 /* StageObjDraw.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StageObjDraw.hpp; path = ../src/StageObjDraw.hpp; sourceTree = "<group>"; };
+		74CEEA8D1F6EBCC4002111C2 /* StageObjFactory.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StageObjFactory.hpp; path = ../src/StageObjFactory.hpp; sourceTree = "<group>"; };
+		74CEEA8E1F6EBCC4002111C2 /* StageObjMesh.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StageObjMesh.hpp; path = ../src/StageObjMesh.hpp; sourceTree = "<group>"; };
+		74CEEA8F1F6EBCC4002111C2 /* Target.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Target.hpp; path = ../src/Target.hpp; sourceTree = "<group>"; };
+		74CEEA901F6EBCC4002111C2 /* TiledStage.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = TiledStage.hpp; path = ../src/TiledStage.hpp; sourceTree = "<group>"; };
+		74CEEA911F6EBCC4002111C2 /* Time.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Time.hpp; path = ../src/Time.hpp; sourceTree = "<group>"; };
+		74CEEA921F6EBCC4002111C2 /* Touch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Touch.hpp; path = ../src/Touch.hpp; sourceTree = "<group>"; };
+		74CEEA931F6EBCC4002111C2 /* UI.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = UI.hpp; path = ../src/UI.hpp; sourceTree = "<group>"; };
+		74CEEA941F6EBCC4002111C2 /* Waypoint.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Waypoint.hpp; path = ../src/Waypoint.hpp; sourceTree = "<group>"; };
+		74CEEA951F6EBCC4002111C2 /* Worker.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Worker.hpp; path = ../src/Worker.hpp; sourceTree = "<group>"; };
 		8D1107320486CEB800E47090 /* BlueOcean.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlueOcean.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		98C968B9F85744B69AFEB0E6 /* CinderApp.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = CinderApp.icns; path = ../resources/CinderApp.icns; sourceTree = "<group>"; };
 		F3934B5B4DFC4C1F878AB1F7 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -72,6 +119,52 @@
 			isa = PBXGroup;
 			children = (
 				4775AE771D2D2005005AEEF2 /* BlueOceanApp.cpp */,
+				74CEEA661F6EBCC4002111C2 /* Arguments.hpp */,
+				74CEEA671F6EBCC4002111C2 /* Asset.hpp */,
+				74CEEA681F6EBCC4002111C2 /* Audio.hpp */,
+				74CEEA691F6EBCC4002111C2 /* AudioEvent.hpp */,
+				74CEEA6A1F6EBCC4002111C2 /* BlueOceanApp.cpp */,
+				74CEEA6C1F6EBCC4002111C2 /* DayLighting.hpp */,
+				74CEEA6D1F6EBCC4002111C2 /* Defines.hpp */,
+				74CEEA6E1F6EBCC4002111C2 /* DiscreteRandom.hpp */,
+				74CEEA6F1F6EBCC4002111C2 /* Draw.hpp */,
+				74CEEA711F6EBCC4002111C2 /* Game.hpp */,
+				74CEEA721F6EBCC4002111C2 /* Holder.hpp */,
+				74CEEA731F6EBCC4002111C2 /* Item.hpp */,
+				74CEEA741F6EBCC4002111C2 /* ItemReporter.hpp */,
+				74CEEA751F6EBCC4002111C2 /* JsonUtil.hpp */,
+				74CEEA761F6EBCC4002111C2 /* Light.hpp */,
+				74CEEA771F6EBCC4002111C2 /* Misc.hpp */,
+				74CEEA781F6EBCC4002111C2 /* Params.hpp */,
+				74CEEA791F6EBCC4002111C2 /* Path.hpp */,
+				74CEEA7A1F6EBCC4002111C2 /* PieChart.hpp */,
+				74CEEA7B1F6EBCC4002111C2 /* PLY.hpp */,
+				74CEEA7C1F6EBCC4002111C2 /* Relic.hpp */,
+				74CEEA7D1F6EBCC4002111C2 /* RelicDraw.hpp */,
+				74CEEA7E1F6EBCC4002111C2 /* RelicFactory.hpp */,
+				74CEEA7F1F6EBCC4002111C2 /* Route.hpp */,
+				74CEEA801F6EBCC4002111C2 /* RouteDraw.hpp */,
+				74CEEA811F6EBCC4002111C2 /* SceneBase.hpp */,
+				74CEEA821F6EBCC4002111C2 /* SceneGame.hpp */,
+				74CEEA831F6EBCC4002111C2 /* SceneItemReporter.hpp */,
+				74CEEA841F6EBCC4002111C2 /* Sea.hpp */,
+				74CEEA851F6EBCC4002111C2 /* Search.hpp */,
+				74CEEA861F6EBCC4002111C2 /* shader.hpp */,
+				74CEEA871F6EBCC4002111C2 /* Ship.hpp */,
+				74CEEA881F6EBCC4002111C2 /* ShipCamera.hpp */,
+				74CEEA891F6EBCC4002111C2 /* Stage.hpp */,
+				74CEEA8A1F6EBCC4002111C2 /* StageDraw.hpp */,
+				74CEEA8B1F6EBCC4002111C2 /* StageObj.hpp */,
+				74CEEA8C1F6EBCC4002111C2 /* StageObjDraw.hpp */,
+				74CEEA8D1F6EBCC4002111C2 /* StageObjFactory.hpp */,
+				74CEEA8E1F6EBCC4002111C2 /* StageObjMesh.hpp */,
+				74CEEA8F1F6EBCC4002111C2 /* Target.hpp */,
+				74CEEA901F6EBCC4002111C2 /* TiledStage.hpp */,
+				74CEEA911F6EBCC4002111C2 /* Time.hpp */,
+				74CEEA921F6EBCC4002111C2 /* Touch.hpp */,
+				74CEEA931F6EBCC4002111C2 /* UI.hpp */,
+				74CEEA941F6EBCC4002111C2 /* Waypoint.hpp */,
+				74CEEA951F6EBCC4002111C2 /* Worker.hpp */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -215,6 +308,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				74CEEA961F6EBCC4002111C2 /* BlueOceanApp.cpp in Sources */,
 				4775AE781D2D2005005AEEF2 /* BlueOceanApp.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -225,6 +319,7 @@
 		C01FCF4B08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CINDER_PATH = ../../Cinder;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = BlueOcean_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -248,6 +343,7 @@
 		C01FCF4C08A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CINDER_PATH = ../../Cinder;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = BlueOcean_Prefix.pch;
 				GCC_PREPROCESSOR_DEFINITIONS = (

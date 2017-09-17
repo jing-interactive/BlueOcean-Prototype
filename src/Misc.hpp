@@ -9,7 +9,7 @@
 #include <cinder/gl/GlslProg.h>
 #include "Light.hpp"
 #include "Relic.hpp"
-#include "Shader.hpp"
+#include "shader.hpp"
 
 
 namespace ngs {
