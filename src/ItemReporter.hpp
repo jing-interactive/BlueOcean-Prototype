@@ -15,7 +15,7 @@
 namespace ngs {
 
 class ItemReporter {
-  Event<Arguments>& event_;
+  Event& event_;
   
   // アイテム表示用専用カメラ
   ci::CameraPersp camera_;
@@ -53,7 +53,7 @@ class ItemReporter {
   
   
 public:
-  ItemReporter(Event<Arguments>& event,
+  ItemReporter(Event& event,
                const ci::JsonTree& params,
                const ci::TimelineRef& timeline)
     : event_(event),

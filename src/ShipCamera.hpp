@@ -7,7 +7,7 @@
 namespace ngs {
 
 class ShipCamera {
-  Event<Arguments>& event_;
+  Event& event_;
 
   // 到着時と移動時の距離
   ci::vec2 distance_;
@@ -17,7 +17,7 @@ class ShipCamera {
 
   
 public:
-  ShipCamera(Event<Arguments>& event, const ci::JsonTree& params)
+  ShipCamera(Event& event, const ci::JsonTree& params)
     : event_(event),
       distance_(Json::getVec<ci::vec2>(params["ship_camera.distance"])),
       current_distance_(distance_.x)

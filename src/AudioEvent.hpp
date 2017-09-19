@@ -10,7 +10,7 @@
 
 namespace ngs { namespace AudioEvent {
 
-void play(Event<Arguments>& event, const std::string& name) {
+void play(Event& event, const std::string& name) {
   Arguments arguments = {
     { "name", name }
   };
@@ -18,7 +18,7 @@ void play(Event<Arguments>& event, const std::string& name) {
   event.signal("audio", arguments);
 }
 
-void stopAll(Event<Arguments>& event) {
+void stopAll(Event& event) {
   event.signal("audio_stop", Arguments());
 }
 

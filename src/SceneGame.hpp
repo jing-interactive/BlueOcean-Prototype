@@ -15,7 +15,7 @@ class SceneGame
   : public SceneBase {
 
   // FIXME:スマートポインタの方が安全
-  Event<Arguments>& event_;
+  Event& event_;
   ConnectionHolder holder_;
 
   const ci::JsonTree& params_;
@@ -57,7 +57,7 @@ class SceneGame
 
   
 public:
-  SceneGame(Event<Arguments>& event,
+  SceneGame(Event& event,
             const ci::JsonTree& params,
             const std::shared_ptr<Game>& game)
     : event_(event),
@@ -66,13 +66,13 @@ public:
   {
     // アイテムゲット画面起動時はデバッグダイアログを破棄
     holder_ += event_.connect("pause_game",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 game_->destroyDialog();
                               });
 
     // アイテムゲット画面終了時にデバッグダイアログを復活
     holder_ += event_.connect("resume_game",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 game_->createDialog();
                               });
 

@@ -32,7 +32,7 @@ std::vector<T> getArray(const ci::JsonTree& json) noexcept {
 template<typename T>
 T getVec(const ci::JsonTree& json) noexcept {
   T v;
-  for (size_t i = 0; i < v.size(); ++i) {
+  for (size_t i = 0; i < v.length(); ++i) {
     v[i] = json[i].getValue<double>();
   }
 
@@ -48,7 +48,7 @@ ci::quat getQuat(const ci::JsonTree& json) {
 template<typename T>
 ci::JsonTree createFromVec(const T& vec) {
   ci::JsonTree json;
-  for (size_t i = 0; i < vec.size(); ++i) {
+  for (size_t i = 0; i < vec.length(); ++i) {
     json.pushBack(ci::JsonTree("", vec[i]));
   }
   return json;
@@ -57,7 +57,7 @@ ci::JsonTree createFromVec(const T& vec) {
 template<typename T>
 ci::JsonTree createFromVec(const std::string& key, const T& vec) {
   auto json = ci::JsonTree::makeObject(key);
-  for (size_t i = 0; i < vec.size(); ++i) {
+  for (size_t i = 0; i < vec.length(); ++i) {
     json.pushBack(ci::JsonTree("", vec[i]));
   }
   return json;

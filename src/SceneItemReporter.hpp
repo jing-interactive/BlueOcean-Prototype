@@ -15,7 +15,7 @@ class SceneItemReporter
   : public SceneBase {
 
   // FIXME:スマートポインタの方が安全
-  Event<Arguments>& event_;
+  Event& event_;
   ConnectionHolder holder_;
 
   ci::gl::FboRef fbo_;
@@ -71,7 +71,7 @@ class SceneItemReporter
 
   
 public:
-  SceneItemReporter(Event<Arguments>& event,
+  SceneItemReporter(Event& event,
                     const ci::JsonTree& params,
                     const ci::TimelineRef& timeline,
                     const ci::gl::FboRef& fbo,
@@ -86,7 +86,7 @@ public:
     model_  = ci::gl::VboMesh::create(ci::ObjLoader(Asset::load("bg.obj")));
     
     holder_ += event_.connect("close_item_reporter",
-                              [this](const Connection& connection, const Arguments&) {
+                              [this](const Arguments&) {
                                 event_.signal("resume_game", Arguments());
                                 active_ = false;
                               });

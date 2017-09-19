@@ -19,7 +19,7 @@ namespace ngs {
 template <typename T>
 struct LessVec {
   bool operator()(const T& lhs, const T& rhs) const {
-    for (size_t i = 0; i < lhs.size(); ++i) {
+    for (size_t i = 0; i < lhs.length(); ++i) {
       if (lhs[i] < rhs[i]) return true;
       if (lhs[i] > rhs[i]) return false;
     }

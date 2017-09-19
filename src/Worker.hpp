@@ -19,7 +19,7 @@ namespace ngs {
 
 class Worker {
   // 汎用的なコールバック管理
-  Event<Arguments> event_;
+  Event event_;
   ConnectionHolder holder_;
 
   // ゲーム内パラメーター
@@ -55,14 +55,14 @@ class Worker {
   // シーンファクトリー
   void setupFactory() {
     holder_ += event_.connect("scene_game",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 DOUT << "scene_game" << std::endl;
 
                                 scene_stack_.push_front(std::make_shared<SceneGame>(event_, params_, game_));
                               });
 
     holder_ += event_.connect("scene_item_reporter",
-                              [this](const Connection&, const Arguments& arguments) {
+                              [this](const Arguments& arguments) {
                                 DOUT << "scene_item_reporter" << std::endl;
 
                                 // 直前の画面のsnapshot
@@ -86,14 +86,14 @@ public:
     setupFactory();
 
     holder_ += event_.connect("audio",
-                              [this](const Connection&, const Arguments& arguments) {
+                              [this](const Arguments& arguments) {
                                 const auto& name = boost::any_cast<const std::string&>(arguments.at("name"));
                                 audio_.play(name);
                               });
 
     // サウンドデバッグ用
     holder_ += event_.connect("audio_test",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 DOUT << "audio_test" << std::endl;
 
                                 int num = params_["audio"].getNumChildren();
@@ -108,7 +108,7 @@ public:
                               });
 
     holder_ += event_.connect("audio_stop",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 DOUT << "audio_stop" << std::endl;
                                 
                                 audio_.stopAll();
@@ -174,7 +174,7 @@ public:
 
 
   // デバッグ用途
-  Event<Arguments>& getEvent() { return event_; }
+  Event& getEvent() { return event_; }
   const ci::JsonTree& getParams() const { return params_; }
 
 };

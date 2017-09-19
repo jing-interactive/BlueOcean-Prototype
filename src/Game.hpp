@@ -47,7 +47,7 @@ class Game {
     FBO_HEIGHT = 512,
   };
 
-  Event<Arguments>& event_;
+  Event& event_;
   ConnectionHolder holder_;
   
   const ci::JsonTree& params_;
@@ -580,7 +580,7 @@ class Game {
   // 各種コールバックを登録
   void registerCallbacks() {
     holder_ += event_.connect("ship_arrival",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 DOUT << "ship_arrival" << std::endl;
                                 has_route_ = false;
                                 target_.arrived();
@@ -811,14 +811,14 @@ class Game {
 
   void setupDebugEvent() {
     holder_ += event_.connect("debug_item_reporter",
-                              [this](const Connection&, const Arguments&) {
+                              [this](const Arguments&) {
                                 foundItem();                                
                               });
   }
 
   
 public:
-  Game(Event<Arguments>& event, const ci::JsonTree& params)
+  Game(Event& event, const ci::JsonTree& params)
     : event_(event),
       params_(params),
       fov(params_.getValueForKey<float>("camera.fov")),

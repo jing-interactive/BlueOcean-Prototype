@@ -16,7 +16,7 @@
 namespace ngs {
 
 class Ship {
-  Event<Arguments>& event_;
+  Event& event_;
   
   ci::vec3 position_;
   ci::quat rotation_;
@@ -85,7 +85,7 @@ class Ship {
   
   
 public:
-  Ship(Event<Arguments>& event, const ci::JsonTree& params)
+  Ship(Event& event, const ci::JsonTree& params)
     : event_(event),
       position_(Json::getVec<ci::vec3>(params["position"])),
       scaling_(Json::getVec<ci::vec3>(params["scaling"])),
