@@ -87,11 +87,11 @@ public:
     
     holder_ += event_.connect("close_item_reporter",
                               [this](const Arguments&) {
-                                event_.signal("resume_game", Arguments());
+                                event_.signal("resume_game");
                                 active_ = false;
                               });
 
-    event_.signal("pause_game", Arguments());
+    event_.signal("pause_game");
   }
 
 };

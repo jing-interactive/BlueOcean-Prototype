@@ -115,7 +115,7 @@ public:
                               });
     
     // 最初のシーンを生成
-    event_.signal("scene_game", Arguments());
+    event_.signal("scene_game");
   }
 
 

@@ -53,7 +53,7 @@ class Ship {
       height_   = position_.y;
       do_route_ = false;
 
-      event_.signal("ship_arrival", Arguments());
+      event_.signal("ship_arrival");
     }
     else {
       double required_time = getRequiredTime();

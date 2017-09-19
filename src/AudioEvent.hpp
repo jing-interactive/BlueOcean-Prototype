@@ -19,7 +19,7 @@ void play(Event& event, const std::string& name) {
 }
 
 void stopAll(Event& event) {
-  event.signal("audio_stop", Arguments());
+  event.signal("audio_stop");
 }
 
 } }

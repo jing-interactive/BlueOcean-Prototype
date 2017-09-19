@@ -162,7 +162,7 @@ private:
              << " "
              << message << std::endl;
       
-        worker_->getEvent().signal(message, Arguments());
+        worker_->getEvent().signal(message);
       }
     }
   }

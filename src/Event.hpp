@@ -28,7 +28,7 @@ namespace ngs {
             return signals_[msg].connect(callback);
         }
 
-        void signal(const std::string& msg, const Arguments& args) noexcept {
+        void signal(const std::string& msg, const Arguments& args = {}) noexcept {
             signals_[msg].emit(args);
         }
 

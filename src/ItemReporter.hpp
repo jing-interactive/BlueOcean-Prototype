@@ -198,7 +198,7 @@ public:
         AudioEvent::play(event_, "agree");
         timeline_->apply(&tween_scale_, 0.0f, 0.5f, ci::EaseInBack())
           .finishFn([this]() {
-              event_.signal("close_item_reporter", Arguments());
+              event_.signal("close_item_reporter");
             });
       }
     
